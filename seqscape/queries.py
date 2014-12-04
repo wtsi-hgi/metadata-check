@@ -30,9 +30,10 @@ Created on Nov 5, 2014
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from Celery_Django_Prj import configs
-from serapis.seqscape.models import Sample, Study, Library, StudySamplesLink
-from serapis.com import wrappers
+import config
+#from Celery_Django_Prj import configs
+from seqscape.models import Sample, Study, Library, StudySamplesLink
+from com import wrappers
 
 
 def connect(host, port, database, user, password=None, dialect='mysql'):
@@ -42,7 +43,7 @@ def connect(host, port, database, user, password=None, dialect='mysql'):
 
 
 def connect_and_get_session_instance():
-    engine = connect(configs.SEQSC_HOST, str(configs.SEQSC_PORT), configs.SEQSC_DB_NAME, configs.SEQSC_USER)
+    engine = connect(config.SEQSC_HOST, str(config.SEQSC_PORT), config.SEQSC_DB_NAME, config.SEQSC_USER)
     session_cls = sessionmaker(bind=engine)
     return session_cls()
 
