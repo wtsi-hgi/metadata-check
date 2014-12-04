@@ -19,6 +19,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
+import argparse
 from header_parser import bam_hparser
 from irods import api as irods
 
@@ -67,31 +68,34 @@ def check_samples():
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--study', required=False, help='Study name')
-    #parser.add_argument('--path_irods', required=False, help='Path in iRODS to a BAM')
+    parser.add_argument('--path_irods', required=False, help='Path in iRODS to a BAM')
 
     args = parser.parse_args()
     if not args.study and not args.path_irods:
         print "No study provided, no BAM path given => NOTHING TO DO! EXITTING"
         exit(0)
+    return args
 
 
 # CHECK LANELETS:
 
 def main():
     args = parse_args()
-    if args.irods_path:
-        fpahts_irods = [args.irods_path]
+    if args.path_irods:
+        fpaths_irods = [args.path_irods]
     elif args.study:
         fpaths_irods = get_list_of_files_for_study(study_name)
-    
+    else:
+        print "No arguments provided! Exitting"
+        return
     for fpath in fpaths_irods:
         metadata = get_irods_metadata(fpath)
         sample_name = extract_values_by_key_from_irods_metadata(metadata, 'sample')
         sample_acc_nr = extract_values_by_key_from_irods_metadata(metadata, 'sample_accession_number')
         sample_internal_id = extract_values_by_key_from_irods_metadata(metadata, 'sample_id')
-        print "SAMPLE name: "+sample_name
-        print "sample_ acc nr:"+sample_acc_nr
-        print "sample internal id: "+sample_internal_id
+        print "SAMPLE name: "+str(sample_name)
+        print "sample_ acc nr:"+str(sample_acc_nr)
+        print "sample internal id: "+str(sample_internal_id)
 
         study_internal_id = extract_values_by_key_from_irods_metadata(metadata, 'study_id')
         study_acc_nr = extract_values_by_key_from_irods_metadata(metadata, 'study_accession_number')
