@@ -65,8 +65,9 @@ class BAMHeaderParser(object):
         rgs_parsed = cls._parse_RG_tag(rg_list)
         return rgs_parsed
 
-header = BAMHeaderParser.extract('/seq/11010/11010_8#21.bam')
-rgs_list = BAMHeaderParser.parse(header)
-print "EXTRACTED HEADER: "+str(rgs_list)
 
+# header = BAMHeaderParser.extract('/seq/11010/11010_8#21.bam')
+# rgs_list = BAMHeaderParser.parse(header)
+# print "EXTRACTED HEADER: "+str(rgs_list)
 
+print "HELLO"
