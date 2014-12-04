@@ -20,7 +20,8 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import argparse
-from header_parser import bam_hparser
+from header_parser import bam_h_analyser as h_analyser
+from identifiers import EntityIdentifier as Identif
 from irods import api as irods
 
 def extract_fname_from_path(fpath):
@@ -41,9 +42,10 @@ def guess_irods_path(lustre_path):
 
 
 def get_header_metadata_from_irods_file(irods_path):
-    full_header = bam_hparser.BAMHeaderParser.extract_header(irods_path)
-    parsed_header = bam_hparser.BAMHeaderParser.parse(full_header)
-    return parsed_header.rg
+    full_header = h_analyser.BAMHeaderAnalyser.extract_header(irods_path)
+    parsed_header = h_analyser.BAMHeaderAnalyser.parse_header(full_header)
+    header_metadata = h_analyser.BAMHeaderAnalyser.extract_metadata_from_header(parsed_header)
+    return header_metadata
 
 
 def get_irods_metadata(irods_path):
@@ -62,12 +64,29 @@ def get_list_of_files_for_study(study_name):
     return irods.iRODSAPI.get_files_list_by_metadata('study', study_name)
 
 
+
 def check_sample_metadata(header_metadata, irods_metadata):
     samples_identifiers = header_metadata.samples
 
     irods_sample_names_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'sample')
     irods_sample_acc_nr_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'sample_accession_number')
     irods_sample_internal_id_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'sample_id')
+
+    header_samples_identifiers_tuples = [(Identif.guess_identifier_type(sample), sample) for sample in header_metadata.samples]
+
+    # Compare sample identifiers:
+    for id_type, id_val in header_samples_identifiers_tuples:
+        if id_type == 'accession_number':
+            if id_val not in irods_sample_acc_nr_list:
+                print "ERROR - this sample accession number appears in the header, but not in the metadata:"+str(id_val)
+        elif id_type == 'name':
+            if id_val not in irods_sample_names_list:
+                print "ERROR - this sample name appears in the header, but not in the irods metadata: "+str(id_val)
+        elif id_type == 'internal_id':
+            if id_val not in irods_sample_internal_id_list:
+                print "ERROR - this sample id appears in the header, but not in the irods metadata: "+str(id_val)
+
+
 
     print "SAMPLE name: "+str(irods_sample_names_list)
     print "sample_ acc nr:"+str(irods_sample_acc_nr_list)
@@ -119,7 +138,7 @@ def main():
         print "No arguments provided! Exitting"
         return
     for fpath in fpaths_irods:
-        test_file(fpath)
+        test_file_metadata(fpath)
 
 
 if __name__ == '__main__':

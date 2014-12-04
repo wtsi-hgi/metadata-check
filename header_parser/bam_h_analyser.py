@@ -299,6 +299,28 @@ class BAMHeaderAnalyser(object):
 
     @classmethod
     @wrappers.check_args_not_none
+    def _parse_RG_tag(cls, rg_list):
+        """
+        Takes a list of rg tags, each tag is represented as text.
+        Parameters
+        ----------
+        rg_list : list
+            A list of RG tags, as they appear in the BAM header.
+        """
+        rgs_parsed = []
+        for rg in rg_list:
+            new_rg = {}
+            groups = rg.split('\t')
+            for grp in groups:
+                tag_name = grp[0:2]
+                if tag_name in ['SM', 'LB', 'PL', 'PU', 'DS', 'DT', 'CN']:
+                    tag_value = grp[3:]
+                    new_rg[tag_name] = tag_value
+            rgs_parsed.append(new_rg)
+        return rgs_parsed
+
+    @classmethod
+    @wrappers.check_args_not_none
     def parse_header(cls, header):
         """
             Receives a BAM header as text (string) and parses it.
@@ -367,27 +389,6 @@ class BAMHeaderAnalyser(object):
         return BAMHeader(sq=sq, hd=hd, pg=pg, rg=rg)
 
 
-    @classmethod
-    @wrappers.check_args_not_none
-    def _parse_RG_tag(cls, rg_list):
-        """
-        Takes a list of rg tags, each tag is represented as text.
-        Parameters
-        ----------
-        rg_list : list
-            A list of RG tags, as they appear in the BAM header.
-        """
-        rgs_parsed = []
-        for rg in rg_list:
-            new_rg = {}
-            groups = rg.split('\t')
-            for grp in groups:
-                tag_name = grp[0:2]
-                if tag_name in ['SM', 'LB', 'PL', 'PU', 'DS', 'DT', 'CN']:
-                    tag_value = grp[3:]
-                    new_rg[tag_name] = tag_value
-            rgs_parsed.append(new_rg)
-        return rgs_parsed
 
 
 header = BAMHeaderAnalyser.extract_header_from_irods_file('/seq/11010/11010_8#21.bam')
