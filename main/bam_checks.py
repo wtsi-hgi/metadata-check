@@ -40,9 +40,10 @@ def guess_irods_path(lustre_path):
     return irods_fpath
 
 
-def get_header_metadata(path):
-    full_header = bam_hparser.BAMHeaderParser.extract_header(path)
-    return full_header.rg
+def get_header_metadata_from_irods_file(irods_path):
+    full_header = bam_hparser.BAMHeaderParser.extract_header(irods_path)
+    parsed_header = bam_hparser.BAMHeaderParser.parse(full_header)
+    return parsed_header.rg
 
 
 def get_irods_metadata(irods_path):
@@ -61,8 +62,37 @@ def get_list_of_files_for_study(study_name):
     return irods.iRODSAPI.get_files_list_by_metadata('study', study_name)
 
 
-def check_samples():
-    pass
+def check_sample_metadata(header_metadata, irods_metadata):
+    samples_identifiers = header_metadata.samples
+
+    irods_sample_names_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'sample')
+    irods_sample_acc_nr_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'sample_accession_number')
+    irods_sample_internal_id_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'sample_id')
+
+    print "SAMPLE name: "+str(irods_sample_names_list)
+    print "sample_ acc nr:"+str(irods_sample_acc_nr_list)
+    print "sample internal id: "+str(irods_sample_internal_id_list)
+
+
+
+def test_file_metadata(irods_fpath):
+    header_metadata = get_header_metadata_from_irods_file(irods_fpath)
+
+    irods_metadata = get_irods_metadata(irods_fpath)
+
+    study_internal_id = extract_values_by_key_from_irods_metadata(irods_metadata, 'study_id')
+    study_acc_nr = extract_values_by_key_from_irods_metadata(irods_metadata, 'study_accession_number')
+
+    library_name = extract_values_by_key_from_irods_metadata(irods_metadata, 'library')
+    library_internal_id = extract_values_by_key_from_irods_metadata(irods_metadata, 'library_id')
+
+    run_id = extract_values_by_key_from_irods_metadata(irods_metadata, 'id_run')
+    lane_id = extract_values_by_key_from_irods_metadata(irods_metadata, 'lane')
+    tag_id = extract_values_by_key_from_irods_metadata(irods_metadata, 'tag_index')
+
+    md5 = extract_values_by_key_from_irods_metadata(irods_metadata, 'md5')
+
+    reference_file = extract_values_by_key_from_irods_metadata(irods_metadata, 'reference')
 
 
 def parse_args():
@@ -84,33 +114,12 @@ def main():
     if args.path_irods:
         fpaths_irods = [args.path_irods]
     elif args.study:
-        fpaths_irods = get_list_of_files_for_study(study_name)
+        fpaths_irods = get_list_of_files_for_study(args.study)
     else:
         print "No arguments provided! Exitting"
         return
     for fpath in fpaths_irods:
-        metadata = get_irods_metadata(fpath)
-        sample_name = extract_values_by_key_from_irods_metadata(metadata, 'sample')
-        sample_acc_nr = extract_values_by_key_from_irods_metadata(metadata, 'sample_accession_number')
-        sample_internal_id = extract_values_by_key_from_irods_metadata(metadata, 'sample_id')
-        print "SAMPLE name: "+str(sample_name)
-        print "sample_ acc nr:"+str(sample_acc_nr)
-        print "sample internal id: "+str(sample_internal_id)
-
-        study_internal_id = extract_values_by_key_from_irods_metadata(metadata, 'study_id')
-        study_acc_nr = extract_values_by_key_from_irods_metadata(metadata, 'study_accession_number')
-
-        library_name = extract_values_by_key_from_irods_metadata(metadata, 'library')
-        library_internal_id = extract_values_by_key_from_irods_metadata(metadata, 'library_id')
-
-        run_id = extract_values_by_key_from_irods_metadata(metadata, 'id_run')
-        lane_id = extract_values_by_key_from_irods_metadata(metadata, 'lane')
-        tag_id = extract_values_by_key_from_irods_metadata(metadata, 'tag_index')
-
-        md5 = extract_values_by_key_from_irods_metadata(metadata, 'md5')
-
-        reference_file = extract_values_by_key_from_irods_metadata(metadata, 'reference')
-
+        test_file(fpath)
 
 
 if __name__ == '__main__':

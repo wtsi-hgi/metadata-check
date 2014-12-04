@@ -1,9 +1,28 @@
 """
+Copyright (C) 2014  Genome Research Ltd.
+
+Author: Irina Colgiu <ic4@sanger.ac.uk>
+
+This program is part of metadata-check.
+
+metadata-check is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+
 This is the API exposed for the whole package, this should encompass all the functionality that a user wants
 from an iRODS API wrapper.
 
-Created on Oct 24, 2014
-@author: ic4
+This file has been created on Oct 24, 2014
 """
 
 from irods import api_wrapper as irods_api
