@@ -30,7 +30,21 @@ import config
 class BAMHeaderParser(object):
 
     @classmethod
-    def extract(cls, irods_path):
+    def extract_header_from_file(cls, path):
+        """
+            This method extract the header from a file stored in a
+            non-irods file system and returns it as text (string)
+        """
+        child_proc = subprocess.Popen([config.SAMTOOLS_PATH, 'view', '-H', path], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+        (out, err) = child_proc.communicate()
+        if err:
+            print "ERROR calling samtools on " + str(path)
+            raise IOError(err)
+        return out
+
+
+    @classmethod
+    def extract_header_from_irods_file(cls, irods_path):
         irods_path = 'irods:'+str(irods_path)
         child_proc = subprocess.Popen([config.SAMTOOLS_IRODS_PATH, 'view', '-H', irods_path], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
         (out, err) = child_proc.communicate()
@@ -38,6 +52,7 @@ class BAMHeaderParser(object):
             print "ERROR calling samtools irods on " + str(irods_path)
             raise IOError(err)
         return out
+
 
     @classmethod
     def _parse_RG_tag(cls, rg_list):
@@ -97,6 +112,12 @@ class BAMHeaderParser(object):
         return header_dict
 
 
-header = BAMHeaderParser.extract('/seq/11010/11010_8#21.bam')
+header = BAMHeaderParser.extract_header_from_irods_file('/seq/11010/11010_8#21.bam')
 rgs_list = BAMHeaderParser.parse_header(header)
-print "EXTRACTED HEADER: "+str(rgs_list)
+print "EXTRACTED HEADER from file from iRODS: "+str(rgs_list)
+
+print "\n"
+
+header = BAMHeaderParser.extract_header_from_file('/lustre/scratch113/teams/hgi/mc14-vb-carl-fvg-hdd/F12HPCEUHK0358/WCAZAK513578/F12HPCEUHK0358_HUMcoqR/582009/Alignment_result/582009.dedup.realn.recal.bam')
+rgs_list = BAMHeaderParser.parse_header(header)
+print "Extracted header from file in lustre: "+str(rgs_list)
