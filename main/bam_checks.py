@@ -64,16 +64,34 @@ def check_samples():
     pass
 
 
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--study', required=False, help='Study name')
+    #parser.add_argument('--path_irods', required=False, help='Path in iRODS to a BAM')
+
+    args = parser.parse_args()
+    if not args.study and not args.path_irods:
+        print "No study provided, no BAM path given => NOTHING TO DO! EXITTING"
+        exit(0)
+
+
 # CHECK LANELETS:
 
 def main():
-    study_name = 'abc'
-    fpaths_irods = get_list_of_files_for_study(study_name)
+    args = parse_args()
+    if args.irods_path:
+        fpahts_irods = [args.irods_path]
+    elif args.study:
+        fpaths_irods = get_list_of_files_for_study(study_name)
+    
     for fpath in fpaths_irods:
         metadata = get_irods_metadata(fpath)
         sample_name = extract_values_by_key_from_irods_metadata(metadata, 'sample')
         sample_acc_nr = extract_values_by_key_from_irods_metadata(metadata, 'sample_accession_number')
         sample_internal_id = extract_values_by_key_from_irods_metadata(metadata, 'sample_id')
+        print "SAMPLE name: "+sample_name
+        print "sample_ acc nr:"+sample_acc_nr
+        print "sample internal id: "+sample_internal_id
 
         study_internal_id = extract_values_by_key_from_irods_metadata(metadata, 'study_id')
         study_acc_nr = extract_values_by_key_from_irods_metadata(metadata, 'study_accession_number')
