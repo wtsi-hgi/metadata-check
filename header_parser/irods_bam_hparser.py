@@ -39,7 +39,6 @@ class BAMHeaderParser(object):
             raise IOError(err)
         return out
 
-
     @classmethod
     def _parse_RG_tag(cls, rg_list):
         """
@@ -61,19 +60,43 @@ class BAMHeaderParser(object):
 
 
     @classmethod
-    def parse(cls, header):
-        rg_list = []
+    def parse_header(cls, header):
+        """
+            Receives a BAM header as text (string) and parses it.
+            It returns a dict containing as keys the header tags.
+            Parameters
+            ----------
+            header : str
+                Header as text (string)
+            Returns
+            -------
+            header_dict : dict
+                The contents of the header as dict of tags and tag-contents
+        """
+        header_dict = {}
+        rg_list, sq_list, pg_list, hd_list = [], [], [], []
         lines = header.split('\n')
         for line in lines:
-            if line.startswith('@RG'):
+            if line.startswith('@SQ'):
+                # sq_list.append(line)
+                pass
+            elif line.startswith('@HD'):
+                # hd_list.append(line)
+                pass
+            elif line.startswith('@PG'):
+                break
+            elif line.startswith('@RG'):
                 rg_list.append(line)
-            #elif line.startswith(...) -- TODO: implement for other tags if needed
-        rgs_parsed = cls._parse_RG_tag(rg_list)
-        return rgs_parsed
+        rg_parsed_list = cls._parse_RG_tag(rg_list)
+        #sq_parsed_list = cls._parse_SQ_tag(sq_list)
+
+        header_dict['RG'] = rg_parsed_list
+        header_dict['SQ'] = sq_list  #should be sq_parsed_list, but since we don't have a parser for these tags...
+        header_dict['HD'] = hd_list
+        header_dict['PG'] = pg_list
+        return header_dict
 
 
-# header = BAMHeaderParser.extract('/seq/11010/11010_8#21.bam')
-# rgs_list = BAMHeaderParser.parse(header)
-# print "EXTRACTED HEADER: "+str(rgs_list)
-
-print "HELLO"
+header = BAMHeaderParser.extract('/seq/11010/11010_8#21.bam')
+rgs_list = BAMHeaderParser.parse_header(header)
+print "EXTRACTED HEADER: "+str(rgs_list)
