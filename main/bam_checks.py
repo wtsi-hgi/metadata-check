@@ -23,6 +23,7 @@ import argparse
 from header_parser import bam_h_analyser as h_analyser
 from identifiers import EntityIdentifier as Identif
 from irods import api as irods
+from irods import  api_wrapper as irods_wrapper
 
 def extract_fname_from_path(fpath):
     _, fname = os.path.split(fpath)
@@ -60,8 +61,11 @@ def extract_values_by_key_from_irods_metadata(avus_list, key):
     return results
 
 
-def get_list_of_files_for_study(study_name):
-    return irods.iRODSAPI.get_files_list_by_metadata('study', study_name)
+def get_list_of_bams_for_study(study_name):
+    avus = {'study': study_name, 'type': 'bam'}
+    bams = irods_wrapper.iRODSMetaQueryOperations.query_by_metadata(avus)
+    filtered_bams = irods_wrapper.iRODSMetaQueryOperations.filter_out_phix_files(bams)
+    return filtered_bams
 
 
 def check_sample_metadata(header_metadata, irods_metadata):
@@ -117,8 +121,19 @@ def check_library_metadata(header_metadata, irods_metadata):
 
     print "IRODS LIBRARY names: "+str(irods_lib_names_list)
     print "IRODS LIBRARY ids: "+str(irods_lib_ids_list)
-
     print "HEADER LIBRARIES: "+str(header_lib_identifiers_tuples)
+
+    error = False
+    for lib_identif in header_lib_identifiers_tuples:
+        if lib_identif not in irods_lib_ids_list and lib_identif not in irods_lib_names_list:
+            print "ERROR Library in the header, but not in the iRODS metadata: "+str(lib_identif)
+            print "IRODS libraries name: "+str(irods_lib_names_list)
+            print "IRODS library ids: "+str(irods_lib_ids_list)
+            error = True
+        if error:
+            error = False
+        else:
+            print "File OK"
 
 
 def test_file_metadata(irods_fpath):
@@ -164,7 +179,7 @@ def main():
     if args.path_irods:
         fpaths_irods = [args.path_irods]
     elif args.study:
-        fpaths_irods = get_list_of_files_for_study(args.study)
+        fpaths_irods = get_list_of_bams_for_study(args.study)
     else:
         print "No arguments provided! Exitting"
         return
