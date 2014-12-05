@@ -42,10 +42,10 @@ def guess_irods_path(lustre_path):
 
 
 def get_header_metadata_from_irods_file(irods_path):
-    full_header = h_analyser.BAMHeaderAnalyser.extract_header(irods_path)
+    full_header = h_analyser.BAMHeaderAnalyser.extract_header_from_irods_file(irods_path)
     parsed_header = h_analyser.BAMHeaderAnalyser.parse_header(full_header)
     header_metadata = h_analyser.BAMHeaderAnalyser.extract_metadata_from_header(parsed_header)
-    return header_metadata
+    return header_metadata.rg
 
 
 def get_irods_metadata(irods_path):
@@ -72,7 +72,12 @@ def check_sample_metadata(header_metadata, irods_metadata):
     irods_sample_acc_nr_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'sample_accession_number')
     irods_sample_internal_id_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'sample_id')
 
+    print "IRODS samples:"+str(irods_sample_names_list)
+    print "IRODS SAMPLES ACC NRS: "+str(irods_sample_acc_nr_list)+"\n"
+
     header_samples_identifiers_tuples = [(Identif.guess_identifier_type(sample), sample) for sample in header_metadata.samples]
+    print "HEADER SAMPLES:"+str(header_samples_identifiers_tuples)
+
 
     # Compare sample identifiers:
     for id_type, id_val in header_samples_identifiers_tuples:
@@ -86,8 +91,6 @@ def check_sample_metadata(header_metadata, irods_metadata):
             if id_val not in irods_sample_internal_id_list:
                 print "ERROR - this sample id appears in the header, but not in the irods metadata: "+str(id_val)
 
-
-
     print "SAMPLE name: "+str(irods_sample_names_list)
     print "sample_ acc nr:"+str(irods_sample_acc_nr_list)
     print "sample internal id: "+str(irods_sample_internal_id_list)
@@ -98,6 +101,8 @@ def test_file_metadata(irods_fpath):
     header_metadata = get_header_metadata_from_irods_file(irods_fpath)
 
     irods_metadata = get_irods_metadata(irods_fpath)
+    print "HEADER METADATA: "+str(header_metadata)
+    check_sample_metadata(header_metadata, irods_metadata)
 
     study_internal_id = extract_values_by_key_from_irods_metadata(irods_metadata, 'study_id')
     study_acc_nr = extract_values_by_key_from_irods_metadata(irods_metadata, 'study_accession_number')

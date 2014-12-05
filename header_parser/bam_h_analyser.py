@@ -360,7 +360,7 @@ class BAMHeaderAnalyser(object):
 
     @classmethod
     @wrappers.check_args_not_none
-    def extract_metadata_from_header(cls, header_dict, rg=True, sq=True, hd=True, pg=True):
+    def extract_metadata_from_header(cls, header_dict, rg=True, sq=False, hd=False, pg=False):
         """ This method takes a BAM file path and processes its header into a BAMHeader object
             Parameters
             ----------
@@ -391,12 +391,12 @@ class BAMHeaderAnalyser(object):
 
 
 
-header = BAMHeaderAnalyser.extract_header_from_irods_file('/seq/11010/11010_8#21.bam')
-rgs_list = BAMHeaderAnalyser.parse_header(header)
-print "EXTRACTED HEADER from file from iRODS: "+str(rgs_list)
+# header = BAMHeaderAnalyser.extract_header_from_irods_file('/seq/11010/11010_8#21.bam')
+# rgs_list = BAMHeaderAnalyser.parse_header(header)
+# print "EXTRACTED HEADER from file from iRODS: "+str(rgs_list)
 
-print "\n"
+# print "\n"
 
-header = BAMHeaderAnalyser.extract_header_from_file('/lustre/scratch113/teams/hgi/mc14-vb-carl-fvg-hdd/F12HPCEUHK0358/WCAZAK513578/F12HPCEUHK0358_HUMcoqR/582009/Alignment_result/582009.dedup.realn.recal.bam')
-rgs_list = BAMHeaderAnalyser.parse_header(header)
-print "Extracted header from file in lustre: "+str(rgs_list)
+# header = BAMHeaderAnalyser.extract_header_from_file('/lustre/scratch113/teams/hgi/mc14-vb-carl-fvg-hdd/F12HPCEUHK0358/WCAZAK513578/F12HPCEUHK0358_HUMcoqR/582009/Alignment_result/582009.dedup.realn.recal.bam')
+# rgs_list = BAMHeaderAnalyser.parse_header(header)
+# print "Extracted header from file in lustre: "+str(rgs_list)
