@@ -110,13 +110,13 @@ class TestiRODSMetaQueryOperations(unittest.TestCase):
                     '/humgen/projects/serapis_staging/test-coll/test-imeta-wrappers/pip-freeze2.txt',
                     '/humgen/projects/serapis_staging/test-coll/test-imeta-wrappers/pip-freeze3.txt'
                     ]
-        result = irods_api.iRODSMetaQueryOperations.query_by_metadata(avu_dict)
+        result = irods_api.iRODSMetaQueryOperations.query_by_metadata(avu_dict, zone=irods_api.IRODS_HUMGEN_ZONE)
         self.assertSetEqual(set(expected), set(result))
 
         # Testing query on an AVU that only one file has:
         avu_dict = {"sample": "ARandomSampleName"}
         expected = ['/humgen/projects/serapis_staging/test-coll/test-imeta-wrappers/pip-freeze1.txt']
-        result = irods_api.iRODSMetaQueryOperations.query_by_metadata(avu_dict)
+        result = irods_api.iRODSMetaQueryOperations.query_by_metadata(avu_dict, irods_api.IRODS_HUMGEN_ZONE)
         self.assertSetEqual(set(expected), set(result))
 
         # Testing what happens when an empty AVU is sent:
