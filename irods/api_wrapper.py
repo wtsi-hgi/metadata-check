@@ -32,8 +32,6 @@ from multimethods import multimethod
 
 from com import wrappers, utils
 from irods import data_types as irods_types
-# from serapis.com import constants, utils, wrappers
-# from serapis.irods import data_types as irods_types
 
 
 ######################## CONSTANTS ###############################
@@ -483,30 +481,32 @@ class iRODSChecksumOperations(iRODSOperations):
 class iRODSMetaQueryOperations(iRODSOperations):
     
     @classmethod
-    def _run_imeta_qu(cls, attribute, value, zone=IRODS_SEQ_ZONE, operator='='):
-        cmd_args = ["imeta", "qu", "-z", zone,"-d", attribute, operator, value]
+    def _run_imeta_qu(cls, avu_dict, zone=IRODS_SEQ_ZONE, operator='='):
+        """
+            Queries iRODS for all the data objects matching the avus given as parameter.
+            WARNING! The default operator for all avus is "=". TO be changed, if not sufficient.
+        """
+        cmd_args = []
+        cmd_args.extend(["imeta", "qu", "-z", zone])
+        for attribute, value in avu_dict.iteritems():
+            cmd_args.append("-d")
+            cmd_args.append(attribute)
+            cmd_args.append(operator)
+            cmd_args.append(value)
+#        cmd_args = ["imeta", "qu", "-z", zone,"-d", attribute, operator, value]
         try:
             return cls._run_icmd(cmd_args)
         except exceptions.iRODSException as e:
             raise exceptions.iMetaException(error=e.err, output=e.out, cmd=cmd_args)
-    
-    
-#     @staticmethod
-#     def query_by_metadata_attribute(zone, attribute, value, operator="="):
-#         child_proc = subprocess.Popen(cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
-#         (out, err) = child_proc.communicate()
-#         if err:
-#             raise exceptions.iMetaException(err, out, cmd)
-#         return out
-        
-        
+
+
     @classmethod
     @wrappers.check_args_not_none
     def _process_icmd_output(cls, output):
-        ''' This method converts an output like: collection: /seq/123\n, dataObj: 123.bam to
+        """ This method converts an output like: collection: /seq/123\n, dataObj: 123.bam to
             a list of irods files paths.
             Returns the list of file paths from the output.
-        '''
+        """
         file_paths = []
         lines = output.split('\n')
         if lines[0].find('No rows found') != -1:
@@ -520,24 +520,37 @@ class iRODSMetaQueryOperations(iRODSOperations):
                 file_paths.append(os.path.join(coll, fname))
         return file_paths
 
-    
+
     @classmethod
     def filter_out_phix_files(cls, file_paths):
-        ''' This method is filtering the list of file paths by eliminating the phix data and #0 files.'''
+        """
+            This method is filtering the list of file paths by eliminating the phix data and #0 files.
+        """
         return [fpath for fpath in file_paths if fpath.find("#0.bam") == -1 and fpath.find("phix.bam")==-1]
-       
-       
+
+
     @classmethod
-    def query_by_metadata(cls, attribute, value, zone=IRODS_SEQ_ZONE, operator='='):
-        ''' 
-            Queries iRODS by metadata and returns a list of full paths of the files 
+    def query_by_metadata(cls, avu_dict, zone=IRODS_SEQ_ZONE, operator='='):
+        """
+            Queries iRODS by metadata and returns a list of full paths of the files
             matching the metadata querying criteria.
+            Parameters
+            ----------
+            avu_dict : dict
+                A dict of attribute - values to be queried iRODS on
+            zone : str
+                The iRODS zone to be queried
+            operator : str
+                Operator that links the attributes and values. It is = for most of the cases,
+                so at the moment there is only 1 operator applied for all the avus. Normally
+                each avu should have its own operator, but for our needs "=" on all avus is enough.
             Returns
             -------
             list of str
-                List of file paths
-        '''
-        output = cls._run_imeta_qu(attribute, value, zone, operator)
+                List of file paths corresponding to the data objects
+                that have as metadata the avus given as parameter
+        """
+        output = cls._run_imeta_qu(avu_dict, zone, operator)
         return cls._process_icmd_output(output)
     
 
