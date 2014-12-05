@@ -390,13 +390,14 @@ class BAMHeaderAnalyser(object):
 
 
 
+if __name__ == '__main__':
 
-header = BAMHeaderAnalyser.extract_header_from_irods_file('/seq/11010/11010_8#21.bam')
-rgs_list = BAMHeaderAnalyser.parse_header(header)
-print "EXTRACTED HEADER from file from iRODS: "+str(rgs_list)
+    header = BAMHeaderAnalyser.extract_header_from_irods_file('/seq/11010/11010_8#21.bam')
+    rgs_list = BAMHeaderAnalyser.parse_header(header)
+    print "EXTRACTED HEADER from file from iRODS: "+str(rgs_list)
 
-print "\n"
+    print "\n"
 
-header = BAMHeaderAnalyser.extract_header_from_file('/lustre/scratch113/teams/hgi/mc14-vb-carl-fvg-hdd/F12HPCEUHK0358/WCAZAK513578/F12HPCEUHK0358_HUMcoqR/582009/Alignment_result/582009.dedup.realn.recal.bam')
-rgs_list = BAMHeaderAnalyser.parse_header(header)
-print "Extracted header from file in lustre: "+str(rgs_list)
+    header = BAMHeaderAnalyser.extract_header_from_file('/lustre/scratch113/teams/hgi/mc14-vb-carl-fvg-hdd/F12HPCEUHK0358/WCAZAK513578/F12HPCEUHK0358_HUMcoqR/582009/Alignment_result/582009.dedup.realn.recal.bam')
+    rgs_list = BAMHeaderAnalyser.parse_header(header)
+    print "Extracted header from file in lustre: "+str(rgs_list)
