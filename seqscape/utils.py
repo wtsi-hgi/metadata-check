@@ -18,7 +18,7 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-Created on Nov 14, 2014
+This file has been created on Nov 14, 2014.
 """
 
 import json

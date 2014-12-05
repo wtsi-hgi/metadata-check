@@ -25,7 +25,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 import config
-#from Celery_Django_Prj import configs
 from seqscape.models import Sample, Study, Library, StudySamplesLink
 from com import wrappers
 
