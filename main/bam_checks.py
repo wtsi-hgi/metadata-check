@@ -126,7 +126,7 @@ def test_file_metadata(irods_fpath):
     irods_metadata = get_irods_metadata(irods_fpath)
 
     print "FILE: "+str(irods_fpath)
-    
+
     #print "HEADER METADATA: "+str(header_metadata)
     check_sample_metadata(header_metadata, irods_metadata)
 
