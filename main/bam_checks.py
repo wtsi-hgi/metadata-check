@@ -71,30 +71,38 @@ def check_sample_metadata(header_metadata, irods_metadata):
     irods_sample_acc_nr_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'sample_accession_number')
     irods_sample_internal_id_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'sample_id')
 
-    print "IRODS samples:"+str(irods_sample_names_list)
-    print "IRODS SAMPLES ACC NRS: "+str(irods_sample_acc_nr_list)+"\n"
-    print "IRODS SAMPLE INTERNAL IDS: "+str(irods_sample_internal_id_list)
+    # print "IRODS samples:"+str(irods_sample_names_list)
+    # print "IRODS SAMPLES ACC NRS: "+str(irods_sample_acc_nr_list)+"\n"
+    # print "IRODS SAMPLE INTERNAL IDS: "+str(irods_sample_internal_id_list)
 
     header_samples_identifiers_tuples = [(Identif.guess_identifier_type(sample), sample) for sample in header_metadata.samples]
-    print "HEADER SAMPLES:"+str(header_samples_identifiers_tuples)
+#    print "HEADER SAMPLES:"+str(header_samples_identifiers_tuples)
 
     # Compare sample identifiers:
+    error = False
     for id_type, id_val in header_samples_identifiers_tuples:
         if id_type == 'accession_number':
             if id_val not in irods_sample_acc_nr_list:
                 print "ERROR - this sample accession number appears in the header, but not in the metadata:"+str(id_val)
                 print "Header SAMPLE accession numbers: "+str(id_val)
                 print "IRODS SAMPLE accession numbers: "+str(irods_sample_acc_nr_list)
+                error = True
         elif id_type == 'name':
             if id_val not in irods_sample_names_list:
                 print "ERROR - this sample name appears in the header, but not in the irods metadata: "+str(id_val)
                 print "Header SAMPLE name: "+str(id_val)
                 print "IRODS SAMPLE names: "+str(irods_sample_names_list)
+                error = True
         elif id_type == 'internal_id':
             if id_val not in irods_sample_internal_id_list:
                 print "ERROR - this sample id appears in the header, but not in the irods metadata: "+str(id_val)
                 print "Header SAMPLE internal_id: "+str(id_val)
                 print "IRODS SAMPLE internal_id: "+str(irods_sample_internal_id_list)
+                error = True
+        if not error:
+            print "OK"
+        else:
+            error = False
 
     # print "SAMPLE name: "+str(irods_sample_names_list)
     # print "sample_ acc nr:"+str(irods_sample_acc_nr_list)
@@ -115,9 +123,11 @@ def check_library_metadata(header_metadata, irods_metadata):
 
 def test_file_metadata(irods_fpath):
     header_metadata = get_header_metadata_from_irods_file(irods_fpath)
-
     irods_metadata = get_irods_metadata(irods_fpath)
-    print "HEADER METADATA: "+str(header_metadata)
+
+    print "FILE: "+str(irods_fpath)
+    
+    #print "HEADER METADATA: "+str(header_metadata)
     check_sample_metadata(header_metadata, irods_metadata)
 
     study_internal_id = extract_values_by_key_from_irods_metadata(irods_metadata, 'study_id')
