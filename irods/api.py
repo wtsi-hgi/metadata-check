@@ -96,6 +96,6 @@ class iRODSAPI:
 
 
     @classmethod
-    def get_files_list_by_metadata(cls, attribute, value):
-        return irods_api.iRODSMetaQueryOperations.query_by_metadata(attribute, value)
+    def get_files_list_by_metadata(cls, avu_dict):
+        return irods_api.iRODSMetaQueryOperations.query_by_metadata(avu_dict)
 
