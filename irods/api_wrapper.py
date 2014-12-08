@@ -487,7 +487,7 @@ class iRODSMetaQueryOperations(iRODSOperations):
             WARNING! The default operator for all avus is "=". TO be changed, if not sufficient.
         """
         if not avu_dict:
-            return []
+            return ''
         cmd_args = []
         cmd_args.extend(["imeta", "qu", "-z", zone])
         cmd_args.append("-d")
