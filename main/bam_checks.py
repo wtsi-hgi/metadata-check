@@ -180,6 +180,7 @@ def main():
         fpaths_irods = [args.path_irods]
     elif args.study:
         fpaths_irods = get_list_of_bams_for_study(args.study)
+        print "FPATHS for this study: "+str(fpaths_irods)
     else:
         print "No arguments provided! Exitting"
         return
