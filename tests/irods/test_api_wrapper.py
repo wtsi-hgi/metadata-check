@@ -131,6 +131,14 @@ class TestiRODSMetaQueryOperations(unittest.TestCase):
         result = irods_api.iRODSMetaQueryOperations.query_by_metadata(avu_dict)
         self.assertSetEqual(set(expected), set(result))
 
+        # Testing on more than one AVU:
+        avu_dict = {"type" : "bam", "study": "ARandomStudy"}
+        expected = ['/humgen/projects/serapis_staging/test-coll/test-imeta-wrappers/pip-freeze1.txt',
+                    '/humgen/projects/serapis_staging/test-coll/test-imeta-wrappers/pip-freeze2.txt']
+        result = irods_api.iRODSMetaQueryOperations.query_by_metadata(avu_dict, irods_api.IRODS_HUMGEN_ZONE)
+        self.assertSetEqual(set(expected), set(result))
+
+
 
     def test_process_output(self):
         cmd_out = "collection: /seq/10100\ndataObj: 10100_8#0.bam\n----\ncollection: /seq/10100\ndataObj: 10100_8#0_phix.bam\n----\ncollection: /seq/10100\ndataObj: 10100_8#48.bam\n----\ncollection: /seq/10100\ndataObj: 10100_8#48_phix.bam\n"   

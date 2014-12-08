@@ -69,7 +69,7 @@ def get_list_of_bams_for_study(study_name):
 
 
 def check_sample_metadata(header_metadata, irods_metadata):
-    samples_identifiers = header_metadata.samples
+    # samples_identifiers = header_metadata.samples
 
     irods_sample_names_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'sample')
     irods_sample_acc_nr_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'sample_accession_number')
