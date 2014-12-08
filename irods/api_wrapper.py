@@ -486,13 +486,17 @@ class iRODSMetaQueryOperations(iRODSOperations):
             Queries iRODS for all the data objects matching the avus given as parameter.
             WARNING! The default operator for all avus is "=". TO be changed, if not sufficient.
         """
+        if not avu_dict:
+            return []
         cmd_args = []
         cmd_args.extend(["imeta", "qu", "-z", zone])
+        cmd_args.append("-d")
         for attribute, value in avu_dict.iteritems():
-            cmd_args.append("-d")
             cmd_args.append(attribute)
             cmd_args.append(operator)
             cmd_args.append(value)
+            cmd_args.append('and')
+        cmd_args = cmd_args[:len(cmd_args)-1]
 #        cmd_args = ["imeta", "qu", "-z", zone,"-d", attribute, operator, value]
         try:
             return cls._run_icmd(cmd_args)
