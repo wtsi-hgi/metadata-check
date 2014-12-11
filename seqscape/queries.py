@@ -29,14 +29,15 @@ from seqscape.models import Sample, Study, Library, StudySamplesLink
 from com import wrappers
 
 
-def connect(host, port, database, user, password=None, dialect='mysql'):
-    db_url = dialect + "://" + user + ":@" + host + ":" + str(port) + "/" + database
-    engine = create_engine(db_url)
-    return engine
+#def connect(host, port, database, user, password=None, dialect='mysql'):
+    #db_url = dialect + "://" + user + ":@" + host + ":" + str(port) + "/" + database
+db_url = 'mysql://' + config.SEQSC_USER+ ":@" + config.SEQSC_HOST+ ":" + str(config.SEQSC_PORT)+ "/" + config.SEQSC_DB_NAME
+engine = create_engine(db_url)
+#    return engine
 
 
 def connect_and_get_session_instance():
-    engine = connect(config.SEQSC_HOST, str(config.SEQSC_PORT), config.SEQSC_DB_NAME, config.SEQSC_USER)
+    #engine = connect(config.SEQSC_HOST, str(config.SEQSC_PORT), config.SEQSC_DB_NAME, config.SEQSC_USER)
     session_cls = sessionmaker(bind=engine)
     return session_cls()
 
@@ -58,9 +59,11 @@ def _query_all_as_batch_by_name(model_cls, names):
             Returns a list of objects of type model_cls found to match the keys given as parameter.
     """
     session = connect_and_get_session_instance()
-    return session.query(model_cls). \
+    result = session.query(model_cls). \
         filter(model_cls.name.in_(names)). \
         filter(model_cls.is_current == 1).all()
+    session.close()
+    return result
 
 
 @wrappers.check_args_not_none
@@ -80,9 +83,11 @@ def _query_all_as_batch_by_internal_id(model_cls, internal_ids):
             Returns a list of objects of type model_cls found to match the internal_ids given as parameter.
     """
     session = connect_and_get_session_instance()
-    return session.query(model_cls). \
+    result = session.query(model_cls). \
         filter(model_cls.internal_id.in_(internal_ids)). \
         filter(model_cls.is_current == 1).all()
+    session.close()
+    return result
 
 
 @wrappers.check_args_not_none
@@ -102,9 +107,11 @@ def _query_all_as_batch_by_accession_number(model_cls, accession_numbers):
             Returns a list of objects of type model_cls found to match the accession_number given as parameter.
     """
     session = connect_and_get_session_instance()
-    return session.query(model_cls). \
+    result = session.query(model_cls). \
         filter(model_cls.accession_number.in_(accession_numbers)). \
         filter(model_cls.is_current == 1).all()
+    session.close()
+    return result
 
 
 @wrappers.check_args_not_none

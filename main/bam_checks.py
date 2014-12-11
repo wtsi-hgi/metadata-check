@@ -87,8 +87,6 @@ def get_diff_seqsc_and_irods_samples_metadata(irods_samples):
     seqsc_samples_by_acc_nr = get_samples_from_seqsc(irods_samples['accession_number'], 'accession_number')
     seqsc_samples_by_internal_id = get_samples_from_seqsc(irods_samples['internal_id'], 'internal_id')
 
-    print "BY NAME: "+str(seqsc_samples_by_name)
-    print "BY ACC NR: "+str(seqsc_samples_by_acc_nr)
     print set(seqsc_samples_by_acc_nr) == set(seqsc_samples_by_internal_id) == set(seqsc_samples_by_name)
     differences = []
     if not (set(seqsc_samples_by_acc_nr) == set(seqsc_samples_by_internal_id) == set(seqsc_samples_by_name)):
@@ -138,7 +136,7 @@ def get_diff_irods_and_header_metadata(header_dict, irods_dict):
     differences = []
     for id_type, head_ids_list in header_dict.iteritems():
         if not irods_dict.get(id_type):
-            differences.append("The header contains entities that are not present in iRODS: " + str(head_ids_list))
+            differences.append("The header contains entities that are not present in iRODS. "+ str(id_type)+"=" + str(head_ids_list))
         elif set(head_ids_list).difference(set(irods_dict[id_type])):
             differences.append("The header contains entities that are not present in iRODS: " + str(head_ids_list))
     return differences
@@ -201,10 +199,11 @@ def check_study_metadata(irods_metadata):
 def check_md5_metadata(irods_metadata, irods_fpath):
     md5_metadata = extract_values_by_key_from_irods_metadata(irods_metadata, 'md5')
     md5_chksum = irods_wrapper.iRODSChecksumOperations.get_checksum(irods_fpath)
-    if not md5_metadata == md5_chksum:
-        return [
-            "The md5 in the iRODS metadata is different from what ichksum returns: " + str(md5_chksum) + " vs. " + str(
-                md5_metadata)]
+    if md5_chksum:
+        if not md5_metadata[0] == md5_chksum.md5:
+            return [
+                "The md5 in the iRODS metadata is different from what ichksum returns: " + str(md5_chksum) + " vs. " + str(
+                    md5_metadata)]
     return []
 
 
@@ -313,9 +312,14 @@ def test_file_metadata(irods_fpath):
     irods_metadata = get_irods_metadata(irods_fpath)
 
     diffs = []
-    diffs.extend(check_sample_metadata(header_metadata, irods_metadata))
-    diffs.extend(check_library_metadata(header_metadata, irods_metadata))
-    diffs.extend(check_study_metadata(header_metadata, irods_metadata))
+    sample_issues = check_sample_metadata(header_metadata, irods_metadata)
+    diffs.extend(sample_issues)
+
+    library_issues = check_library_metadata(header_metadata, irods_metadata)
+    diffs.extend(library_issues)
+
+    study_issues = check_study_metadata(irods_metadata)
+    diffs.extend(study_issues)
 
     # study_internal_id = extract_values_by_key_from_irods_metadata(irods_metadata, 'study_id')
     # study_acc_nr = extract_values_by_key_from_irods_metadata(irods_metadata, 'study_accession_number')
@@ -328,10 +332,22 @@ def test_file_metadata(irods_fpath):
     # tag_id = extract_values_by_key_from_irods_metadata(irods_metadata, 'tag_index')
 
     # md5 = extract_values_by_key_from_irods_metadata(irods_metadata, 'md5')
-    diffs.extend(check_md5_metadata(irods_metadata, irods_fpath))
-    print "FILE: " + str(irods_fpath) + " ERRORS: " + str(diffs)
+    checksum_issues = check_md5_metadata(irods_metadata, irods_fpath)
+    diffs.extend(checksum_issues)
 
-
+    if sample_issues or library_issues or study_issues or checksum_issues:
+        print "FILE: "+str(irods_fpath) + " has issues with:"
+        if sample_issues:
+            print "SAMPLES: "+str(sample_issues)
+        if library_issues:
+            print "LIBRARIES: "+str(library_issues)
+        if study_issues:
+            print "STUDIES: "+ str(study_issues)
+        if checksum_issues:
+            print "CHECKSUM: "+checksum_issues
+    
+    
+    #print "FILE: " + str(irods_fpath) + " ERRORS: " + str(diffs)
     # reference_file = extract_values_by_key_from_irods_metadata(irods_metadata, 'reference')
 
 
