@@ -169,7 +169,7 @@ def _query_one(model_cls, name=None, accession_number=None, internal_id=None):
     if len(result) > 1:
         err = "This query has more than one row associated in SEQSCAPE"+str([s.name for s in result])
         raise ValueError(err)
-    return result
+    return result[0]
 
 
 @wrappers.check_args_not_none
