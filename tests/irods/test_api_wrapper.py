@@ -4,16 +4,16 @@ Created on Oct 28, 2014
 @author: ic4
 '''
 import unittest
-import mock
+#import mock
 import config
 
 import irods.api_wrapper as irods_api
 from irods import data_types as irods_types
 from irods import exceptions as irods_exc
 
-def run_ils_fake1(output):
-    m = mock.Mock()
-    m.return_value = output
+# def run_ils_fake1(output):
+#     m = mock.Mock()
+#     m.return_value = output
     
 
 class TestiRODSListOperations(unittest.TestCase):

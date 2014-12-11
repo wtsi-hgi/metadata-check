@@ -23,7 +23,9 @@ import argparse
 from header_parser import bam_h_analyser as h_analyser
 from identifiers import EntityIdentifier as Identif
 from irods import api as irods
-from irods import  api_wrapper as irods_wrapper
+from irods import api_wrapper as irods_wrapper
+from seqscape import queries as seqsc
+
 
 def extract_fname_from_path(fpath):
     _, fname = os.path.split(fpath)
@@ -38,7 +40,7 @@ def extract_lanelet_name(lanelet_path):
 def guess_irods_path(lustre_path):
     fname = extract_fname_from_path(lustre_path)
     run_id = fname.split("_")
-    irods_fpath = "/seq/"+run_id[0]+"/"+fname
+    irods_fpath = "/seq/" + run_id[0] + "/" + fname
     return irods_fpath
 
 
@@ -68,67 +70,200 @@ def get_list_of_bams_for_study(study_name):
     return filtered_bams
 
 
-def check_sample_metadata(header_metadata, irods_metadata):
-    # samples_identifiers = header_metadata.samples
+def get_samples_from_seqsc(ids_list, id_type):
+    return seqsc.query_all_samples_as_batch(ids_list, id_type)
 
+
+def get_libraries_from_seqsc(ids_list, id_type):
+    return seqsc.query_all_libraries_as_batch(ids_list, id_type)
+
+
+def get_studies_from_seqsc(ids_list, id_type):
+    return seqsc.query_all_studies_as_batch(ids_list, id_type)
+
+
+def get_diff_seqsc_and_irods_samples_metadata(irods_samples):
+    seqsc_samples_by_name = get_samples_from_seqsc(irods_samples['name'], 'name')
+    seqsc_samples_by_acc_nr = get_samples_from_seqsc(irods_samples['accession_number'], 'accession_number')
+    seqsc_samples_by_internal_id = get_samples_from_seqsc(irods_samples['internal_id'], 'internal_id')
+
+    print "BY NAME: "+str(seqsc_samples_by_name)
+    print "BY ACC NR: "+str(seqsc_samples_by_acc_nr)
+    print set(seqsc_samples_by_acc_nr) == set(seqsc_samples_by_internal_id) == set(seqsc_samples_by_name)
+    differences = []
+    if not (set(seqsc_samples_by_acc_nr) == set(seqsc_samples_by_internal_id) == set(seqsc_samples_by_name)):
+        diff = "Sample identifiers from iRODS don't identify the same set of samples: by name: " + \
+               str(seqsc_samples_by_name) + \
+               " by accession_number:" + str(seqsc_samples_by_acc_nr) + \
+               " by internal_id: " + str(seqsc_samples_by_internal_id)
+        differences.append(diff)
+        print "DIFFS: "+str(differences)
+    return differences
+
+
+def get_diff_seqsc_and_irods_studies_metadata(irods_studies):
+    seqsc_studies_by_name = get_studies_from_seqsc(irods_studies['name'], 'name')
+    seqsc_studies_by_acc_nr = get_studies_from_seqsc(irods_studies['accession_number'], 'accession_number')
+    seqsc_studies_by_internal_id = get_studies_from_seqsc(irods_studies['internal_id'], 'internal_id')
+
+    differences = []
+    if not (set(seqsc_studies_by_acc_nr) == set(seqsc_studies_by_internal_id) == set(seqsc_studies_by_name)):
+        diff = "Study identifiers from iRODS don't identify the same set of studies: by name: " + \
+               str(seqsc_studies_by_name) + \
+               " by accession_number:" + str(seqsc_studies_by_acc_nr) + \
+               " by internal_id: " + str(seqsc_studies_by_internal_id)
+        differences.append(diff)
+    return differences
+
+
+def get_diff_seqsc_and_irods_libraries_metadata(irods_libraries):
+    seqsc_libraries_by_name = get_libraries_from_seqsc(irods_libraries['name'], 'name')
+    seqsc_libraries_by_internal_id = get_libraries_from_seqsc(irods_libraries['internal_id'], 'internal_id')
+
+    differences = []
+    if not (set(seqsc_libraries_by_internal_id) == set(seqsc_libraries_by_name)):
+        diff = "Libraries identifiers from iRODS don't identify the same set of studies: by name: " + \
+               str(seqsc_libraries_by_name) + \
+               " by internal_id: " + str(seqsc_libraries_by_internal_id)
+        differences.append(diff)
+    return differences
+
+
+def get_diff_irods_and_header_metadata(header_dict, irods_dict):
+    """
+        where: (e.g.)
+         irods_dict = dict('name': [sample_name], accession_number: [samples_acc_nr], internal_id: [internal_id])
+         header_dict = dict('name': [sample_name], accession_number: [samples_acc_nr], internal_id: [internal_id])
+    """
+    differences = []
+    for id_type, head_ids_list in header_dict.iteritems():
+        if not irods_dict.get(id_type):
+            differences.append("The header contains entities that are not present in iRODS: " + str(head_ids_list))
+        elif set(head_ids_list).difference(set(irods_dict[id_type])):
+            differences.append("The header contains entities that are not present in iRODS: " + str(head_ids_list))
+    return differences
+
+
+def check_sample_metadata(header_metadata, irods_metadata):
+    irods_sample_names_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'sample')
+    irods_sample_acc_nr_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'sample_accession_number')
+    irods_sample_internal_id_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'sample_id')
+    irods_samples = {'name': irods_sample_names_list,
+                     'accession_number': irods_sample_acc_nr_list,
+                     'internal_id': irods_sample_internal_id_list
+    }
+    header_samples = {'name': [], 'accession_number': [], 'internal_id': []}
+    for sample in header_metadata.samples:
+        id_type = Identif.guess_identifier_type(sample)
+        header_samples[id_type].append(sample)
+
+    # Compare IRODS vs. HEADER:
+    irods_vs_head_diffs = get_diff_irods_and_header_metadata(header_samples, irods_samples)
+
+    # Compare IRODS vs. SEQSCAPE:
+    irods_vs_seqsc_diffs = get_diff_seqsc_and_irods_samples_metadata(irods_samples)
+    return irods_vs_head_diffs + irods_vs_seqsc_diffs
+
+
+def check_library_metadata(header_metadata, irods_metadata):
+    irods_lib_names_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'library')
+    irods_lib_internal_id_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'library_id')
+    irods_libraries = {'name': irods_lib_names_list,
+                       'internal_id': irods_lib_internal_id_list}
+    header_libraries = {'name': [], 'internal_id': []}
+
+    for lib in header_metadata.libraries:
+        id_type = Identif.guess_identifier_type(lib)
+        header_libraries[id_type].append(lib)
+
+    # Compare IRODS vs. HEADER:
+    irods_vs_head_diffs = get_diff_irods_and_header_metadata(header_libraries, irods_libraries)
+
+    # Compare IRODS vs. SEQSCAPE:
+    irods_vs_seqsc_diffs = get_diff_seqsc_and_irods_libraries_metadata(irods_libraries)
+    return irods_vs_head_diffs + irods_vs_seqsc_diffs
+
+
+def check_study_metadata(irods_metadata):
+    irods_study_names_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'study')
+    irods_study_internal_id_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'study_id')
+    irods_study_acc_nr_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'study_accession_number')
+    irods_studies = {'name': irods_study_names_list,
+                     'internal_id': irods_study_internal_id_list,
+                     'accession_number': irods_study_acc_nr_list
+    }
+
+    # Compare IRODS vs. SEQSCAPE:
+    irods_vs_seqsc_diffs = get_diff_seqsc_and_irods_studies_metadata(irods_studies)
+    return irods_vs_seqsc_diffs
+
+
+def check_md5_metadata(irods_metadata, irods_fpath):
+    md5_metadata = extract_values_by_key_from_irods_metadata(irods_metadata, 'md5')
+    md5_chksum = irods_wrapper.iRODSChecksumOperations.get_checksum(irods_fpath)
+    if not md5_metadata == md5_chksum:
+        return [
+            "The md5 in the iRODS metadata is different from what ichksum returns: " + str(md5_chksum) + " vs. " + str(
+                md5_metadata)]
+    return []
+
+
+def check_sample_metadata_old(header_metadata, irods_metadata):
+    file_ok = True
     irods_sample_names_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'sample')
     irods_sample_acc_nr_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'sample_accession_number')
     irods_sample_internal_id_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'sample_id')
 
-    # print "IRODS samples:"+str(irods_sample_names_list)
-    # print "IRODS SAMPLES ACC NRS: "+str(irods_sample_acc_nr_list)+"\n"
-    # print "IRODS SAMPLE INTERNAL IDS: "+str(irods_sample_internal_id_list)
-
-    header_samples_identifiers_tuples = [(Identif.guess_identifier_type(sample), sample) for sample in header_metadata.samples]
-#    print "HEADER SAMPLES:"+str(header_samples_identifiers_tuples)
-
-    # Compare sample identifiers:
+    # Compare sample identifiers HEADER vs IRODS:
     error = False
-    for id_type, id_val in header_samples_identifiers_tuples:
+    for sample_id in header_metadata.samples:
+        id_type = Identif.guess_identifier_type(sample_id)
         if id_type == 'accession_number':
-            if id_val not in irods_sample_acc_nr_list:
-                print "ERROR - this sample accession number appears in the header, but not in the metadata:"+str(id_val)
-                print "Header SAMPLE accession numbers: "+str(id_val)
-                print "IRODS SAMPLE accession numbers: "+str(irods_sample_acc_nr_list)
+            if sample_id not in irods_sample_acc_nr_list:
+                print "ERROR - this sample accession number appears in the header, but not in the metadata:" + str(
+                    sample_id)
+                print "Header SAMPLE accession numbers: " + str(sample_id)
+                print "IRODS SAMPLE accession numbers: " + str(irods_sample_acc_nr_list)
                 error = True
+                file_ok = False
         elif id_type == 'name':
-            if id_val not in irods_sample_names_list:
-                print "ERROR - this sample name appears in the header, but not in the irods metadata: "+str(id_val)
-                print "Header SAMPLE name: "+str(id_val)
-                print "IRODS SAMPLE names: "+str(irods_sample_names_list)
+            if sample_id not in irods_sample_names_list:
+                print "ERROR - this sample name appears in the header, but not in the irods metadata: " + str(sample_id)
+                print "Header SAMPLE name: " + str(sample_id)
+                print "IRODS SAMPLE names: " + str(irods_sample_names_list)
                 error = True
+                file_ok = False
         elif id_type == 'internal_id':
-            if id_val not in irods_sample_internal_id_list:
-                print "ERROR - this sample id appears in the header, but not in the irods metadata: "+str(id_val)
-                print "Header SAMPLE internal_id: "+str(id_val)
-                print "IRODS SAMPLE internal_id: "+str(irods_sample_internal_id_list)
+            if sample_id not in irods_sample_internal_id_list:
+                print "ERROR - this sample id appears in the header, but not in the irods metadata: " + str(sample_id)
+                print "Header SAMPLE internal_id: " + str(sample_id)
+                print "IRODS SAMPLE internal_id: " + str(irods_sample_internal_id_list)
                 error = True
-        if not error:
-            print "OK"
-        else:
+                file_ok = False
+        if error:
             error = False
 
-    # print "SAMPLE name: "+str(irods_sample_names_list)
-    # print "sample_ acc nr:"+str(irods_sample_acc_nr_list)
-    # print "sample internal id: "+str(irods_sample_internal_id_list)
+    # Compare samples IRODS vs. SEQSCAPE:
+    get_diff_seqsc_and_irods_samples_metadata()
+    return file_ok
 
 
-def check_library_metadata(header_metadata, irods_metadata):
+def check_library_metadata_old(header_metadata, irods_metadata):
     irods_lib_names_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'library')
     irods_lib_ids_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'library_id')
 
     header_lib_identifiers_tuples = [(Identif.guess_identifier_type(lib), lib) for lib in header_metadata.libraries]
 
-    print "IRODS LIBRARY names: "+str(irods_lib_names_list)
-    print "IRODS LIBRARY ids: "+str(irods_lib_ids_list)
-    print "HEADER LIBRARIES: "+str(header_lib_identifiers_tuples)
+    print "IRODS LIBRARY names: " + str(irods_lib_names_list)
+    print "IRODS LIBRARY ids: " + str(irods_lib_ids_list)
+    print "HEADER LIBRARIES: " + str(header_lib_identifiers_tuples)
 
     error = False
     for lib_identif in header_lib_identifiers_tuples:
         if lib_identif not in irods_lib_ids_list and lib_identif not in irods_lib_names_list:
-            print "ERROR Library in the header, but not in the iRODS metadata: "+str(lib_identif)
-            print "IRODS libraries name: "+str(irods_lib_names_list)
-            print "IRODS library ids: "+str(irods_lib_ids_list)
+            print "ERROR Library in the header, but not in the iRODS metadata: " + str(lib_identif)
+            print "IRODS libraries name: " + str(irods_lib_names_list)
+            print "IRODS library ids: " + str(irods_lib_ids_list)
             error = True
         if error:
             error = False
@@ -136,28 +271,68 @@ def check_library_metadata(header_metadata, irods_metadata):
             print "File OK"
 
 
+def get_run_from_irods_path(irods_fpath):
+    return irods_fpath.split("\\")[-2]
+
+
+def get_lane_from_irods_path(irods_fpath):
+    fname = irods_fpath.split("\\")[-1]
+    lane_id = fname.split("_")[1].split("#")[1]
+    return lane_id
+
+
+def check_run_metadata(irods_metadata, irods_fpath):
+    irods_run_id = extract_values_by_key_from_irods_metadata(irods_metadata, 'id_run')
+    path_run_id = get_run_from_irods_path(irods_fpath)
+    if not irods_run_id == path_run_id:
+        return ["The run id in the iRODS file path is not the same as the run id in the iRODS metadata: " + \
+                str(irods_run_id) + " vs. " + str(path_run_id)]
+    return []
+
+
+def check_lane_metadata(irods_metadata, irods_fpath):
+    irods_lane_id = extract_values_by_key_from_irods_metadata(irods_metadata, 'lane')
+    lane_id = get_lane_from_irods_path(irods_fpath)
+    if not irods_lane_id == lane_id:
+        return ["The lane id in the iRODS file path is not the same as the lane id in the iRODS metadata: " +
+                str(irods_lane_id) + " vs. " + str(lane_id)]
+    return []
+
+
+def check_reference(irods_metadata, desired_ref):
+    irods_ref = extract_values_by_key_from_irods_metadata(irods_metadata, 'reference')
+    ref_file_name = os.path.basename(irods_ref)
+    ref_name = ref_file_name.split(".")[0]
+    if ref_name != desired_ref:
+        return ["This file hasn't been mapped to the reference I want: " + str(irods_ref)]
+    return []
+
+
 def test_file_metadata(irods_fpath):
     header_metadata = get_header_metadata_from_irods_file(irods_fpath)
     irods_metadata = get_irods_metadata(irods_fpath)
 
-    print "FILE: "+str(irods_fpath)
+    diffs = []
+    diffs.extend(check_sample_metadata(header_metadata, irods_metadata))
+    diffs.extend(check_library_metadata(header_metadata, irods_metadata))
+    diffs.extend(check_study_metadata(header_metadata, irods_metadata))
 
-    #print "HEADER METADATA: "+str(header_metadata)
-    check_sample_metadata(header_metadata, irods_metadata)
+    # study_internal_id = extract_values_by_key_from_irods_metadata(irods_metadata, 'study_id')
+    # study_acc_nr = extract_values_by_key_from_irods_metadata(irods_metadata, 'study_accession_number')
+    #
+    # library_name = extract_values_by_key_from_irods_metadata(irods_metadata, 'library')
+    # library_internal_id = extract_values_by_key_from_irods_metadata(irods_metadata, 'library_id')
 
-    study_internal_id = extract_values_by_key_from_irods_metadata(irods_metadata, 'study_id')
-    study_acc_nr = extract_values_by_key_from_irods_metadata(irods_metadata, 'study_accession_number')
+    # run_id = extract_values_by_key_from_irods_metadata(irods_metadata, 'id_run')
+    # lane_id = extract_values_by_key_from_irods_metadata(irods_metadata, 'lane')
+    # tag_id = extract_values_by_key_from_irods_metadata(irods_metadata, 'tag_index')
 
-    library_name = extract_values_by_key_from_irods_metadata(irods_metadata, 'library')
-    library_internal_id = extract_values_by_key_from_irods_metadata(irods_metadata, 'library_id')
+    # md5 = extract_values_by_key_from_irods_metadata(irods_metadata, 'md5')
+    diffs.extend(check_md5_metadata(irods_metadata, irods_fpath))
+    print "FILE: " + str(irods_fpath) + " ERRORS: " + str(diffs)
 
-    run_id = extract_values_by_key_from_irods_metadata(irods_metadata, 'id_run')
-    lane_id = extract_values_by_key_from_irods_metadata(irods_metadata, 'lane')
-    tag_id = extract_values_by_key_from_irods_metadata(irods_metadata, 'tag_index')
 
-    md5 = extract_values_by_key_from_irods_metadata(irods_metadata, 'md5')
-
-    reference_file = extract_values_by_key_from_irods_metadata(irods_metadata, 'reference')
+    # reference_file = extract_values_by_key_from_irods_metadata(irods_metadata, 'reference')
 
 
 def parse_args():
@@ -180,7 +355,7 @@ def main():
         fpaths_irods = [args.path_irods]
     elif args.study:
         fpaths_irods = get_list_of_bams_for_study(args.study)
-        print "FPATHS for this study: "+str(fpaths_irods)
+        print "FPATHS for this study: " + str(fpaths_irods)
     else:
         print "No arguments provided! Exitting"
         return
