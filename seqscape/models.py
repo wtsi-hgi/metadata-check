@@ -53,6 +53,13 @@ class Sample(Base):
     def __hash__(self):
         return hash(self.name)
 
+    def __str__(self):
+        return "{ internal_id="+ str(self.internal_id)+", name="+str(self.name)+", accession_number="+str(self.accession_number) + " }"
+
+    def __repr__(self):
+        return "{ internal_id="+ str(self.internal_id)+", name="+str(self.name)+", accession_number="+str(self.accession_number) + " }"
+
+
 class Study(Base):
     __tablename__ = 'current_studies'
 
@@ -75,6 +82,12 @@ class Study(Base):
     def __hash__(self):
         return hash(self.name)
 
+    def __str__(self):
+        return "{ internal_id="+ str(self.internal_id)+", name="+str(self.name)+", accession_number="+str(self.accession_number) + " }"
+
+    def __repr__(self):
+        return "{ internal_id="+ str(self.internal_id)+", name="+str(self.name)+", accession_number="+str(self.accession_number) + " }"
+
 
 class Library(Base):
     __tablename__ = 'current_library_tubes'
@@ -90,6 +103,12 @@ class Library(Base):
 
     def __hash__(self):
         return hash(self.name)
+
+    def __str__(self):
+        return "{ internal_id="+ str(self.internal_id)+", name="+str(self.name)+" }"
+
+    def __repr__(self):
+        return "{ internal_id="+ str(self.internal_id)+", name="+str(self.name) + " }"
 
 
 class StudySamplesLink(Base):
