@@ -271,18 +271,37 @@ def check_library_metadata_old(header_metadata, irods_metadata):
 
 
 def get_run_from_irods_path(irods_fpath):
-    return irods_fpath.split("\\")[-2]
+    tokens = irods_fpath.split("/")
+    if len(tokens) >= 2 and tokens[1] == 'seq':
+        return tokens[-2]
+    return ''
 
 
 def get_lane_from_irods_path(irods_fpath):
-    fname = irods_fpath.split("\\")[-1]
-    lane_id = fname.split("_")[1].split("#")[1]
-    return lane_id
+    fname = os.path.basename(irods_fpath)
+    if fname.find("_") != -1:
+        lane_id = ''
+        lane_token = fname.split("_")[1]
+        if lane_token.find("#") != -1:
+            lane_id = lane_token.split("#")[0]
+        elif lane_token.find(".bam") != -1:
+            lane_id = lane_token.split(".bam")[0]
+        return lane_id
+    return ''
 
 
-def check_run_metadata(irods_metadata, irods_fpath):
-    irods_run_id = extract_values_by_key_from_irods_metadata(irods_metadata, 'id_run')
+def check_run_id(irods_metadata, irods_fpath):
+    """
+    This test assumes that all the files in iRODS have exactly 1 run (=LANELETS)
+    """
+    irods_run_ids = extract_values_by_key_from_irods_metadata(irods_metadata, 'id_run')
     path_run_id = get_run_from_irods_path(irods_fpath)
+    if len(irods_run_ids) > 1:
+        return ["ERROR: There are more than 1 runs for this file."]
+    elif len(irods_run_ids) < 1:
+        return ["ERROR: There is no run id in this file's metadata"]
+    else:
+        irods_run_id = irods_run_ids[0]
     if not irods_run_id == path_run_id:
         return ["The run id in the iRODS file path is not the same as the run id in the iRODS metadata: " + \
                 str(irods_run_id) + " vs. " + str(path_run_id)]
@@ -290,24 +309,61 @@ def check_run_metadata(irods_metadata, irods_fpath):
 
 
 def check_lane_metadata(irods_metadata, irods_fpath):
-    irods_lane_id = extract_values_by_key_from_irods_metadata(irods_metadata, 'lane')
     lane_id = get_lane_from_irods_path(irods_fpath)
+    irods_lane_ids = extract_values_by_key_from_irods_metadata(irods_metadata, 'lane')
+    if len(irods_lane_ids) > 1:
+        return ["There is more than 1 LANE in iRODS metadata"]
+    elif len(irods_lane_ids) < 1:
+        return ["There is NO LANE in iRODS metadata"]
+    else:
+        irods_lane_id = irods_lane_ids[0]
     if not irods_lane_id == lane_id:
         return ["The lane id in the iRODS file path is not the same as the lane id in the iRODS metadata: " +
                 str(irods_lane_id) + " vs. " + str(lane_id)]
     return []
 
 
-def check_reference(irods_metadata, desired_ref):
-    irods_ref = extract_values_by_key_from_irods_metadata(irods_metadata, 'reference')
-    ref_file_name = os.path.basename(irods_ref)
-    ref_name = ref_file_name.split(".")[0]
-    if ref_name != desired_ref:
-        return ["This file hasn't been mapped to the reference I want: " + str(irods_ref)]
+def extract_lanelet_name_from_irods_fpath(irods_fpath):
+    fname = os.path.basename(irods_fpath)
+    if fname.find("_") == -1:
+        return ''
+    if fname.find(".bam") != -1:
+        return fname.split(".bam")[0]
+    return ''
+
+def check_lanelet_name(irods_fpath, header_lanelets):
+    if len(header_lanelets) != 1:
+        return ["More than 1 lanelets in the header."]
+    irods_lanelet_name = extract_lanelet_name_from_irods_fpath(irods_fpath)
+    if irods_lanelet_name != header_lanelets[0]:
+        return ["HEADER LANELET = "+str(header_lanelets[0]) + " different from FILE NAME = "+str(irods_lanelet_name)]
     return []
 
 
-def test_file_metadata(irods_fpath):
+def extract_reference_name_from_path(ref_path):
+    print "REF PATH: "+str(ref_path)
+    ref_file_name = os.path.basename(ref_path)
+    if ref_file_name.find(".fa") != -1:
+        ref_name = ref_file_name.split(".fa")[0]
+        return ref_name
+    return ''
+
+
+def check_reference(irods_metadata, desired_ref):
+    ref_paths = extract_values_by_key_from_irods_metadata(irods_metadata, 'reference')
+    if len(ref_paths) > 1:
+        return ["There is more than 1 REFERENCE ATTRIBUTE in iRODS metadata"]
+    elif len(ref_paths) < 1:
+        return ["There is NO REFERENCE ATTRIBUTE in iRODS metadata"]
+    else:
+        ref_path = ref_paths[0]
+    ref_name = extract_reference_name_from_path(ref_path)
+    if ref_name != desired_ref:
+        return ["WANTED REFERENCE =: " + str(desired_ref)+ " different from ACTUAL REFERENCE = " + str(ref_name)]
+    return []
+
+
+def test_file_metadata(irods_fpath, desired_ref=None):
     header_metadata = get_header_metadata_from_irods_file(irods_fpath)
     irods_metadata = get_irods_metadata(irods_fpath)
 
@@ -335,7 +391,20 @@ def test_file_metadata(irods_fpath):
     checksum_issues = check_md5_metadata(irods_metadata, irods_fpath)
     diffs.extend(checksum_issues)
 
-    if sample_issues or library_issues or study_issues or checksum_issues:
+    run_id_issues = check_run_id(irods_metadata, irods_fpath)
+    diffs.extend(run_id_issues)
+
+    lane_metadata_issues = check_lane_metadata(irods_metadata, irods_fpath)
+    diffs.extend(lane_metadata_issues)
+
+    lane_name_issues = check_lanelet_name(irods_fpath, header_metadata.lanelets)
+    diffs.extend(lane_name_issues)
+
+    if desired_ref:
+        ref_issues = check_reference(irods_metadata, desired_ref)
+        diffs.extend(ref_issues)
+
+    if diffs:
         print "FILE: "+str(irods_fpath) + " has issues with:"
         if sample_issues:
             print "SAMPLES: "+str(sample_issues)
@@ -344,8 +413,16 @@ def test_file_metadata(irods_fpath):
         if study_issues:
             print "STUDIES: "+ str(study_issues)
         if checksum_issues:
-            print "CHECKSUM: "+checksum_issues
-    
+            print "CHECKSUM: "+str(checksum_issues)
+        if run_id_issues:
+            print "RUN IDS: "+str(run_id_issues)
+        if lane_name_issues:
+            print "LANE METADATA: "+str(lane_metadata_issues)
+        if lane_name_issues:
+            print "LANE NAME: "+str(lane_name_issues)
+        if desired_ref and ref_issues:
+            print "REFERENCE: "+str(ref_issues)
+
     
     #print "FILE: " + str(irods_fpath) + " ERRORS: " + str(diffs)
     # reference_file = extract_values_by_key_from_irods_metadata(irods_metadata, 'reference')

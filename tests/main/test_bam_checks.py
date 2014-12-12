@@ -23,6 +23,7 @@ import config
 
 import unittest
 from main import bam_checks
+from irods import data_types as irods_types
 
 class SeqscapeQueriesTests(unittest.TestCase):
 
@@ -157,6 +158,7 @@ class MD5Test(unittest.TestCase):
 
 class LibraryMetadataWholeTests(unittest.TestCase):
 
+    @unittest.skipIf(config.RUNNING_LOCATION == 'localhost', "Skipping checks because it runs locally")
     def test_check_library_metadata(self):
         irods_fpath = '/seq/14761/14761_4.bam'
         header_metadata = bam_checks.get_header_metadata_from_irods_file(irods_fpath)
@@ -166,6 +168,8 @@ class LibraryMetadataWholeTests(unittest.TestCase):
 
 
 class SampleMetadataWholeTests(unittest.TestCase):
+
+    @unittest.skipIf(config.RUNNING_LOCATION == 'localhost', "Skipping checks because it runs locally")
     def test_check_sample_metadata(self):
         irods_fpath = '/seq/11010/11010_8#21.bam'
         header_metadata = bam_checks.get_header_metadata_from_irods_file(irods_fpath)
@@ -191,3 +195,206 @@ class SampleMetadataWholeTests(unittest.TestCase):
 #     # Compare IRODS vs. SEQSCAPE:
 #     irods_vs_seqsc_diffs = get_diff_seqsc_and_irods_libraries_metadata(irods_libraries)
 #     return irods_vs_head_diffs + irods_vs_seqsc_diffs
+
+
+class AuxiliaryFctsTests(unittest.TestCase):
+
+    def test_get_run_from_irods_path(self):
+        # Testing for a normal path:
+        path = '/seq/1234/1234_3#12.bam'
+        result = bam_checks.get_run_from_irods_path(path)
+        expected = '1234'
+        self.assertEqual(result, expected)
+
+        path = '/seq/11000/11000_2#3.bam'
+        result = bam_checks.get_run_from_irods_path(path)
+        expected = '11000'
+        self.assertEqual(result, expected)
+
+        # Testing that it doesn't crash if a random thing is given:
+        path = '/a/random/path'
+        result = bam_checks.get_run_from_irods_path(path)
+        expected = ''
+        self.assertEqual(result, expected)
+
+        path = 'pathwithout_slashes'
+        result = bam_checks.get_run_from_irods_path(path)
+        expected = ''
+        self.assertEqual(result, expected)
+
+
+    def test_get_lane_from_irods_path(self):
+        # Testing it works with normal irods path:
+        path = '/seq/1234/1234_3#1.bam'
+        result = bam_checks.get_lane_from_irods_path(path)
+        expected = '3'
+        self.assertEqual(result, expected)
+
+        path = '/seq/1234/12345_6#7.bam'
+        result = bam_checks.get_lane_from_irods_path(path)
+        expected = '6'
+        self.assertEqual(result, expected)
+
+        # Testing it works on a lane-level BAM:
+        path = '/seq/1234/1234_5.bam'
+        result = bam_checks.get_lane_from_irods_path(path)
+        expected = '5'
+        self.assertEqual(result, expected)
+
+        # Testing it works on abnormal params:
+        path = '/seq/'
+        result = bam_checks.get_lane_from_irods_path(path)
+        expected = ''
+        self.assertEqual(result, expected)
+
+        path = 'a_random_path'
+        result = bam_checks.get_lane_from_irods_path(path)
+        expected = ''
+        self.assertEqual(result, expected)
+
+        # Testing that it returns '' on an empty path
+        path = ''
+        result = bam_checks.get_lane_from_irods_path(path)
+        expected = ''
+        self.assertEqual(result, expected)
+
+        # Testing it returns '' on a path from diff. zone:
+        path = '/humgen/projects/hgi/SRP123.bam'
+        result = bam_checks.get_lane_from_irods_path(path)
+        expected = ''
+        self.assertEqual(result, expected)
+
+
+class AdjancentMetadataChecksTests(unittest.TestCase):
+
+    def test_check_run_id(self):
+        # Testing it works for normal cases:
+        irods_metadata = [irods_types.MetaAVU('id_run', '11000')]
+        irods_fpath = '/seq/11000/11000_2#3.bam'
+        result = bam_checks.check_run_id(irods_metadata, irods_fpath)
+        expected = []
+        self.assertEqual(result, expected)
+
+        # Testing that it returns an error if there is no run id in the metadata:
+        irods_metadata = []
+        irods_fpath = '/seq/11000/11000_2#3.bam'
+        result = bam_checks.check_run_id(irods_metadata, irods_fpath)
+        self.assertEqual(len(result), 1)
+
+        # Testing that it returns an error message if there is more than 1 run in the metadata:
+        irods_metadata = [irods_types.MetaAVU('id_run', '11000'), irods_types.MetaAVU('id_run', '11111')]
+        irods_fpath = '/seq/11000/11000_2#3.bam'
+        result = bam_checks.check_run_id(irods_metadata, irods_fpath)
+        self.assertEqual(len(result), 1)
+
+        # Testing that it returns an error message if the irods path doesn't look like expected:
+        irods_metadata = [irods_types.MetaAVU('id_run', '11000')]
+        irods_fpath = '/humgen/projects/hgi/11000_2#3.bam'
+        result = bam_checks.check_run_id(irods_metadata, irods_fpath)
+        self.assertEqual(len(result), 1)
+
+
+    def test_check_lane_metadata(self):
+        # Testing on a normal case - lanelet:
+        irods_metadata = [irods_types.MetaAVU('lane', '1')]
+        irods_fpath = '/seq/11111/11111_1#2.bam'
+        result = bam_checks.check_lane_metadata(irods_metadata, irods_fpath)
+        expected = []
+        self.assertEqual(result, expected)
+
+        # Testing on a lane-level BAM:
+        irods_metadata = [irods_types.MetaAVU('lane', '2')]
+        irods_fpath = '/seq/11111/11111_2.bam'
+        result = bam_checks.check_lane_metadata(irods_metadata, irods_fpath)
+        expected = []
+        self.assertEqual(result, expected)
+
+        # Testing that a message is returned if the irods path doesn't look normal:
+        irods_metadata = [irods_types.MetaAVU('lane', '2')]
+        irods_fpath = '/humgen/projects/hgi/SSS123.bam'
+        result = bam_checks.check_lane_metadata(irods_metadata, irods_fpath)
+        self.assertEqual(len(result), 1)
+
+        # Testing that a message is returned if there is no irods metadata:
+        irods_metadata = []
+        irods_fpath = '/seq/11111/11111_2.bam'
+        result = bam_checks.check_lane_metadata(irods_metadata, irods_fpath)
+        self.assertEqual(len(result), 1)
+
+    def test_extract_reference_name_from_path(self):
+        # Testing that it works on the normal case:
+        ref_path = '/lustre/scratch110/srpipe/references/Homo_sapiens/1000Genomes_hs37d5/all/bwa/hs37d5.fa'
+        result = bam_checks.extract_reference_name_from_path(ref_path)
+        expected = 'hs37d5'
+        self.assertEqual(result, expected)
+
+        # Testing on a different reference - again normal case, should work:
+        ref_path = '/lustre/scratch110/srpipe/references/Homo_sapiens/GRCh38_15/all/bwa/Homo_sapiens.GRCh38_15.fa'
+        result = bam_checks.extract_reference_name_from_path(ref_path)
+        expected = 'Homo_sapiens.GRCh38_15'
+        self.assertEqual(result, expected)
+
+        # Testing that it returns '' if the path is not a reference:
+        ref_path = '/lustre/scratch110/srpipe/references/Homo_sapiens/GRCh38_15/all/bwa/Homo_sapiens'
+        result = bam_checks.extract_reference_name_from_path(ref_path)
+        expected = ''
+        self.assertEqual(result, expected)
+
+
+    def test_check_reference(self):
+        # Testing on a normal case - the ref is not the desired one:
+        irods_metadata = [irods_types.MetaAVU('reference', '/path/refs/GRCh38_15/all/bwa/Homo_sapiens.GRCh38_15.fa')]
+        desired_ref = 'hs37d5'
+        result = bam_checks.check_reference(irods_metadata, desired_ref)
+        self.assertEqual(len(result), 1)
+
+        # Testing on a normal case - the ref is the desired one:
+        irods_metadata = [irods_types.MetaAVU('reference', '/path/ref/Homo_sapiens/1000Genomes_hs37d5/all/bwa/hs37d5.fa')]
+        desired_ref = 'hs37d5'
+        result = bam_checks.check_reference(irods_metadata, desired_ref)
+        self.assertEqual(len(result), 0)
+
+
+    def test_extract_lanelet_name_from_irods_fpath(self):
+        # Testing on a normal lanelet:
+        irods_fpath = '/seq/1234/1234_5#6.bam'
+        result = bam_checks.extract_lanelet_name_from_irods_fpath(irods_fpath)
+        expected = '1234_5#6'
+        self.assertEqual(result, expected)
+
+        # Testing for a lane-level bam:
+        irods_fpath = '/seq/1234/1234_5.bam'
+        result = bam_checks.extract_lanelet_name_from_irods_fpath(irods_fpath)
+        expected = '1234_5'
+        self.assertEqual(result, expected)
+
+        # Testing on a non-standard path - should return ''
+        irods_fpath = '/humgen/projectscrohns/1234SRA.bam'
+        result = bam_checks.extract_lanelet_name_from_irods_fpath(irods_fpath)
+        expected = ''
+        self.assertEqual(result, expected)
+
+
+    def test_check_lanelet_name(self):
+        # Testing on  a normal case:
+        irods_fpath = '/seq/1234/1234_5#6.bam'
+        header_lanelets = ['1234_5#6']
+        result = bam_checks.check_lanelet_name(irods_fpath, header_lanelets)
+        expected = []
+        self.assertEqual(result, expected)
+
+
+
+
+
+
+
+
+# def check_run_metadata(irods_metadata, irods_fpath):
+#     irods_run_id = extract_values_by_key_from_irods_metadata(irods_metadata, 'id_run')
+#     path_run_id = get_run_from_irods_path(irods_fpath)
+#     if not irods_run_id == path_run_id:
+#         return ["The run id in the iRODS file path is not the same as the run id in the iRODS metadata: " + \
+#                 str(irods_run_id) + " vs. " + str(path_run_id)]
+#     return []
+#
