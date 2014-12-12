@@ -87,7 +87,7 @@ def get_diff_seqsc_and_irods_samples_metadata(irods_samples):
     seqsc_samples_by_acc_nr = get_samples_from_seqsc(irods_samples['accession_number'], 'accession_number')
     seqsc_samples_by_internal_id = get_samples_from_seqsc(irods_samples['internal_id'], 'internal_id')
 
-    print set(seqsc_samples_by_acc_nr) == set(seqsc_samples_by_internal_id) == set(seqsc_samples_by_name)
+    #print set(seqsc_samples_by_acc_nr) == set(seqsc_samples_by_internal_id) == set(seqsc_samples_by_name)
     differences = []
     if not (set(seqsc_samples_by_acc_nr) == set(seqsc_samples_by_internal_id) == set(seqsc_samples_by_name)):
         diff = "Sample identifiers from iRODS don't identify the same set of samples: by name: " + \
@@ -95,7 +95,7 @@ def get_diff_seqsc_and_irods_samples_metadata(irods_samples):
                " by accession_number:" + str(seqsc_samples_by_acc_nr) + \
                " by internal_id: " + str(seqsc_samples_by_internal_id)
         differences.append(diff)
-        print "DIFFS: "+str(differences)
+        #print "DIFFS: "+str(differences)
     return differences
 
 
@@ -341,7 +341,7 @@ def check_lanelet_name(irods_fpath, header_lanelets):
 
 
 def extract_reference_name_from_path(ref_path):
-    print "REF PATH: "+str(ref_path)
+    #print "REF PATH: "+str(ref_path)
     ref_file_name = os.path.basename(ref_path)
     if ref_file_name.find(".fa") != -1:
         ref_name = ref_file_name.split(".fa")[0]
