@@ -58,6 +58,8 @@ def _query_all_as_batch_by_name(model_cls, names):
         obj_list
             Returns a list of objects of type model_cls found to match the keys given as parameter.
     """
+    if not names:
+        return []
     session = get_session_instance()
     result = session.query(model_cls). \
         filter(model_cls.name.in_(names)). \
@@ -82,6 +84,8 @@ def _query_all_as_batch_by_internal_id(model_cls, internal_ids):
         obj_list
             Returns a list of objects of type model_cls found to match the internal_ids given as parameter.
     """
+    if not internal_ids:
+        return []
     session = get_session_instance()
     result = session.query(model_cls). \
         filter(model_cls.internal_id.in_(internal_ids)). \
@@ -106,6 +110,8 @@ def _query_all_as_batch_by_accession_number(model_cls, accession_numbers):
         obj_list
             Returns a list of objects of type model_cls found to match the accession_number given as parameter.
     """
+    if not accession_numbers:
+        return []
     session = get_session_instance()
     result = session.query(model_cls). \
         filter(model_cls.accession_number.in_(accession_numbers)). \
@@ -131,6 +137,8 @@ def _query_all_as_batch(model_cls, ids, id_type):
         obj_list
             A list of objects returned by the query of type models.*
     """
+    if not ids:
+        return []
     if id_type == 'name':
         return _query_all_as_batch_by_name(model_cls, ids)
     elif id_type == 'accession_number':
