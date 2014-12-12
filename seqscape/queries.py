@@ -36,7 +36,7 @@ engine = create_engine(db_url)
 #    return engine
 
 
-def connect_and_get_session_instance():
+def get_session_instance():
     #engine = connect(config.SEQSC_HOST, str(config.SEQSC_PORT), config.SEQSC_DB_NAME, config.SEQSC_USER)
     session_cls = sessionmaker(bind=engine)
     return session_cls()
@@ -58,7 +58,7 @@ def _query_all_as_batch_by_name(model_cls, names):
         obj_list
             Returns a list of objects of type model_cls found to match the keys given as parameter.
     """
-    session = connect_and_get_session_instance()
+    session = get_session_instance()
     result = session.query(model_cls). \
         filter(model_cls.name.in_(names)). \
         filter(model_cls.is_current == 1).all()
@@ -82,7 +82,7 @@ def _query_all_as_batch_by_internal_id(model_cls, internal_ids):
         obj_list
             Returns a list of objects of type model_cls found to match the internal_ids given as parameter.
     """
-    session = connect_and_get_session_instance()
+    session = get_session_instance()
     result = session.query(model_cls). \
         filter(model_cls.internal_id.in_(internal_ids)). \
         filter(model_cls.is_current == 1).all()
@@ -106,7 +106,7 @@ def _query_all_as_batch_by_accession_number(model_cls, accession_numbers):
         obj_list
             Returns a list of objects of type model_cls found to match the accession_number given as parameter.
     """
-    session = connect_and_get_session_instance()
+    session = get_session_instance()
     result = session.query(model_cls). \
         filter(model_cls.accession_number.in_(accession_numbers)). \
         filter(model_cls.is_current == 1).all()
@@ -195,7 +195,7 @@ def _query_all_individually(model_cls, ids_as_tuples):
 
 @wrappers.check_args_not_none
 def _query_for_study_ids_by_sample_ids(sample_internal_ids):
-    session = connect_and_get_session_instance()
+    session = get_session_instance()
     return session.query(StudySamplesLink). \
         filter(StudySamplesLink.sample_internal_id.in_(sample_internal_ids)). \
         filter(StudySamplesLink.is_current == 1).all()
