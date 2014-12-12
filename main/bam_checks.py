@@ -83,14 +83,28 @@ def get_studies_from_seqsc(ids_list, id_type):
 
 
 def get_diff_seqsc_and_irods_samples_metadata(irods_samples):
+    if not irods_samples['name']:
+        return ["NO SAMPLE_NAMES in IRODS metadata"]
+    elif not irods_samples['internal_id']:
+        return ["NO SAMPLE INTERNAL_ID in IRODS metadata"]
+    elif not irods_samples['accession_number']:
+        return ["NO SAMPLE ACCESSION_NUMBER in IRODS metadata"]
+
     seqsc_samples_by_name = get_samples_from_seqsc(irods_samples['name'], 'name')
     seqsc_samples_by_acc_nr = get_samples_from_seqsc(irods_samples['accession_number'], 'accession_number')
     seqsc_samples_by_internal_id = get_samples_from_seqsc(irods_samples['internal_id'], 'internal_id')
 
+    if not seqsc_samples_by_name:
+        return ["NO SAMPLES in SEQSCAPE by sample names from iRODS = "+str(seqsc_samples_by_name)]
+    if not seqsc_samples_by_internal_id:
+        return ["NO SAMPLES in SEQSCAPE by sample internal_id from iRODS = "+str(seqsc_samples_by_internal_id)]
+    if not seqsc_samples_by_acc_nr:
+        return ["NO SAMPLES in SEQSCAPE by sample internal_id from iRODS = "+str(seqsc_samples_by_acc_nr)]
+
     #print set(seqsc_samples_by_acc_nr) == set(seqsc_samples_by_internal_id) == set(seqsc_samples_by_name)
     differences = []
     if not (set(seqsc_samples_by_acc_nr) == set(seqsc_samples_by_internal_id) == set(seqsc_samples_by_name)):
-        diff = "Sample identifiers from iRODS don't identify the same set of samples: by name: " + \
+        diff = "SAMPLES in iRODS =" + str(irods_samples) + " != SEQSCAPE SAMPLES SEARCHED by name: " + \
                str(seqsc_samples_by_name) + \
                " by accession_number:" + str(seqsc_samples_by_acc_nr) + \
                " by internal_id: " + str(seqsc_samples_by_internal_id)
@@ -100,29 +114,52 @@ def get_diff_seqsc_and_irods_samples_metadata(irods_samples):
 
 
 def get_diff_seqsc_and_irods_studies_metadata(irods_studies):
+    if not irods_studies['name']:
+        return ["NO STUDY_NAMES in IRODS metadata"]
+    elif not irods_studies['internal_id']:
+        return ["NO STUDY INTERNAL_ID in IRODS metadata"]
+    elif not irods_studies['accession_number']:
+        return ["NO STUDY ACCESSION_NUMBER in IRODS metadata"]
+
     seqsc_studies_by_name = get_studies_from_seqsc(irods_studies['name'], 'name')
     seqsc_studies_by_acc_nr = get_studies_from_seqsc(irods_studies['accession_number'], 'accession_number')
     seqsc_studies_by_internal_id = get_studies_from_seqsc(irods_studies['internal_id'], 'internal_id')
 
+    if not seqsc_studies_by_name:
+        return ["NO STUDIES in SEQSCAPE by study names from iRODS = "+str(seqsc_studies_by_name)]
+    if not seqsc_studies_by_internal_id:
+        return ["NO STUDIES in SEQSCAPE by study internal_id from iRODS = "+str(seqsc_studies_by_internal_id)]
+    if not seqsc_studies_by_acc_nr:
+        return ["NO STUDIES in SEQSCAPE by study internal_id from iRODS = "+str(seqsc_studies_by_acc_nr)]
+
     differences = []
     if not (set(seqsc_studies_by_acc_nr) == set(seqsc_studies_by_internal_id) == set(seqsc_studies_by_name)):
-        diff = "Study identifiers from iRODS don't identify the same set of studies: by name: " + \
+        diff = "STUDY in iRODS =" + str(irods_studies) + " != SEQSCAPE STUDIES SEARCHED by name: " + \
                str(seqsc_studies_by_name) + \
-               " by accession_number:" + str(seqsc_studies_by_acc_nr) + \
-               " by internal_id: " + str(seqsc_studies_by_internal_id)
+               " != by accession_number:" + str(seqsc_studies_by_acc_nr) + \
+               " != by internal_id: " + str(seqsc_studies_by_internal_id)
         differences.append(diff)
     return differences
 
 
 def get_diff_seqsc_and_irods_libraries_metadata(irods_libraries):
+    if not irods_libraries['name']:
+        return ["NO LIBRARY_NAMES in IRODS metadata"]
+    elif not irods_libraries['internal_id']:
+        return ["NO LIBRARY INTERNAL_ID in IRODS metadata"]
+
     seqsc_libraries_by_name = get_libraries_from_seqsc(irods_libraries['name'], 'name')
     seqsc_libraries_by_internal_id = get_libraries_from_seqsc(irods_libraries['internal_id'], 'internal_id')
 
+    if not seqsc_libraries_by_name:
+        return ["NO LIBRARIES in SEQSCAPE by library names from iRODS = "+str(seqsc_libraries_by_name)]
+    if not seqsc_libraries_by_internal_id:
+        return ["NO LIBRARIES in SEQSCAPE by library internal_id from iRODS = "+str(seqsc_libraries_by_internal_id)]
     differences = []
     if not (set(seqsc_libraries_by_internal_id) == set(seqsc_libraries_by_name)):
-        diff = "Libraries identifiers from iRODS don't identify the same set of studies: by name: " + \
+        diff = "LIBRARIES in iRODS= "+ str(irods_libraries) + " != SEQSCAPE LIBRARIES SEARCHED by name: " + \
                str(seqsc_libraries_by_name) + \
-               " by internal_id: " + str(seqsc_libraries_by_internal_id)
+               " != SEQSCAPE LIBRARIES searched by internal_id: " + str(seqsc_libraries_by_internal_id)
         differences.append(diff)
     return differences
 
@@ -136,9 +173,9 @@ def get_diff_irods_and_header_metadata(header_dict, irods_dict):
     differences = []
     for id_type, head_ids_list in header_dict.iteritems():
         if not irods_dict.get(id_type):
-            differences.append("The header contains entities that are not present in iRODS. "+ str(id_type)+"=" + str(head_ids_list))
+            differences.append(" HEADER " + str(id_type) + " (" +str(head_ids_list) + ") != iRODS  " + str(irods_dict))
         elif set(head_ids_list).difference(set(irods_dict[id_type])):
-            differences.append("The header contains entities that are not present in iRODS: " + str(head_ids_list))
+            differences.append(" HEADER " + str(id_type) + " (" +str(head_ids_list) + ") != iRODS  " + str(irods_dict))
     return differences
 
 
@@ -202,8 +239,7 @@ def check_md5_metadata(irods_metadata, irods_fpath):
     if md5_chksum:
         if not md5_metadata[0] == md5_chksum.md5:
             return [
-                "The md5 in the iRODS metadata is different from what ichksum returns: " + str(md5_chksum) + " vs. " + str(
-                    md5_metadata)]
+                "iRODS metadata md5 ("+ str(md5_metadata) + ") != ichksum (" + str(md5_chksum) + ") "]
     return []
 
 
@@ -297,9 +333,9 @@ def check_run_id(irods_metadata, irods_fpath):
     irods_run_ids = extract_values_by_key_from_irods_metadata(irods_metadata, 'id_run')
     path_run_id = get_run_from_irods_path(irods_fpath)
     if len(irods_run_ids) > 1:
-        return ["ERROR: There are more than 1 runs for this file."]
+        return ["ERROR: > 1 runs for this file."]
     elif len(irods_run_ids) < 1:
-        return ["ERROR: There is no run id in this file's metadata"]
+        return ["ERROR: MISSING run_id from iRODS metadata"]
     else:
         irods_run_id = irods_run_ids[0]
     if not irods_run_id == path_run_id:
@@ -312,13 +348,13 @@ def check_lane_metadata(irods_metadata, irods_fpath):
     lane_id = get_lane_from_irods_path(irods_fpath)
     irods_lane_ids = extract_values_by_key_from_irods_metadata(irods_metadata, 'lane')
     if len(irods_lane_ids) > 1:
-        return ["There is more than 1 LANE in iRODS metadata"]
+        return [" > 1 LANE in iRODS metadata"]
     elif len(irods_lane_ids) < 1:
-        return ["There is NO LANE in iRODS metadata"]
+        return ["NO LANE in iRODS metadata"]
     else:
         irods_lane_id = irods_lane_ids[0]
     if not irods_lane_id == lane_id:
-        return ["The lane id in the iRODS file path is not the same as the lane id in the iRODS metadata: " +
+        return ["iRODS fpath lane_id != lane_id in iRODS metadata: " +
                 str(irods_lane_id) + " vs. " + str(lane_id)]
     return []
 
@@ -333,7 +369,7 @@ def extract_lanelet_name_from_irods_fpath(irods_fpath):
 
 def check_lanelet_name(irods_fpath, header_lanelets):
     if len(header_lanelets) != 1:
-        return ["More than 1 lanelets in the header."]
+        return [" > 1 lanelets in the header."]
     irods_lanelet_name = extract_lanelet_name_from_irods_fpath(irods_fpath)
     if irods_lanelet_name != header_lanelets[0]:
         return ["HEADER LANELET = "+str(header_lanelets[0]) + " different from FILE NAME = "+str(irods_lanelet_name)]
@@ -352,9 +388,9 @@ def extract_reference_name_from_path(ref_path):
 def check_reference(irods_metadata, desired_ref):
     ref_paths = extract_values_by_key_from_irods_metadata(irods_metadata, 'reference')
     if len(ref_paths) > 1:
-        return ["There is more than 1 REFERENCE ATTRIBUTE in iRODS metadata"]
+        return [" > 1 REFERENCE ATTRIBUTE in iRODS metadata"]
     elif len(ref_paths) < 1:
-        return ["There is NO REFERENCE ATTRIBUTE in iRODS metadata"]
+        return ["NO REFERENCE ATTRIBUTE in iRODS metadata"]
     else:
         ref_path = ref_paths[0]
     ref_name = extract_reference_name_from_path(ref_path)
