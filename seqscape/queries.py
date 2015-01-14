@@ -25,7 +25,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 import config
-from seqscape.models import Sample, Study, Library, StudySamplesLink
+from seqscape.models import Sample, Study, Library, StudySamplesLink, Wells, MultiplexedLibrary
 from com import wrappers
 
 
@@ -344,6 +344,15 @@ def query_all_libraries_as_batch(ids, id_type):
         A list of libraries, where a library is a seqscape model
     """
     return _query_all_as_batch(Library, ids, id_type)
+
+
+@wrappers.check_args_not_none
+def query_all_wells_as_batch(ids, id_type):
+    return _query_all_as_batch(Wells, ids, id_type)
+
+@wrappers.check_args_not_none
+def query_all_multiplexed_libraries_as_batch(ids, id_type):
+    return _query_all_as_batch(MultiplexedLibrary, ids, id_type)
 
 
 @wrappers.check_args_not_none

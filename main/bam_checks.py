@@ -78,6 +78,15 @@ def get_libraries_from_seqsc(ids_list, id_type):
     return seqsc.query_all_libraries_as_batch(ids_list, id_type)
 
 
+def get_all_possible_libraries_from_seqsc(ids_list, id_type):
+    libs = seqsc.query_all_libraries_as_batch(ids_list, id_type)
+    if not libs:
+        libs = seqsc.query_all_wells_as_batch(ids_list, id_type)
+    if not libs:
+        libs = seqsc.query_all_multiplexed_libraries_as_batch(ids_list, id_type)
+    return libs
+
+
 def get_studies_from_seqsc(ids_list, id_type):
     return seqsc.query_all_studies_as_batch(ids_list, id_type)
 
@@ -95,11 +104,11 @@ def get_diff_seqsc_and_irods_samples_metadata(irods_samples):
     seqsc_samples_by_internal_id = get_samples_from_seqsc(irods_samples['internal_id'], 'internal_id')
 
     if not seqsc_samples_by_name:
-        return ["NO SAMPLES in SEQSCAPE by sample names from iRODS = "+str(seqsc_samples_by_name)]
+        return ["NO SAMPLES in SEQSCAPE by sample names from iRODS = "+str(irods_samples['name'])]
     if not seqsc_samples_by_internal_id:
-        return ["NO SAMPLES in SEQSCAPE by sample internal_id from iRODS = "+str(seqsc_samples_by_internal_id)]
+        return ["NO SAMPLES in SEQSCAPE by sample internal_id from iRODS = "+str(irods_samples['internal_id'])]
     if not seqsc_samples_by_acc_nr:
-        return ["NO SAMPLES in SEQSCAPE by sample internal_id from iRODS = "+str(seqsc_samples_by_acc_nr)]
+        return ["NO SAMPLES in SEQSCAPE by sample accession_number from iRODS = "+str(irods_samples['accession_number'])]
 
     #print set(seqsc_samples_by_acc_nr) == set(seqsc_samples_by_internal_id) == set(seqsc_samples_by_name)
     differences = []
@@ -126,11 +135,11 @@ def get_diff_seqsc_and_irods_studies_metadata(irods_studies):
     seqsc_studies_by_internal_id = get_studies_from_seqsc(irods_studies['internal_id'], 'internal_id')
 
     if not seqsc_studies_by_name:
-        return ["NO STUDIES in SEQSCAPE by study names from iRODS = "+str(seqsc_studies_by_name)]
+        return ["NO STUDIES in SEQSCAPE by study names from iRODS = "+str(irods_studies['name'])]
     if not seqsc_studies_by_internal_id:
-        return ["NO STUDIES in SEQSCAPE by study internal_id from iRODS = "+str(seqsc_studies_by_internal_id)]
+        return ["NO STUDIES in SEQSCAPE by study internal_id from iRODS = "+str(irods_studies['internal_id'])]
     if not seqsc_studies_by_acc_nr:
-        return ["NO STUDIES in SEQSCAPE by study internal_id from iRODS = "+str(seqsc_studies_by_acc_nr)]
+        return ["NO STUDIES in SEQSCAPE by study accession_number from iRODS = "+str(irods_studies['accession_number'])]
 
     differences = []
     if not (set(seqsc_studies_by_acc_nr) == set(seqsc_studies_by_internal_id) == set(seqsc_studies_by_name)):
@@ -148,13 +157,13 @@ def get_diff_seqsc_and_irods_libraries_metadata(irods_libraries):
     elif not irods_libraries['internal_id']:
         return ["NO LIBRARY INTERNAL_ID in IRODS metadata"]
 
-    seqsc_libraries_by_name = get_libraries_from_seqsc(irods_libraries['name'], 'name')
-    seqsc_libraries_by_internal_id = get_libraries_from_seqsc(irods_libraries['internal_id'], 'internal_id')
+    seqsc_libraries_by_name = get_all_possible_libraries_from_seqsc(irods_libraries['name'], 'name')
+    seqsc_libraries_by_internal_id = get_all_possible_libraries_from_seqsc(irods_libraries['internal_id'],'internal_id')
 
     if not seqsc_libraries_by_name:
-        return ["NO LIBRARIES in SEQSCAPE by library names from iRODS = "+str(seqsc_libraries_by_name)]
+        return ["NO LIBRARIES in SEQSCAPE by library names from iRODS = "+str(irods_libraries['name'])]
     if not seqsc_libraries_by_internal_id:
-        return ["NO LIBRARIES in SEQSCAPE by library internal_id from iRODS = "+str(seqsc_libraries_by_internal_id)]
+        return ["NO LIBRARIES in SEQSCAPE by library internal_id from iRODS = "+str(irods_libraries['internal_id'])]
     differences = []
     if not (set(seqsc_libraries_by_internal_id) == set(seqsc_libraries_by_name)):
         diff = "LIBRARIES in iRODS= "+ str(irods_libraries) + " != SEQSCAPE LIBRARIES SEARCHED by name: " + \
@@ -173,9 +182,9 @@ def get_diff_irods_and_header_metadata(header_dict, irods_dict):
     differences = []
     for id_type, head_ids_list in header_dict.iteritems():
         if not irods_dict.get(id_type):
-            differences.append(" HEADER " + str(id_type) + " (" +str(head_ids_list) + ") != iRODS  " + str(irods_dict))
+            differences.append(" HEADER " + str(id_type) + " (" + str(head_ids_list) + ") != iRODS  " + str(irods_dict))
         elif set(head_ids_list).difference(set(irods_dict[id_type])):
-            differences.append(" HEADER " + str(id_type) + " (" +str(head_ids_list) + ") != iRODS  " + str(irods_dict))
+            differences.append(" HEADER " + str(id_type) + " (" + str(head_ids_list) + ") != iRODS  " + str(irods_dict))
     return differences
 
 
@@ -235,6 +244,10 @@ def check_study_metadata(irods_metadata):
 
 def check_md5_metadata(irods_metadata, irods_fpath):
     md5_metadata = extract_values_by_key_from_irods_metadata(irods_metadata, 'md5')
+    if not md5_metadata:
+        print "This file doesn't have md5 in irods metadata"
+        return []
+
     md5_chksum = irods_wrapper.iRODSChecksumOperations.get_checksum(irods_fpath)
     if md5_chksum:
         if not md5_metadata[0] == md5_chksum.md5:
@@ -366,6 +379,7 @@ def extract_lanelet_name_from_irods_fpath(irods_fpath):
     if fname.find(".bam") != -1:
         return fname.split(".bam")[0]
     return ''
+
 
 def check_lanelet_name(irods_fpath, header_lanelets):
     if len(header_lanelets) != 1:
