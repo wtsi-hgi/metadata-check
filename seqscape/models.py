@@ -105,7 +105,49 @@ class Library(Base):
         return hash(self.name)
 
     def __str__(self):
-        return "{ internal_id="+ str(self.internal_id)+", name="+str(self.name)+" }"
+        return "{ internal_id="+ str(self.internal_id)+", name="+str(self.name) + " }"
+
+    def __repr__(self):
+        return "{ internal_id="+ str(self.internal_id)+", name="+str(self.name) + " }"
+
+
+class Wells(Base):
+    __tablename__ = 'current_wells'
+
+    internal_id = Column(Integer, primary_key=True)
+    name = Column(String)
+
+    is_current = Column(Integer)
+
+    def __eq__(self, other):
+        return self.internal_id == other.internal_id
+
+    def __hash__(self):
+        return hash(self.internal_id)
+
+    def __str__(self):
+        return "{ internal_id="+ str(self.internal_id) + "}"
+
+    def __repr__(self):
+        return self.__str__()
+
+
+class MultiplexedLibrary(Base):
+    __tablename__ = 'current_multiplexed_library_tubes'
+
+    internal_id = Column(Integer, primary_key=True)
+    name = Column(String)
+
+    is_current = Column(Integer)
+
+    def __eq__(self, other):
+        return self.name == other.name and self.internal_id == other.internal_id
+
+    def __hash__(self):
+        return hash(self.name)
+
+    def __str__(self):
+        return "{ internal_id="+ str(self.internal_id)+", name="+str(self.name) + " }"
 
     def __repr__(self):
         return "{ internal_id="+ str(self.internal_id)+", name="+str(self.name) + " }"
@@ -119,5 +161,4 @@ class StudySamplesLink(Base):
     study_internal_id = Column(Integer)
 
     is_current = Column(Integer)
-    
-    
+
