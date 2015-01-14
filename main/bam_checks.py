@@ -235,6 +235,9 @@ def check_study_metadata(irods_metadata):
 
 def check_md5_metadata(irods_metadata, irods_fpath):
     md5_metadata = extract_values_by_key_from_irods_metadata(irods_metadata, 'md5')
+    if not md5_metadata:
+        print "This file doesn't have md5 in irods metadata"
+        return []
     md5_chksum = irods_wrapper.iRODSChecksumOperations.get_checksum(irods_fpath)
     if md5_chksum:
         if not md5_metadata[0] == md5_chksum.md5:
