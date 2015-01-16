@@ -92,33 +92,50 @@ def get_studies_from_seqsc(ids_list, id_type):
 
 
 def get_diff_seqsc_and_irods_samples_metadata(irods_samples):
-    if not irods_samples['name']:
-        return ["NO SAMPLE_NAMES in IRODS metadata"]
-    elif not irods_samples['internal_id']:
-        return ["NO SAMPLE INTERNAL_ID in IRODS metadata"]
-    elif not irods_samples['accession_number']:
-        return ["NO SAMPLE ACCESSION_NUMBER in IRODS metadata"]
+    # if not irods_samples['name']:
+    #     return ["NO SAMPLE_NAMES in IRODS metadata"]
+    # elif not irods_samples['internal_id']:
+    #     return ["NO SAMPLE INTERNAL_ID in IRODS metadata"]
+    # elif not irods_samples['accession_number']:
+    #     return ["NO SAMPLE ACCESSION_NUMBER in IRODS metadata"]
 
-    seqsc_samples_by_name = get_samples_from_seqsc(irods_samples['name'], 'name')
-    seqsc_samples_by_acc_nr = get_samples_from_seqsc(irods_samples['accession_number'], 'accession_number')
-    seqsc_samples_by_internal_id = get_samples_from_seqsc(irods_samples['internal_id'], 'internal_id')
+    if irods_samples['name']:
+        seqsc_samples_by_name = get_samples_from_seqsc(irods_samples['name'], 'name')
+        # if not seqsc_samples_by_name:
+        #     return ["NO SAMPLES in SEQSCAPE by sample names from iRODS = "+str(irods_samples['name'])]
+    if irods_samples['accession_number']:
+        seqsc_samples_by_acc_nr = get_samples_from_seqsc(irods_samples['accession_number'], 'accession_number')
+        # if not seqsc_samples_by_acc_nr:
+        #     return ["NO SAMPLES in SEQSCAPE by sample accession_number from iRODS = "+str(irods_samples['accession_number'])]
+    if irods_samples['internal_id']:
+        seqsc_samples_by_internal_id = get_samples_from_seqsc(irods_samples['internal_id'], 'internal_id')
+        # if not seqsc_samples_by_internal_id:
+        #     return ["NO SAMPLES in SEQSCAPE by sample internal_id from iRODS = "+str(irods_samples['internal_id'])]
 
-    if not seqsc_samples_by_name:
-        return ["NO SAMPLES in SEQSCAPE by sample names from iRODS = "+str(irods_samples['name'])]
-    if not seqsc_samples_by_internal_id:
-        return ["NO SAMPLES in SEQSCAPE by sample internal_id from iRODS = "+str(irods_samples['internal_id'])]
-    if not seqsc_samples_by_acc_nr:
-        return ["NO SAMPLES in SEQSCAPE by sample accession_number from iRODS = "+str(irods_samples['accession_number'])]
+    seqsc_non_empty_dict = {}
+    if seqsc_samples_by_acc_nr:
+        seqsc_non_empty_dict['accession_number'] = seqsc_samples_by_acc_nr
+    if seqsc_samples_by_name:
+        seqsc_non_empty_dict['name'] = seqsc_samples_by_name
+    if seqsc_samples_by_internal_id:
+        seqsc_non_empty_dict['internal_id'] = seqsc_samples_by_internal_id
 
-    #print set(seqsc_samples_by_acc_nr) == set(seqsc_samples_by_internal_id) == set(seqsc_samples_by_name)
     differences = []
-    if not (set(seqsc_samples_by_acc_nr) == set(seqsc_samples_by_internal_id) == set(seqsc_samples_by_name)):
-        diff = "SAMPLES in iRODS =" + str(irods_samples) + " != SEQSCAPE SAMPLES SEARCHED by name: " + \
-               str(seqsc_samples_by_name) + \
-               " by accession_number:" + str(seqsc_samples_by_acc_nr) + \
-               " by internal_id: " + str(seqsc_samples_by_internal_id)
-        differences.append(diff)
-        #print "DIFFS: "+str(differences)
+    if len(seqsc_non_empty_dict) == 3:
+        if not (set(seqsc_samples_by_acc_nr) == set(seqsc_samples_by_internal_id) == set(seqsc_samples_by_name)):
+            diff = "SAMPLES in iRODS =" + str(irods_samples) + " != SEQSCAPE SAMPLES SEARCHED by name:" + \
+                   str(seqsc_samples_by_name) + \
+                   " by accession_number:" + str(seqsc_samples_by_acc_nr) + \
+                   " by internal_id: " + str(seqsc_samples_by_internal_id)
+            differences.append(diff)
+    elif len(seqsc_non_empty_dict) == 2:
+        id_type_1, samples_by_1 = seqsc_non_empty_dict.popitem()
+        id_type_2, samples_by_2 = seqsc_non_empty_dict.popitem()
+        if not (set(samples_by_1) == set(samples_by_2)):
+            diff = "SAMPLES in iRODS =" + str(irods_samples) + " != SEQSCAPE SAMPLES SEARCHED by "+id_type_1+": " + \
+                   str(samples_by_1) + \
+                   " by :" + id_type_2 + " : "+ str(samples_by_2)
+            differences.append(diff)
     return differences
 
 
@@ -189,6 +206,7 @@ def get_diff_irods_and_header_metadata(header_dict, irods_dict):
 
 
 def check_sample_metadata(header_metadata, irods_metadata):
+    errors = []
     irods_sample_names_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'sample')
     irods_sample_acc_nr_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'sample_accession_number')
     irods_sample_internal_id_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'sample_id')
@@ -196,6 +214,14 @@ def check_sample_metadata(header_metadata, irods_metadata):
                      'accession_number': irods_sample_acc_nr_list,
                      'internal_id': irods_sample_internal_id_list
     }
+    if not irods_samples['name']:
+        errors.append("NO SAMPLE_NAMES in IRODS metadata")
+    elif not irods_samples['internal_id']:
+        errors.append("NO SAMPLE INTERNAL_ID in IRODS metadata")
+    elif not irods_samples['accession_number']:
+        errors.append("NO SAMPLE ACCESSION_NUMBER in IRODS metadata")
+
+
     header_samples = {'name': [], 'accession_number': [], 'internal_id': []}
     for sample in header_metadata.samples:
         id_type = Identif.guess_identifier_type(sample)
@@ -206,7 +232,7 @@ def check_sample_metadata(header_metadata, irods_metadata):
 
     # Compare IRODS vs. SEQSCAPE:
     irods_vs_seqsc_diffs = get_diff_seqsc_and_irods_samples_metadata(irods_samples)
-    return irods_vs_head_diffs + irods_vs_seqsc_diffs
+    return errors + irods_vs_head_diffs + irods_vs_seqsc_diffs
 
 
 def check_library_metadata(header_metadata, irods_metadata):
