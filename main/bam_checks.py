@@ -92,13 +92,6 @@ def get_studies_from_seqsc(ids_list, id_type):
 
 
 def get_diff_seqsc_and_irods_samples_metadata(irods_samples):
-    # if not irods_samples['name']:
-    #     return ["NO SAMPLE_NAMES in IRODS metadata"]
-    # elif not irods_samples['internal_id']:
-    #     return ["NO SAMPLE INTERNAL_ID in IRODS metadata"]
-    # elif not irods_samples['accession_number']:
-    #     return ["NO SAMPLE ACCESSION_NUMBER in IRODS metadata"]
-
     if irods_samples['name']:
         seqsc_samples_by_name = get_samples_from_seqsc(irods_samples['name'], 'name')
         # if not seqsc_samples_by_name:
@@ -138,55 +131,80 @@ def get_diff_seqsc_and_irods_samples_metadata(irods_samples):
             differences.append(diff)
     return differences
 
-
+# TODO: I am not currently reporting when a study is not found in seqscape...
 def get_diff_seqsc_and_irods_studies_metadata(irods_studies):
-    if not irods_studies['name']:
-        return ["NO STUDY_NAMES in IRODS metadata"]
-    elif not irods_studies['internal_id']:
-        return ["NO STUDY INTERNAL_ID in IRODS metadata"]
-    elif not irods_studies['accession_number']:
-        return ["NO STUDY ACCESSION_NUMBER in IRODS metadata"]
+    # if not irods_studies['name']:
+    #     return ["NO STUDY_NAMES in IRODS metadata"]
+    # if not irods_studies['internal_id']:
+    #     return ["NO STUDY INTERNAL_ID in IRODS metadata"]
+    # if not irods_studies['accession_number']:
+    #     return ["NO STUDY ACCESSION_NUMBER in IRODS metadata"]
 
-    seqsc_studies_by_name = get_studies_from_seqsc(irods_studies['name'], 'name')
-    seqsc_studies_by_acc_nr = get_studies_from_seqsc(irods_studies['accession_number'], 'accession_number')
-    seqsc_studies_by_internal_id = get_studies_from_seqsc(irods_studies['internal_id'], 'internal_id')
+    if irods_studies['name']:
+        seqsc_studies_by_name = get_studies_from_seqsc(irods_studies['name'], 'name')
+        # if not seqsc_studies_by_name:
+            # return ["NO STUDIES in SEQSCAPE by study names from iRODS = "+str(irods_studies['name'])]
+    if irods_studies['accession_number']:
+        seqsc_studies_by_acc_nr = get_studies_from_seqsc(irods_studies['accession_number'], 'accession_number')
+        # if not seqsc_studies_by_acc_nr:
+            # return ["NO STUDIES in SEQSCAPE by study accession_number from iRODS = "+str(irods_studies['accession_number'])]
+    if irods_studies['internal_id']:
+        seqsc_studies_by_internal_id = get_studies_from_seqsc(irods_studies['internal_id'], 'internal_id')
+        # if not seqsc_studies_by_internal_id:
+            # return ["NO STUDIES in SEQSCAPE by study internal_id from iRODS = "+str(irods_studies['internal_id'])]
 
-    if not seqsc_studies_by_name:
-        return ["NO STUDIES in SEQSCAPE by study names from iRODS = "+str(irods_studies['name'])]
-    if not seqsc_studies_by_internal_id:
-        return ["NO STUDIES in SEQSCAPE by study internal_id from iRODS = "+str(irods_studies['internal_id'])]
-    if not seqsc_studies_by_acc_nr:
-        return ["NO STUDIES in SEQSCAPE by study accession_number from iRODS = "+str(irods_studies['accession_number'])]
+    seqsc_non_empty_dict = {}
+    if seqsc_studies_by_acc_nr:
+        seqsc_non_empty_dict['accession_number'] = seqsc_studies_by_acc_nr
+    if seqsc_studies_by_name:
+        seqsc_non_empty_dict['name'] = seqsc_studies_by_name
+    if seqsc_studies_by_internal_id:
+        seqsc_non_empty_dict['internal_id'] = seqsc_studies_by_internal_id
+
 
     differences = []
-    if not (set(seqsc_studies_by_acc_nr) == set(seqsc_studies_by_internal_id) == set(seqsc_studies_by_name)):
-        diff = "STUDY in iRODS =" + str(irods_studies) + " != SEQSCAPE STUDIES SEARCHED by name: " + \
-               str(seqsc_studies_by_name) + \
-               " != by accession_number:" + str(seqsc_studies_by_acc_nr) + \
-               " != by internal_id: " + str(seqsc_studies_by_internal_id)
-        differences.append(diff)
+    if len(seqsc_non_empty_dict) == 3:
+        if not (set(seqsc_studies_by_acc_nr) == set(seqsc_studies_by_internal_id) == set(seqsc_studies_by_name)):
+            diff = "STUDY in iRODS =" + str(irods_studies) + " != SEQSCAPE STUDIES SEARCHED by name: " + \
+                   str(seqsc_studies_by_name) + \
+                   " != by accession_number:" + str(seqsc_studies_by_acc_nr) + \
+                   " != by internal_id: " + str(seqsc_studies_by_internal_id)
+            differences.append(diff)
+    elif len(seqsc_non_empty_dict) == 2:
+        id_type_1, studies_by_1 = seqsc_non_empty_dict.popitem()
+        id_type_2, studies_by_2 = seqsc_non_empty_dict.popitem()
+        if not (set(studies_by_1) == set(studies_by_2)):
+            diff = "STUDIES in iRODS =" + str(irods_studies) + " != SEQSCAPE STUDIES SEARCHED by "+id_type_1+": " + \
+                   str(studies_by_1) + \
+                   " by :" + id_type_2 + " : "+ str(studies_by_2)
+            differences.append(diff)
     return differences
 
 
 def get_diff_seqsc_and_irods_libraries_metadata(irods_libraries):
-    if not irods_libraries['name']:
-        return ["NO LIBRARY_NAMES in IRODS metadata"]
-    elif not irods_libraries['internal_id']:
-        return ["NO LIBRARY INTERNAL_ID in IRODS metadata"]
+    # if not irods_libraries['name']:
+    #     return ["NO LIBRARY_NAMES in IRODS metadata"]
+    # elif not irods_libraries['internal_id']:
+    #     return ["NO LIBRARY INTERNAL_ID in IRODS metadata"]
 
-    seqsc_libraries_by_name = get_all_possible_libraries_from_seqsc(irods_libraries['name'], 'name')
-    seqsc_libraries_by_internal_id = get_all_possible_libraries_from_seqsc(irods_libraries['internal_id'],'internal_id')
+    if irods_libraries['name']:
+        seqsc_libraries_by_name = get_all_possible_libraries_from_seqsc(irods_libraries['name'], 'name')
+    if irods_libraries['internal_id']:
+        seqsc_libraries_by_internal_id = get_all_possible_libraries_from_seqsc(irods_libraries['internal_id'],'internal_id')
 
-    if not seqsc_libraries_by_name:
-        return ["NO LIBRARIES in SEQSCAPE by library names from iRODS = "+str(irods_libraries['name'])]
-    if not seqsc_libraries_by_internal_id:
-        return ["NO LIBRARIES in SEQSCAPE by library internal_id from iRODS = "+str(irods_libraries['internal_id'])]
+    # TODO: fit this in somehow, somewhere, report it back...
+    # if not seqsc_libraries_by_name:
+    #     return ["NO LIBRARIES in SEQSCAPE by library names from iRODS = "+str(irods_libraries['name'])]
+    # if not seqsc_libraries_by_internal_id:
+    #     return ["NO LIBRARIES in SEQSCAPE by library internal_id from iRODS = "+str(irods_libraries['internal_id'])]
+
     differences = []
-    if not (set(seqsc_libraries_by_internal_id) == set(seqsc_libraries_by_name)):
-        diff = "LIBRARIES in iRODS= "+ str(irods_libraries) + " != SEQSCAPE LIBRARIES SEARCHED by name: " + \
-               str(seqsc_libraries_by_name) + \
-               " != SEQSCAPE LIBRARIES searched by internal_id: " + str(seqsc_libraries_by_internal_id)
-        differences.append(diff)
+    if seqsc_libraries_by_internal_id and seqsc_libraries_by_name:
+        if not (set(seqsc_libraries_by_internal_id) == set(seqsc_libraries_by_name)):
+            diff = "LIBRARIES in iRODS= "+ str(irods_libraries) + " != SEQSCAPE LIBRARIES SEARCHED by name: " + \
+                   str(seqsc_libraries_by_name) + \
+                   " != SEQSCAPE LIBRARIES searched by internal_id: " + str(seqsc_libraries_by_internal_id)
+            differences.append(diff)
     return differences
 
 
@@ -240,6 +258,12 @@ def check_library_metadata(header_metadata, irods_metadata):
     irods_lib_internal_id_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'library_id')
     irods_libraries = {'name': irods_lib_names_list,
                        'internal_id': irods_lib_internal_id_list}
+    errors = []
+    if not irods_libraries['name']:
+        errors.append("NO LIBRARY_NAMES in IRODS metadata")
+    elif not irods_libraries['internal_id']:
+        errors.append("NO LIBRARY INTERNAL_ID in IRODS metadata")
+
     header_libraries = {'name': [], 'internal_id': []}
 
     for lib in header_metadata.libraries:
@@ -251,7 +275,7 @@ def check_library_metadata(header_metadata, irods_metadata):
 
     # Compare IRODS vs. SEQSCAPE:
     irods_vs_seqsc_diffs = get_diff_seqsc_and_irods_libraries_metadata(irods_libraries)
-    return irods_vs_head_diffs + irods_vs_seqsc_diffs
+    return irods_vs_head_diffs + irods_vs_seqsc_diffs + errors
 
 
 def check_study_metadata(irods_metadata):
@@ -263,9 +287,17 @@ def check_study_metadata(irods_metadata):
                      'accession_number': irods_study_acc_nr_list
     }
 
+    errors = []
+    if not irods_studies['name']:
+        errors.append("NO STUDY_NAMES in IRODS metadata")
+    if not irods_studies['internal_id']:
+        errors.append("NO STUDY INTERNAL_ID in IRODS metadata")
+    if not irods_studies['accession_number']:
+        errors.append("NO STUDY ACCESSION_NUMBER in IRODS metadata")
+
     # Compare IRODS vs. SEQSCAPE:
     irods_vs_seqsc_diffs = get_diff_seqsc_and_irods_studies_metadata(irods_studies)
-    return irods_vs_seqsc_diffs
+    return irods_vs_seqsc_diffs + errors
 
 
 def check_md5_metadata(irods_metadata, irods_fpath):
