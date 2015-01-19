@@ -220,10 +220,11 @@ def get_diff_irods_and_header_metadata(header_dict, irods_dict):
     """
     differences = []
     for id_type, head_ids_list in header_dict.iteritems():
-        if not irods_dict.get(id_type):
-            differences.append(" HEADER " + str(id_type) + " (" + str(head_ids_list) + ") != iRODS  " + str(irods_dict))
-        elif set(head_ids_list).difference(set(irods_dict[id_type])):
-            differences.append(" HEADER " + str(id_type) + " (" + str(head_ids_list) + ") != iRODS  " + str(irods_dict))
+        # if not irods_dict.get(id_type):
+        #     differences.append(" HEADER " + str(id_type) + " (" + str(head_ids_list) + ") != iRODS  " + str(irods_dict))
+        if irods_dict.get(id_type) and header_dict.get(id_type):
+            if set(head_ids_list).difference(set(irods_dict[id_type])):
+                differences.append(" HEADER " + str(id_type) + " (" + str(head_ids_list) + ") != iRODS  " + str(irods_dict))
     return differences
 
 
