@@ -105,6 +105,7 @@ def get_diff_seqsc_and_irods_samples_metadata(irods_samples):
         # if not seqsc_samples_by_internal_id:
         #     return ["NO SAMPLES in SEQSCAPE by sample internal_id from iRODS = "+str(irods_samples['internal_id'])]
 
+    seqsc_samples_by_acc_nr, seqsc_samples_by_name, seqsc_samples_by_internal_id = None, None, None
     seqsc_non_empty_dict = {}
     if seqsc_samples_by_acc_nr:
         seqsc_non_empty_dict['accession_number'] = seqsc_samples_by_acc_nr
@@ -131,6 +132,7 @@ def get_diff_seqsc_and_irods_samples_metadata(irods_samples):
             differences.append(diff)
     return differences
 
+
 # TODO: I am not currently reporting when a study is not found in seqscape...
 def get_diff_seqsc_and_irods_studies_metadata(irods_studies):
     # if not irods_studies['name']:
@@ -140,6 +142,7 @@ def get_diff_seqsc_and_irods_studies_metadata(irods_studies):
     # if not irods_studies['accession_number']:
     #     return ["NO STUDY ACCESSION_NUMBER in IRODS metadata"]
 
+    seqsc_studies_by_name, seqsc_studies_by_acc_nr, seqsc_studies_by_internal_id = None, None, None
     if irods_studies['name']:
         seqsc_studies_by_name = get_studies_from_seqsc(irods_studies['name'], 'name')
         # if not seqsc_studies_by_name:
@@ -187,10 +190,11 @@ def get_diff_seqsc_and_irods_libraries_metadata(irods_libraries):
     # elif not irods_libraries['internal_id']:
     #     return ["NO LIBRARY INTERNAL_ID in IRODS metadata"]
 
+    seqsc_libraries_by_name, seqsc_libraries_by_internal_id = None, None
     if irods_libraries['name']:
         seqsc_libraries_by_name = get_all_possible_libraries_from_seqsc(irods_libraries['name'], 'name')
     if irods_libraries['internal_id']:
-        seqsc_libraries_by_internal_id = get_all_possible_libraries_from_seqsc(irods_libraries['internal_id'],'internal_id')
+        seqsc_libraries_by_internal_id = get_all_possible_libraries_from_seqsc(irods_libraries['internal_id'], 'internal_id')
 
     # TODO: fit this in somehow, somewhere, report it back...
     # if not seqsc_libraries_by_name:
