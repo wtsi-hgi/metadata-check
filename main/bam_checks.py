@@ -92,122 +92,91 @@ def get_studies_from_seqsc(ids_list, id_type):
 
 
 def get_diff_seqsc_and_irods_samples_metadata(irods_samples):
+    differences = []
+    seqsc_samples_by_acc_nr, seqsc_samples_by_name, seqsc_samples_by_internal_id = None, None, None
     if irods_samples['name']:
         seqsc_samples_by_name = get_samples_from_seqsc(irods_samples['name'], 'name')
-        # if not seqsc_samples_by_name:
-        #     return ["NO SAMPLES in SEQSCAPE by sample names from iRODS = "+str(irods_samples['name'])]
+        if not seqsc_samples_by_name:
+            differences.append("NO SAMPLES found in SEQSCAPE by sample names taken from iRODS metadata = " +
+                               str(irods_samples['name']))
     if irods_samples['accession_number']:
         seqsc_samples_by_acc_nr = get_samples_from_seqsc(irods_samples['accession_number'], 'accession_number')
-        # if not seqsc_samples_by_acc_nr:
-        #     return ["NO SAMPLES in SEQSCAPE by sample accession_number from iRODS = "+str(irods_samples['accession_number'])]
+        if not seqsc_samples_by_acc_nr:
+            differences.append("NO SAMPLES found in SEQSCAPE by sample accession_number from iRODS metadata = " +
+                               str(irods_samples['accession_number']))
     if irods_samples['internal_id']:
         seqsc_samples_by_internal_id = get_samples_from_seqsc(irods_samples['internal_id'], 'internal_id')
-        # if not seqsc_samples_by_internal_id:
-        #     return ["NO SAMPLES in SEQSCAPE by sample internal_id from iRODS = "+str(irods_samples['internal_id'])]
+        if not seqsc_samples_by_internal_id:
+            differences.append("NO SAMPLES found in SEQSCAPE by sample internal_id from iRODS metadata = " +
+                               str(irods_samples['internal_id']))
 
-    seqsc_samples_by_acc_nr, seqsc_samples_by_name, seqsc_samples_by_internal_id = None, None, None
-    seqsc_non_empty_dict = {}
-    if seqsc_samples_by_acc_nr:
-        seqsc_non_empty_dict['accession_number'] = seqsc_samples_by_acc_nr
-    if seqsc_samples_by_name:
-        seqsc_non_empty_dict['name'] = seqsc_samples_by_name
-    if seqsc_samples_by_internal_id:
-        seqsc_non_empty_dict['internal_id'] = seqsc_samples_by_internal_id
-
-    differences = []
-    if len(seqsc_non_empty_dict) == 3:
-        if not (set(seqsc_samples_by_acc_nr) == set(seqsc_samples_by_internal_id) == set(seqsc_samples_by_name)):
-            diff = "SAMPLES in iRODS =" + str(irods_samples) + " != SEQSCAPE SAMPLES SEARCHED by name:" + \
-                   str(seqsc_samples_by_name) + \
-                   " by accession_number:" + str(seqsc_samples_by_acc_nr) + \
-                   " by internal_id: " + str(seqsc_samples_by_internal_id)
+    # Compare samples found in Seqscape by different identifiers:
+    if seqsc_samples_by_acc_nr and seqsc_samples_by_name:
+        if not set(seqsc_samples_by_acc_nr) == set(seqsc_samples_by_name):
+            diff = "The samples found in Seqscape when querying it by sample names from iRODS metadata: "+\
+                   str(seqsc_samples_by_name)+ " != as when querying by accession number from iRODS metadata: "+\
+                   str(seqsc_samples_by_acc_nr)
             differences.append(diff)
-    elif len(seqsc_non_empty_dict) == 2:
-        id_type_1, samples_by_1 = seqsc_non_empty_dict.popitem()
-        id_type_2, samples_by_2 = seqsc_non_empty_dict.popitem()
-        if not (set(samples_by_1) == set(samples_by_2)):
-            diff = "SAMPLES in iRODS =" + str(irods_samples) + " != SEQSCAPE SAMPLES SEARCHED by "+id_type_1+": " + \
-                   str(samples_by_1) + \
-                   " by :" + id_type_2 + " : "+ str(samples_by_2)
+
+    if seqsc_samples_by_internal_id and seqsc_samples_by_name:
+        if not set(seqsc_samples_by_internal_id) == set(seqsc_samples_by_internal_id):
+            diff = "The samples found in Seqscape when querying it by sample names from iRODS metadata: " + \
+                   str(seqsc_samples_by_name) + " != as when querying by internal_ids from iRODS metadata: " + \
+                   str(seqsc_samples_by_internal_id)
             differences.append(diff)
     return differences
 
 
-# TODO: I am not currently reporting when a study is not found in seqscape...
 def get_diff_seqsc_and_irods_studies_metadata(irods_studies):
-    # if not irods_studies['name']:
-    #     return ["NO STUDY_NAMES in IRODS metadata"]
-    # if not irods_studies['internal_id']:
-    #     return ["NO STUDY INTERNAL_ID in IRODS metadata"]
-    # if not irods_studies['accession_number']:
-    #     return ["NO STUDY ACCESSION_NUMBER in IRODS metadata"]
-
+    differences = []
     seqsc_studies_by_name, seqsc_studies_by_acc_nr, seqsc_studies_by_internal_id = None, None, None
     if irods_studies['name']:
         seqsc_studies_by_name = get_studies_from_seqsc(irods_studies['name'], 'name')
-        # if not seqsc_studies_by_name:
-            # return ["NO STUDIES in SEQSCAPE by study names from iRODS = "+str(irods_studies['name'])]
+        if not seqsc_studies_by_name:
+            differences.append("NO STUDIES in SEQSCAPE by study names from iRODS = "+str(irods_studies['name']))
     if irods_studies['accession_number']:
         seqsc_studies_by_acc_nr = get_studies_from_seqsc(irods_studies['accession_number'], 'accession_number')
-        # if not seqsc_studies_by_acc_nr:
-            # return ["NO STUDIES in SEQSCAPE by study accession_number from iRODS = "+str(irods_studies['accession_number'])]
+        if not seqsc_studies_by_acc_nr:
+            differences.append("NO STUDIES in SEQSCAPE by study accession_number from iRODS = "+str(irods_studies['accession_number']))
     if irods_studies['internal_id']:
         seqsc_studies_by_internal_id = get_studies_from_seqsc(irods_studies['internal_id'], 'internal_id')
-        # if not seqsc_studies_by_internal_id:
-            # return ["NO STUDIES in SEQSCAPE by study internal_id from iRODS = "+str(irods_studies['internal_id'])]
+        if not seqsc_studies_by_internal_id:
+            differences.append("NO STUDIES in SEQSCAPE by study internal_id from iRODS = "+str(irods_studies['internal_id']))
 
-    seqsc_non_empty_dict = {}
-    if seqsc_studies_by_acc_nr:
-        seqsc_non_empty_dict['accession_number'] = seqsc_studies_by_acc_nr
-    if seqsc_studies_by_name:
-        seqsc_non_empty_dict['name'] = seqsc_studies_by_name
-    if seqsc_studies_by_internal_id:
-        seqsc_non_empty_dict['internal_id'] = seqsc_studies_by_internal_id
-
-
-    differences = []
-    if len(seqsc_non_empty_dict) == 3:
-        if not (set(seqsc_studies_by_acc_nr) == set(seqsc_studies_by_internal_id) == set(seqsc_studies_by_name)):
-            diff = "STUDY in iRODS =" + str(irods_studies) + " != SEQSCAPE STUDIES SEARCHED by name: " + \
-                   str(seqsc_studies_by_name) + \
-                   " != by accession_number:" + str(seqsc_studies_by_acc_nr) + \
-                   " != by internal_id: " + str(seqsc_studies_by_internal_id)
+    # Compare studies found in Seqscape by different identifiers:
+    if seqsc_studies_by_acc_nr and seqsc_studies_by_name:
+        if not set(seqsc_studies_by_acc_nr) == set(seqsc_studies_by_name):
+            diff = "The studies found in Seqscape when querying it by name from iRODS metadata: "+\
+                   str(seqsc_studies_by_name)+ " != as when querying by accession number from iRODS metadata: "+\
+                   str(seqsc_studies_by_acc_nr)
             differences.append(diff)
-    elif len(seqsc_non_empty_dict) == 2:
-        id_type_1, studies_by_1 = seqsc_non_empty_dict.popitem()
-        id_type_2, studies_by_2 = seqsc_non_empty_dict.popitem()
-        if not (set(studies_by_1) == set(studies_by_2)):
-            diff = "STUDIES in iRODS =" + str(irods_studies) + " != SEQSCAPE STUDIES SEARCHED by "+id_type_1+": " + \
-                   str(studies_by_1) + \
-                   " by :" + id_type_2 + " : "+ str(studies_by_2)
+
+    if seqsc_studies_by_internal_id and seqsc_studies_by_name:
+        if not set(seqsc_studies_by_internal_id) == set(seqsc_studies_by_internal_id):
+            diff = "The studies found in Seqscape when querying it by name from iRODS metadata: " + \
+                   str(seqsc_studies_by_name) + " != as when querying by internal_ids from iRODS metadata: " + \
+                   str(seqsc_studies_by_internal_id)
             differences.append(diff)
     return differences
 
 
 def get_diff_seqsc_and_irods_libraries_metadata(irods_libraries):
-    # if not irods_libraries['name']:
-    #     return ["NO LIBRARY_NAMES in IRODS metadata"]
-    # elif not irods_libraries['internal_id']:
-    #     return ["NO LIBRARY INTERNAL_ID in IRODS metadata"]
-
+    differences = []
     seqsc_libraries_by_name, seqsc_libraries_by_internal_id = None, None
     if irods_libraries['name']:
         seqsc_libraries_by_name = get_all_possible_libraries_from_seqsc(irods_libraries['name'], 'name')
+        if not seqsc_libraries_by_name:
+            differences.append("NO LIBRARIES in SEQSCAPE by library names from iRODS = "+str(irods_libraries['name']))
     if irods_libraries['internal_id']:
         seqsc_libraries_by_internal_id = get_all_possible_libraries_from_seqsc(irods_libraries['internal_id'], 'internal_id')
+        if not seqsc_libraries_by_internal_id:
+            differences.append("NO LIBRARIES in SEQSCAPE by library internal_id from iRODS = "+str(irods_libraries['internal_id']))
 
-    # TODO: fit this in somehow, somewhere, report it back...
-    # if not seqsc_libraries_by_name:
-    #     return ["NO LIBRARIES in SEQSCAPE by library names from iRODS = "+str(irods_libraries['name'])]
-    # if not seqsc_libraries_by_internal_id:
-    #     return ["NO LIBRARIES in SEQSCAPE by library internal_id from iRODS = "+str(irods_libraries['internal_id'])]
-
-    differences = []
     if seqsc_libraries_by_internal_id and seqsc_libraries_by_name:
         if not (set(seqsc_libraries_by_internal_id) == set(seqsc_libraries_by_name)):
-            diff = "LIBRARIES in iRODS= "+ str(irods_libraries) + " != SEQSCAPE LIBRARIES SEARCHED by name: " + \
+            diff = "LIBRARIES in iRODS= "+ str(irods_libraries) + " != LIBRARIES IN SEQSCAPE SEARCHED by name: " + \
                    str(seqsc_libraries_by_name) + \
-                   " != SEQSCAPE LIBRARIES searched by internal_id: " + str(seqsc_libraries_by_internal_id)
+                   " != LIBRARIES IN SEQSCAPE searched by internal_id: " + str(seqsc_libraries_by_internal_id)
             differences.append(diff)
     return differences
 
@@ -228,8 +197,7 @@ def get_diff_irods_and_header_metadata(header_dict, irods_dict):
     return differences
 
 
-def check_sample_metadata(header_metadata, irods_metadata):
-    errors = []
+def get_samples_from_irods_metadata(irods_metadata):
     irods_sample_names_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'sample')
     irods_sample_acc_nr_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'sample_accession_number')
     irods_sample_internal_id_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'sample_id')
@@ -237,18 +205,55 @@ def check_sample_metadata(header_metadata, irods_metadata):
                      'accession_number': irods_sample_acc_nr_list,
                      'internal_id': irods_sample_internal_id_list
     }
-    if not irods_samples['name']:
-        errors.append("NO SAMPLE_NAMES in IRODS metadata")
-    elif not irods_samples['internal_id']:
-        errors.append("NO SAMPLE INTERNAL_ID in IRODS metadata")
-    elif not irods_samples['accession_number']:
-        errors.append("NO SAMPLE ACCESSION_NUMBER in IRODS metadata")
+    return irods_samples
 
 
-    header_samples = {'name': [], 'accession_number': [], 'internal_id': []}
-    for sample in header_metadata.samples:
-        id_type = Identif.guess_identifier_type(sample)
-        header_samples[id_type].append(sample)
+def get_library_from_irods_metadata(irods_metadata):
+    irods_lib_names_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'library')
+    irods_lib_internal_id_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'library_id')
+    irods_libraries = {'name': irods_lib_names_list,
+                       'internal_id': irods_lib_internal_id_list}
+    return irods_libraries
+
+
+def get_studies_from_irods_metadata(irods_metadata):
+    irods_study_names_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'study')
+    irods_study_internal_id_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'study_id')
+    irods_study_acc_nr_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'study_accession_number')
+    irods_studies = {'name': irods_study_names_list,
+                     'internal_id': irods_study_internal_id_list,
+                     'accession_number': irods_study_acc_nr_list
+    }
+    return irods_studies
+
+
+def get_entities_from_header_metadata(header_entities):
+    grouped_entities = {'name': [], 'accession_number': [], 'internal_id': []}
+    for sample_id in header_entities:
+        id_type = Identif.guess_identifier_type(sample_id)
+        grouped_entities[id_type].append(sample_id)
+    return grouped_entities
+
+
+def report_missing_identifiers(metadata):
+    error_report = []
+    if not metadata['name']:
+        error_report.append("NO names in IRODS metadata")
+    if not metadata['internal_id']:
+        error_report.append("NO  internal_ids in IRODS metadata")
+    if not metadata['accession_number']:
+        error_report.append("NO accession numbers in IRODS metadata")
+    return error_report
+
+
+def check_sample_metadata(header_metadata, irods_metadata):
+    errors = []
+
+    missing_ids = report_missing_identifiers(irods_metadata)
+    errors.extend(missing_ids)
+
+    irods_samples = get_samples_from_irods_metadata(irods_metadata)
+    header_samples = get_entities_from_header_metadata(header_metadata)
 
     # Compare IRODS vs. HEADER:
     irods_vs_head_diffs = get_diff_irods_and_header_metadata(header_samples, irods_samples)
@@ -259,21 +264,16 @@ def check_sample_metadata(header_metadata, irods_metadata):
 
 
 def check_library_metadata(header_metadata, irods_metadata):
-    irods_lib_names_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'library')
-    irods_lib_internal_id_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'library_id')
-    irods_libraries = {'name': irods_lib_names_list,
-                       'internal_id': irods_lib_internal_id_list}
     errors = []
-    if not irods_libraries['name']:
-        errors.append("NO LIBRARY_NAMES in IRODS metadata")
-    elif not irods_libraries['internal_id']:
-        errors.append("NO LIBRARY INTERNAL_ID in IRODS metadata")
+    missing_ids = report_missing_identifiers(irods_metadata)
+    errors.extend(missing_ids)
+    # if not irods_libraries['name']:
+    #     errors.append("NO LIBRARY_NAMES in IRODS metadata")
+    # elif not irods_libraries['internal_id']:
+    #     errors.append("NO LIBRARY INTERNAL_ID in IRODS metadata")
 
-    header_libraries = {'name': [], 'internal_id': []}
-
-    for lib in header_metadata.libraries:
-        id_type = Identif.guess_identifier_type(lib)
-        header_libraries[id_type].append(lib)
+    header_libraries = get_entities_from_header_metadata(header_metadata.libraries)
+    irods_libraries = get_library_from_irods_metadata(irods_metadata)
 
     # Compare IRODS vs. HEADER:
     irods_vs_head_diffs = get_diff_irods_and_header_metadata(header_libraries, irods_libraries)
@@ -284,21 +284,12 @@ def check_library_metadata(header_metadata, irods_metadata):
 
 
 def check_study_metadata(irods_metadata):
-    irods_study_names_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'study')
-    irods_study_internal_id_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'study_id')
-    irods_study_acc_nr_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'study_accession_number')
-    irods_studies = {'name': irods_study_names_list,
-                     'internal_id': irods_study_internal_id_list,
-                     'accession_number': irods_study_acc_nr_list
-    }
-
     errors = []
-    if not irods_studies['name']:
-        errors.append("NO STUDY_NAMES in IRODS metadata")
-    if not irods_studies['internal_id']:
-        errors.append("NO STUDY INTERNAL_ID in IRODS metadata")
-    if not irods_studies['accession_number']:
-        errors.append("NO STUDY ACCESSION_NUMBER in IRODS metadata")
+
+    missing_ids = report_missing_identifiers(irods_metadata)
+    errors.extend(missing_ids)
+
+    irods_studies = get_studies_from_irods_metadata(irods_metadata)
 
     # Compare IRODS vs. SEQSCAPE:
     irods_vs_seqsc_diffs = get_diff_seqsc_and_irods_studies_metadata(irods_studies)
@@ -318,69 +309,6 @@ def check_md5_metadata(irods_metadata, irods_fpath):
             return [
                 "iRODS metadata md5 ("+ str(md5_metadata) + ") != ichksum (" + str(md5_chksum) + ") "]
     return []
-
-
-def check_sample_metadata_old(header_metadata, irods_metadata):
-    file_ok = True
-    irods_sample_names_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'sample')
-    irods_sample_acc_nr_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'sample_accession_number')
-    irods_sample_internal_id_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'sample_id')
-
-    # Compare sample identifiers HEADER vs IRODS:
-    error = False
-    for sample_id in header_metadata.samples:
-        id_type = Identif.guess_identifier_type(sample_id)
-        if id_type == 'accession_number':
-            if sample_id not in irods_sample_acc_nr_list:
-                print "ERROR - this sample accession number appears in the header, but not in the metadata:" + str(
-                    sample_id)
-                print "Header SAMPLE accession numbers: " + str(sample_id)
-                print "IRODS SAMPLE accession numbers: " + str(irods_sample_acc_nr_list)
-                error = True
-                file_ok = False
-        elif id_type == 'name':
-            if sample_id not in irods_sample_names_list:
-                print "ERROR - this sample name appears in the header, but not in the irods metadata: " + str(sample_id)
-                print "Header SAMPLE name: " + str(sample_id)
-                print "IRODS SAMPLE names: " + str(irods_sample_names_list)
-                error = True
-                file_ok = False
-        elif id_type == 'internal_id':
-            if sample_id not in irods_sample_internal_id_list:
-                print "ERROR - this sample id appears in the header, but not in the irods metadata: " + str(sample_id)
-                print "Header SAMPLE internal_id: " + str(sample_id)
-                print "IRODS SAMPLE internal_id: " + str(irods_sample_internal_id_list)
-                error = True
-                file_ok = False
-        if error:
-            error = False
-
-    # Compare samples IRODS vs. SEQSCAPE:
-    get_diff_seqsc_and_irods_samples_metadata()
-    return file_ok
-
-
-def check_library_metadata_old(header_metadata, irods_metadata):
-    irods_lib_names_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'library')
-    irods_lib_ids_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'library_id')
-
-    header_lib_identifiers_tuples = [(Identif.guess_identifier_type(lib), lib) for lib in header_metadata.libraries]
-
-    print "IRODS LIBRARY names: " + str(irods_lib_names_list)
-    print "IRODS LIBRARY ids: " + str(irods_lib_ids_list)
-    print "HEADER LIBRARIES: " + str(header_lib_identifiers_tuples)
-
-    error = False
-    for lib_identif in header_lib_identifiers_tuples:
-        if lib_identif not in irods_lib_ids_list and lib_identif not in irods_lib_names_list:
-            print "ERROR Library in the header, but not in the iRODS metadata: " + str(lib_identif)
-            print "IRODS libraries name: " + str(irods_lib_names_list)
-            print "IRODS library ids: " + str(irods_lib_ids_list)
-            error = True
-        if error:
-            error = False
-        else:
-            print "File OK"
 
 
 def get_run_from_irods_path(irods_fpath):
