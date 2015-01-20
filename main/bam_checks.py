@@ -241,7 +241,7 @@ def report_missing_identifiers(metadata):
         error_report.append("NO names in IRODS metadata")
     if not metadata['internal_id']:
         error_report.append("NO  internal_ids in IRODS metadata")
-    if not metadata['accession_number']:
+    if not 'accession_number' in metadata or not metadata['accession_number']:
         error_report.append("NO accession numbers in IRODS metadata")
     return error_report
 
