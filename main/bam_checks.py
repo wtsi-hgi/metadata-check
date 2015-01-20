@@ -249,11 +249,11 @@ def report_missing_identifiers(metadata):
 def check_sample_metadata(header_metadata, irods_metadata):
     errors = []
 
-    missing_ids = report_missing_identifiers(irods_metadata)
-    errors.extend(missing_ids)
-
     irods_samples = get_samples_from_irods_metadata(irods_metadata)
     header_samples = get_entities_from_header_metadata(header_metadata)
+
+    missing_ids = report_missing_identifiers(irods_samples)
+    errors.extend(missing_ids)
 
     # Compare IRODS vs. HEADER:
     irods_vs_head_diffs = get_diff_irods_and_header_metadata(header_samples, irods_samples)
@@ -265,15 +265,12 @@ def check_sample_metadata(header_metadata, irods_metadata):
 
 def check_library_metadata(header_metadata, irods_metadata):
     errors = []
-    missing_ids = report_missing_identifiers(irods_metadata)
-    errors.extend(missing_ids)
-    # if not irods_libraries['name']:
-    #     errors.append("NO LIBRARY_NAMES in IRODS metadata")
-    # elif not irods_libraries['internal_id']:
-    #     errors.append("NO LIBRARY INTERNAL_ID in IRODS metadata")
 
     header_libraries = get_entities_from_header_metadata(header_metadata.libraries)
     irods_libraries = get_library_from_irods_metadata(irods_metadata)
+
+    missing_ids = report_missing_identifiers(irods_libraries)
+    errors.extend(missing_ids)
 
     # Compare IRODS vs. HEADER:
     irods_vs_head_diffs = get_diff_irods_and_header_metadata(header_libraries, irods_libraries)
@@ -286,10 +283,10 @@ def check_library_metadata(header_metadata, irods_metadata):
 def check_study_metadata(irods_metadata):
     errors = []
 
-    missing_ids = report_missing_identifiers(irods_metadata)
-    errors.extend(missing_ids)
-
     irods_studies = get_studies_from_irods_metadata(irods_metadata)
+
+    missing_ids = report_missing_identifiers(irods_studies)
+    errors.extend(missing_ids)
 
     # Compare IRODS vs. SEQSCAPE:
     irods_vs_seqsc_diffs = get_diff_seqsc_and_irods_studies_metadata(irods_studies)
