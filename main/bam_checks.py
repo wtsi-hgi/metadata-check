@@ -249,8 +249,8 @@ def report_missing_identifiers(metadata):
 def check_sample_metadata(header_metadata, irods_metadata):
     errors = []
 
+    header_samples = get_entities_from_header_metadata(header_metadata.samples)
     irods_samples = get_samples_from_irods_metadata(irods_metadata)
-    header_samples = get_entities_from_header_metadata(header_metadata)
 
     missing_ids = report_missing_identifiers(irods_samples)
     errors.extend(missing_ids)
