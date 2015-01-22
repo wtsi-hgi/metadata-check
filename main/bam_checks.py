@@ -237,9 +237,9 @@ def get_entities_from_header_metadata(header_entities):
 
 def report_missing_identifiers(metadata):
     error_report = []
-    if not metadata['name']:
+    if not 'name' in metadata or not metadata['name']:
         error_report.append("NO names in IRODS metadata")
-    if not metadata['internal_id']:
+    if not 'internal_id' in metadata or not metadata['internal_id']:
         error_report.append("NO  internal_ids in IRODS metadata")
     if not 'accession_number' in metadata or not metadata['accession_number']:
         error_report.append("NO accession numbers in IRODS metadata")
