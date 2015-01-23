@@ -20,6 +20,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import argparse
+from collections import namedtuple
 from header_parser import bam_h_analyser as h_analyser
 from identifiers import EntityIdentifier as Identif
 from irods import api as irods
@@ -113,8 +114,8 @@ def get_diff_seqsc_and_irods_samples_metadata(irods_samples):
     # Compare samples found in Seqscape by different identifiers:
     if seqsc_samples_by_acc_nr and seqsc_samples_by_name:
         if not set(seqsc_samples_by_acc_nr) == set(seqsc_samples_by_name):
-            diff = "The samples found in Seqscape when querying it by sample names from iRODS metadata: "+\
-                   str(seqsc_samples_by_name)+ " != as when querying by accession number from iRODS metadata: "+\
+            diff = "The samples found in Seqscape when querying it by sample names from iRODS metadata: " + \
+                   str(seqsc_samples_by_name) + " != as when querying by accession number from iRODS metadata: " + \
                    str(seqsc_samples_by_acc_nr)
             differences.append(diff)
 
@@ -133,21 +134,23 @@ def get_diff_seqsc_and_irods_studies_metadata(irods_studies):
     if irods_studies['name']:
         seqsc_studies_by_name = get_studies_from_seqsc(irods_studies['name'], 'name')
         if not seqsc_studies_by_name:
-            differences.append("NO STUDIES in SEQSCAPE by study names from iRODS = "+str(irods_studies['name']))
+            differences.append("NO STUDIES in SEQSCAPE by study names from iRODS = " + str(irods_studies['name']))
     if irods_studies['accession_number']:
         seqsc_studies_by_acc_nr = get_studies_from_seqsc(irods_studies['accession_number'], 'accession_number')
         if not seqsc_studies_by_acc_nr:
-            differences.append("NO STUDIES in SEQSCAPE by study accession_number from iRODS = "+str(irods_studies['accession_number']))
+            differences.append("NO STUDIES in SEQSCAPE by study accession_number from iRODS = " + str(
+                irods_studies['accession_number']))
     if irods_studies['internal_id']:
         seqsc_studies_by_internal_id = get_studies_from_seqsc(irods_studies['internal_id'], 'internal_id')
         if not seqsc_studies_by_internal_id:
-            differences.append("NO STUDIES in SEQSCAPE by study internal_id from iRODS = "+str(irods_studies['internal_id']))
+            differences.append(
+                "NO STUDIES in SEQSCAPE by study internal_id from iRODS = " + str(irods_studies['internal_id']))
 
     # Compare studies found in Seqscape by different identifiers:
     if seqsc_studies_by_acc_nr and seqsc_studies_by_name:
         if not set(seqsc_studies_by_acc_nr) == set(seqsc_studies_by_name):
-            diff = "The studies found in Seqscape when querying it by name from iRODS metadata: "+\
-                   str(seqsc_studies_by_name)+ " != as when querying by accession number from iRODS metadata: "+\
+            diff = "The studies found in Seqscape when querying it by name from iRODS metadata: " + \
+                   str(seqsc_studies_by_name) + " != as when querying by accession number from iRODS metadata: " + \
                    str(seqsc_studies_by_acc_nr)
             differences.append(diff)
 
@@ -166,15 +169,17 @@ def get_diff_seqsc_and_irods_libraries_metadata(irods_libraries):
     if irods_libraries['name']:
         seqsc_libraries_by_name = get_all_possible_libraries_from_seqsc(irods_libraries['name'], 'name')
         if not seqsc_libraries_by_name:
-            differences.append("NO LIBRARIES in SEQSCAPE by library names from iRODS = "+str(irods_libraries['name']))
+            differences.append("NO LIBRARIES in SEQSCAPE by library names from iRODS = " + str(irods_libraries['name']))
     if irods_libraries['internal_id']:
-        seqsc_libraries_by_internal_id = get_all_possible_libraries_from_seqsc(irods_libraries['internal_id'], 'internal_id')
+        seqsc_libraries_by_internal_id = get_all_possible_libraries_from_seqsc(irods_libraries['internal_id'],
+                                                                               'internal_id')
         if not seqsc_libraries_by_internal_id:
-            differences.append("NO LIBRARIES in SEQSCAPE by library internal_id from iRODS = "+str(irods_libraries['internal_id']))
+            differences.append(
+                "NO LIBRARIES in SEQSCAPE by library internal_id from iRODS = " + str(irods_libraries['internal_id']))
 
     if seqsc_libraries_by_internal_id and seqsc_libraries_by_name:
         if not (set(seqsc_libraries_by_internal_id) == set(seqsc_libraries_by_name)):
-            diff = "LIBRARIES in iRODS= "+ str(irods_libraries) + " != LIBRARIES IN SEQSCAPE SEARCHED by name: " + \
+            diff = "LIBRARIES in iRODS= " + str(irods_libraries) + " != LIBRARIES IN SEQSCAPE SEARCHED by name: " + \
                    str(seqsc_libraries_by_name) + \
                    " != LIBRARIES IN SEQSCAPE searched by internal_id: " + str(seqsc_libraries_by_internal_id)
             differences.append(diff)
@@ -190,10 +195,11 @@ def get_diff_irods_and_header_metadata(header_dict, irods_dict):
     differences = []
     for id_type, head_ids_list in header_dict.iteritems():
         # if not irods_dict.get(id_type):
-        #     differences.append(" HEADER " + str(id_type) + " (" + str(head_ids_list) + ") != iRODS  " + str(irods_dict))
+        # differences.append(" HEADER " + str(id_type) + " (" + str(head_ids_list) + ") != iRODS  " + str(irods_dict))
         if irods_dict.get(id_type) and header_dict.get(id_type):
             if set(head_ids_list).difference(set(irods_dict[id_type])):
-                differences.append(" HEADER " + str(id_type) + " (" + str(head_ids_list) + ") != iRODS  " + str(irods_dict))
+                differences.append(
+                    " HEADER " + str(id_type) + " (" + str(head_ids_list) + ") != iRODS  " + str(irods_dict))
     return differences
 
 
@@ -237,9 +243,9 @@ def get_entities_from_header_metadata(header_entities):
 
 def report_missing_identifiers(metadata):
     error_report = []
-    if not metadata['name']:
+    if not 'name' in metadata or not metadata['name']:
         error_report.append("NO names in IRODS metadata")
-    if not metadata['internal_id']:
+    if not 'internal_id' in metadata or not metadata['internal_id']:
         error_report.append("NO  internal_ids in IRODS metadata")
     if not 'accession_number' in metadata or not metadata['accession_number']:
         error_report.append("NO accession numbers in IRODS metadata")
@@ -304,7 +310,7 @@ def check_md5_metadata(irods_metadata, irods_fpath):
     if md5_chksum:
         if not md5_metadata[0] == md5_chksum.md5:
             return [
-                "iRODS metadata md5 ("+ str(md5_metadata) + ") != ichksum (" + str(md5_chksum) + ") "]
+                "iRODS metadata md5 (" + str(md5_metadata) + ") != ichksum (" + str(md5_chksum) + ") "]
     return []
 
 
@@ -375,12 +381,13 @@ def check_lanelet_name(irods_fpath, header_lanelets):
         return [" > 1 lanelets in the header."]
     irods_lanelet_name = extract_lanelet_name_from_irods_fpath(irods_fpath)
     if irods_lanelet_name != header_lanelets[0]:
-        return ["HEADER LANELET = "+str(header_lanelets[0]) + " different from FILE NAME = "+str(irods_lanelet_name)]
+        return [
+            "HEADER LANELET = " + str(header_lanelets[0]) + " different from FILE NAME = " + str(irods_lanelet_name)]
     return []
 
 
 def extract_reference_name_from_path(ref_path):
-    #print "REF PATH: "+str(ref_path)
+    # print "REF PATH: "+str(ref_path)
     ref_file_name = os.path.basename(ref_path)
     if ref_file_name.find(".fa") != -1:
         ref_name = ref_file_name.split(".fa")[0]
@@ -398,8 +405,149 @@ def check_reference(irods_metadata, desired_ref):
         ref_path = ref_paths[0]
     ref_name = extract_reference_name_from_path(ref_path)
     if ref_name != desired_ref:
-        return ["WANTED REFERENCE =: " + str(desired_ref)+ " different from ACTUAL REFERENCE = " + str(ref_name)]
+        return ["WANTED REFERENCE =: " + str(desired_ref) + " different from ACTUAL REFERENCE = " + str(ref_name)]
     return []
+
+
+def run_tests_on_samples(irods_metadata, header_metadata=None,
+                         irods_vs_header=True, irods_vs_seqscape=True):
+    if not irods_vs_header and not irods_vs_seqscape:
+        print "Called tests_on_samples, but nothing to be done because both " \
+              "irods_vs_header and irods_vs_seqscape parameters are False."
+        return
+    if header_metadata and not irods_vs_header:
+        print "ERROR - called tests_on_samples, but irods_vs_header parameter is false."
+        return
+    if not header_metadata and irods_vs_header:
+        print "ERROR - called tests_on_samples, but header_metadata is None."
+        return
+
+    diffs = []
+    if irods_vs_header or irods_vs_seqscape:
+        irods_samples = get_samples_from_irods_metadata(irods_metadata)
+        missing_ids = report_missing_identifiers(irods_samples)
+        diffs.extend(missing_ids)
+
+    # Compare IRODS vs. HEADER:
+    if irods_vs_header:
+        header_samples = get_entities_from_header_metadata(header_metadata.samples)
+        irods_vs_head_diffs = get_diff_irods_and_header_metadata(header_samples, irods_samples)
+        diffs.extend(irods_vs_head_diffs)
+
+    # Compare IRODS vs. SEQSCAPE:
+    if irods_vs_seqscape:
+        irods_vs_seqsc_diffs = get_diff_seqsc_and_irods_samples_metadata(irods_samples)
+        diffs.extend(irods_vs_seqsc_diffs)
+    return diffs
+
+
+def run_tests_on_libraries(irods_metadata, header_metadata=None,
+                           irods_vs_header=True, irods_vs_seqscape=True):
+    if not irods_vs_header and not irods_vs_seqscape:
+        print "Called tests_on_libraries, but nothing to be done because both " \
+              "irods_vs_header and irods_vs_seqscape parameters are False."
+        return
+    if header_metadata and not irods_vs_header:
+        print "ERROR - called tests_on_libraries, but irods_vs_header parameter is false."
+        return
+    if not header_metadata and irods_vs_header:
+        print "ERROR - called tests_on_libraries, but header_metadata is None."
+        return
+
+    diffs = []
+    if irods_vs_header or irods_vs_seqscape:
+        irods_libraries = get_library_from_irods_metadata(irods_metadata)
+        missing_ids = report_missing_identifiers(irods_libraries)
+        diffs.extend(missing_ids)
+
+    # Compare IRODS vs. HEADER:
+    if irods_vs_header:
+        header_libraries = get_entities_from_header_metadata(header_metadata.libraries)
+        irods_vs_head_diffs = get_diff_irods_and_header_metadata(header_libraries, irods_libraries)
+        diffs.extend(irods_vs_head_diffs)
+
+    # Compare IRODS vs. SEQSCAPE:
+    if irods_vs_seqscape:
+        irods_vs_seqsc_diffs = get_diff_seqsc_and_irods_libraries_metadata(irods_libraries)
+        diffs.extend(irods_vs_seqsc_diffs)
+    return diffs
+
+
+def run_tests_on_studies(irods_metadata):
+    if not irods_metadata:
+        print "ERROR - irods_metadata parameter missing. Returning now!"
+        return
+
+    diffs = []
+    irods_studies = get_studies_from_irods_metadata(irods_metadata)
+    missing_ids = report_missing_identifiers(irods_studies)
+    diffs.extend(missing_ids)
+
+    # Compare IRODS vs. SEQSCAPE:
+    irods_vs_seqsc_diffs = get_diff_seqsc_and_irods_studies_metadata(irods_studies)
+    diffs.extend(irods_vs_seqsc_diffs)
+    return diffs
+
+
+def run_metadata_tests(irods_fpath,
+                       samples_irods_vs_header=True, samples_irods_vs_seqscape=True,
+                       libraries_irods_vs_header=True, libraries_irods_vs_seqscape=True,
+                       study_irods_vs_seqscape=True, desired_ref=None):
+    if not irods_fpath:
+        print "No file path provided. Returning."
+        return
+
+    irods_metadata = get_irods_metadata(irods_fpath)
+    header_metadata = None
+    if samples_irods_vs_header or libraries_irods_vs_header:
+        header_metadata = get_header_metadata_from_irods_file(irods_fpath)
+
+    issues = []
+    if samples_irods_vs_header or samples_irods_vs_seqscape:
+        sample_issues = run_tests_on_samples(irods_metadata, header_metadata, samples_irods_vs_header, samples_irods_vs_seqscape)
+        if sample_issues:
+            issues.extend(sample_issues)
+            print "SAMPLES: " + str(sample_issues)
+
+    if libraries_irods_vs_header or libraries_irods_vs_seqscape:
+        library_issues = run_tests_on_libraries(irods_metadata, header_metadata, libraries_irods_vs_header, libraries_irods_vs_seqscape)
+        if library_issues:
+            issues.extend(library_issues)
+            print "LIBRARIES: " + str(library_issues)
+
+    if study_irods_vs_seqscape:
+        study_issues = run_tests_on_studies(irods_metadata)
+        if study_issues:
+            issues.extend(study_issues)
+            print "STUDIES: " + str(study_issues)
+
+    checksum_issues = check_md5_metadata(irods_metadata, irods_fpath)
+    if checksum_issues:
+        print "CHECKSUM: " + str(checksum_issues)
+        issues.extend(checksum_issues)
+
+    run_id_issues = check_run_id(irods_metadata, irods_fpath)
+    if run_id_issues:
+        print "RUN IDS: " + str(run_id_issues)
+        issues.extend(run_id_issues)
+
+    lane_metadata_issues = check_lane_metadata(irods_metadata, irods_fpath)
+    if lane_metadata_issues:
+        print "LANE METADATA: " + str(lane_metadata_issues)
+        issues.extend(lane_metadata_issues)
+
+    lane_name_issues = check_lanelet_name(irods_fpath, header_metadata.lanelets)
+    if lane_name_issues:
+        print "LANE METADATA: " + str(lane_metadata_issues)
+        issues.extend(lane_name_issues)
+
+    if desired_ref:
+        ref_issues = check_reference(irods_metadata, desired_ref)
+        if ref_issues:
+            print "REFERENCE: " + str(ref_issues)
+            issues.extend(ref_issues)
+
+
 
 
 def test_file_metadata(irods_fpath, desired_ref=None):
@@ -444,37 +592,67 @@ def test_file_metadata(irods_fpath, desired_ref=None):
         diffs.extend(ref_issues)
 
     if diffs:
-        print "FILE: "+str(irods_fpath) + " has issues with:"
+        print "FILE: " + str(irods_fpath) + " has issues with:"
         if sample_issues:
-            print "SAMPLES: "+str(sample_issues)
+            print "SAMPLES: " + str(sample_issues)
         if library_issues:
-            print "LIBRARIES: "+str(library_issues)
+            print "LIBRARIES: " + str(library_issues)
         if study_issues:
-            print "STUDIES: "+ str(study_issues)
+            print "STUDIES: " + str(study_issues)
         if checksum_issues:
-            print "CHECKSUM: "+str(checksum_issues)
+            print "CHECKSUM: " + str(checksum_issues)
         if run_id_issues:
-            print "RUN IDS: "+str(run_id_issues)
+            print "RUN IDS: " + str(run_id_issues)
         if lane_name_issues:
-            print "LANE METADATA: "+str(lane_metadata_issues)
+            print "LANE METADATA: " + str(lane_metadata_issues)
         if lane_name_issues:
-            print "LANE NAME: "+str(lane_name_issues)
+            print "LANE NAME: " + str(lane_name_issues)
         if desired_ref and ref_issues:
-            print "REFERENCE: "+str(ref_issues)
+            print "REFERENCE: " + str(ref_issues)
 
-    
-    #print "FILE: " + str(irods_fpath) + " ERRORS: " + str(diffs)
-    # reference_file = extract_values_by_key_from_irods_metadata(irods_metadata, 'reference')
+
+            # print "FILE: " + str(irods_fpath) + " ERRORS: " + str(diffs)
+            # reference_file = extract_values_by_key_from_irods_metadata(irods_metadata, 'reference')
+
+
+Args = namedtuple('Args', ['study', 'fpath_irods', 'check_samples',
+                           'check_libraries', 'check_study_per_sample',
+                           'check_irods_vs_header', 'check_irods_vs_seqscape'
+])
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--study', required=False, help='Study name')
-    parser.add_argument('--path_irods', required=False, help='Path in iRODS to a BAM')
+    parser.add_argument('--fpath_irods', required=False, help='Path in iRODS to a BAM')
+    parser.add_argument('--check_samples', required=False, help='Add this flag if you want the samples to be checked')
+    parser.add_argument('--check_libraries', required=False, help='Add this flag if you want the libraries '
+                                                                  'to be checked')
+    parser.add_argument('--check_study_per_sample', required=False, help='Add this flag if you want for each file, '
+                                                                         'for each sample the study will be checked '
+                                                                         '(it applies for --irods_vs_seqscape flag, '
+                                                                         'does nothing if ran with '
+                                                                         '--irods_vs_header flag, '
+                                                                         'since the header doesnt contain '
+                                                                         'any information regarding the study')
+    parser.add_argument('--check_irods_vs_header', required=False, help='Add this flag if you want to check '
+                                                                        'the metadata in iRODS versus the header')
+    parser.add_argument('--check_irods_vs_seqscape', required=False, help='Add this flag if you want to check '
+                                                                          'the metadata in iRODS versus '
+                                                                          'what is in SequenceScape')
 
     args = parser.parse_args()
     if not args.study and not args.path_irods:
         print "No study provided, no BAM path given => NOTHING TO DO! EXITTING"
+        parser.print_help()
+        exit(0)
+    if not args.check_samples and not args.check_libraries and not args.check_study_per_sample:
+        print "WARNING! You haven't selected neither samples to be checked, nor libraries, nor study. " \
+              "Is this what you want?"
+    if not args.check_irods_vs_header and not args.check_irods_vs_seqscape:
+        print "ERROR! You haven't selected any type of test to be performed, please select either " \
+              "--check_irods_vs_header or --check_irods_vs_seqscape."
+        parser.print_help()
         exit(0)
     return args
 
