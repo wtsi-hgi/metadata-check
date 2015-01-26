@@ -642,7 +642,7 @@ def parse_args():
 
     args = parser.parse_args()
 
-    if not args.path_irods and not args.study:
+    if not args.fpath_irods and not args.study:
         parser.print_help()
         print "No study provided, no BAM path given => NOTHING TO DO! EXITTING"
         exit(0)
@@ -664,11 +664,14 @@ def parse_args():
 def main():
     args = parse_args()
 
-    if args.path_irods:
-        fpaths_irods = [args.path_irods]
+    if args.fpath_irods:
+        fpaths_irods = [args.fpath_irods]
     elif args.study:
         fpaths_irods = get_list_of_bams_for_study(args.study)
         print "fpaths for this study: " + str(fpaths_irods)
+    else:
+        print "No study provided, no BAM path given => NOTHING TO DO! EXITTING"
+        return
 
     for fpath in fpaths_irods:
 #        test_file_metadata(fpath)
