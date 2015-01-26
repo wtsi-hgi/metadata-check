@@ -625,16 +625,16 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--study', required=False, help='Study name')
     parser.add_argument('--fpath_irods', required=False, help='Path in iRODS to a BAM')
-    parser.add_argument('--samples_irods_vs_header', required=False, help='Add this flag if you want the samples '
+    parser.add_argument('--samples_irods_vs_header', action='store_true', required=False, help='Add this flag if you want the samples '
                                                                           'to be checked - irods vs header')
-    parser.add_argument('--samples_irods_vs_seqscape', required=False, help='Add this flag if you want the samples '
+    parser.add_argument('--samples_irods_vs_seqscape', action='store_true', required=False, help='Add this flag if you want the samples '
                                                                             'to be checked - irods vs sequencescape')
-    parser.add_argument('--libraries_irods_vs_header', required=False, help='Add this flag if you want the libraries '
+    parser.add_argument('--libraries_irods_vs_header', action='store_true', required=False, help='Add this flag if you want the libraries '
                                                                             'to he checked - irods vs header')
 
-    parser.add_argument('--libraries_irods_vs_seqscape', required=False, help='Add this flag if you want to check '
+    parser.add_argument('--libraries_irods_vs_seqscape', action='store_true', required=False, help='Add this flag if you want to check '
                                                                               'the libraries irods vs sequencescape')
-    parser.add_argument('--study_irods_vs_seqscape', required=False, help='Add this flag if you want to check '
+    parser.add_argument('--study_irods_vs_seqscape', action='store_true', required=False, help='Add this flag if you want to check '
                                                                           'the study from irods metadata')
     parser.add_argument('--desired_ref', required=False, help='Add this parameter if you want the reference '
                                                               'in irods metadata to be checked against this reference.')
