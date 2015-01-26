@@ -241,13 +241,13 @@ def get_entities_from_header_metadata(header_entities):
     return grouped_entities
 
 
-def report_missing_identifiers(metadata):
+def check_all_identifiers_in_metadata(metadata, name=True, internal_id=True, accession_number=True):
     error_report = []
-    if not 'name' in metadata or not metadata['name']:
+    if name and not 'name' in metadata or not metadata['name']:
         error_report.append("NO names in IRODS metadata")
-    if not 'internal_id' in metadata or not metadata['internal_id']:
+    if internal_id and not 'internal_id' in metadata or not metadata['internal_id']:
         error_report.append("NO  internal_ids in IRODS metadata")
-    if not 'accession_number' in metadata or not metadata['accession_number']:
+    if accession_number and not 'accession_number' in metadata or not metadata['accession_number']:
         error_report.append("NO accession numbers in IRODS metadata")
     return error_report
 
@@ -258,7 +258,7 @@ def check_sample_metadata(header_metadata, irods_metadata):
     header_samples = get_entities_from_header_metadata(header_metadata.samples)
     irods_samples = get_samples_from_irods_metadata(irods_metadata)
 
-    missing_ids = report_missing_identifiers(irods_samples)
+    missing_ids = check_all_identifiers_in_metadata(irods_samples)
     errors.extend(missing_ids)
 
     # Compare IRODS vs. HEADER:
@@ -275,7 +275,7 @@ def check_library_metadata(header_metadata, irods_metadata):
     header_libraries = get_entities_from_header_metadata(header_metadata.libraries)
     irods_libraries = get_library_from_irods_metadata(irods_metadata)
 
-    missing_ids = report_missing_identifiers(irods_libraries)
+    missing_ids = check_all_identifiers_in_metadata(irods_libraries, name=True, internal_id=True, accession_number=False)
     errors.extend(missing_ids)
 
     # Compare IRODS vs. HEADER:
@@ -291,7 +291,7 @@ def check_study_metadata(irods_metadata):
 
     irods_studies = get_studies_from_irods_metadata(irods_metadata)
 
-    missing_ids = report_missing_identifiers(irods_studies)
+    missing_ids = check_all_identifiers_in_metadata(irods_studies)
     errors.extend(missing_ids)
 
     # Compare IRODS vs. SEQSCAPE:
@@ -424,7 +424,7 @@ def run_tests_on_samples(irods_metadata, header_metadata=None,
     diffs = []
     if irods_vs_header or irods_vs_seqscape:
         irods_samples = get_samples_from_irods_metadata(irods_metadata)
-        missing_ids = report_missing_identifiers(irods_samples)
+        missing_ids = check_all_identifiers_in_metadata(irods_samples)
         diffs.extend(missing_ids)
 
     # Compare IRODS vs. HEADER:
@@ -456,7 +456,7 @@ def run_tests_on_libraries(irods_metadata, header_metadata=None,
     diffs = []
     if irods_vs_header or irods_vs_seqscape:
         irods_libraries = get_library_from_irods_metadata(irods_metadata)
-        missing_ids = report_missing_identifiers(irods_libraries)
+        missing_ids = check_all_identifiers_in_metadata(irods_libraries)
         diffs.extend(missing_ids)
 
     # Compare IRODS vs. HEADER:
@@ -479,7 +479,7 @@ def run_tests_on_studies(irods_metadata):
 
     diffs = []
     irods_studies = get_studies_from_irods_metadata(irods_metadata)
-    missing_ids = report_missing_identifiers(irods_studies)
+    missing_ids = check_all_identifiers_in_metadata(irods_studies)
     diffs.extend(missing_ids)
 
     # Compare IRODS vs. SEQSCAPE:
@@ -614,29 +614,25 @@ def test_file_metadata(irods_fpath, desired_ref=None):
             # reference_file = extract_values_by_key_from_irods_metadata(irods_metadata, 'reference')
 
 
-Args = namedtuple('Args', ['study', 'fpath_irods', 'check_samples',
-                           'check_libraries', 'check_study_per_sample',
-                           'check_irods_vs_header', 'check_irods_vs_seqscape'
-])
-
 
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--study', required=False, help='Study name')
     parser.add_argument('--fpath_irods', required=False, help='Path in iRODS to a BAM')
-    parser.add_argument('--samples_irods_vs_header', action='store_true', required=False, help='Add this flag if you want the samples '
-                                                                          'to be checked - irods vs header')
-    parser.add_argument('--samples_irods_vs_seqscape', action='store_true', required=False, help='Add this flag if you want the samples '
-                                                                            'to be checked - irods vs sequencescape')
-    parser.add_argument('--libraries_irods_vs_header', action='store_true', required=False, help='Add this flag if you want the libraries '
-                                                                            'to he checked - irods vs header')
+    parser.add_argument('--samples_irods_vs_header', action='store_true', required=False,
+                        help='Add this flag if you want the samples to be checked - irods vs header')
+    parser.add_argument('--samples_irods_vs_seqscape', action='store_true', required=False,
+                        help='Add this flag if you want the samples to be checked - irods vs sequencescape')
+    parser.add_argument('--libraries_irods_vs_header', action='store_true', required=False,
+                        help='Add this flag if you want the libraries to he checked - irods vs header')
 
-    parser.add_argument('--libraries_irods_vs_seqscape', action='store_true', required=False, help='Add this flag if you want to check '
-                                                                              'the libraries irods vs sequencescape')
-    parser.add_argument('--study_irods_vs_seqscape', action='store_true', required=False, help='Add this flag if you want to check '
-                                                                          'the study from irods metadata')
-    parser.add_argument('--desired_ref', required=False, help='Add this parameter if you want the reference '
-                                                              'in irods metadata to be checked against this reference.')
+    parser.add_argument('--libraries_irods_vs_seqscape', action='store_true', required=False,
+                        help='Add this flag if you want to check the libraries irods vs sequencescape')
+    parser.add_argument('--study_irods_vs_seqscape', action='store_true', required=False,
+                        help='Add this flag if you want to check the study from irods metadata')
+    parser.add_argument('--desired_ref', required=False,
+                        help='Add this parameter if you want the reference in irods metadata to be checked '
+                             'against this reference.')
 
 
     args = parser.parse_args()
@@ -657,8 +653,6 @@ def parse_args():
 
     return args
 
-
-# CHECK LANELETS:
 
 def main():
     args = parse_args()
