@@ -641,18 +641,25 @@ def parse_args():
 
 
     args = parser.parse_args()
+
+    if not args.path_irods and not args.study:
+        parser.print_help()
+        print "No arguments provided -- either study or irods file path are mandatory."
+
+
     if not args.study and not args.path_irods:
         print "No study provided, no BAM path given => NOTHING TO DO! EXITTING"
         parser.print_help()
         exit(0)
-    if not args.check_samples and not args.check_libraries and not args.check_study_per_sample:
+    if not args.samples_irods_vs_header and not args.samples_irods_vs_seqscape \
+            and not args.libraries_irods_vs_header \
+            and not args.libraries_irods_vs_seqscape \
+            and not args.study_irods_vs_seqscape:
         print "WARNING! You haven't selected neither samples to be checked, nor libraries, nor study. " \
-              "Is this what you want?"
-    if not args.check_irods_vs_header and not args.check_irods_vs_seqscape:
-        print "ERROR! You haven't selected any type of test to be performed, please select either " \
-              "--check_irods_vs_header or --check_irods_vs_seqscape."
+              "Is this what you want? I will only check the adjacent metadata."
         parser.print_help()
         exit(0)
+
     return args
 
 
@@ -660,14 +667,13 @@ def parse_args():
 
 def main():
     args = parse_args()
+
     if args.path_irods:
         fpaths_irods = [args.path_irods]
     elif args.study:
         fpaths_irods = get_list_of_bams_for_study(args.study)
-        print "FPATHS for this study: " + str(fpaths_irods)
-    else:
-        print "No arguments provided! Exitting"
-        return
+        print "fpaths for this study: " + str(fpaths_irods)
+
     for fpath in fpaths_irods:
 #        test_file_metadata(fpath)
         if not fpath:
@@ -679,9 +685,9 @@ def main():
             header_metadata = get_header_metadata_from_irods_file(fpath)
 
         run_metadata_tests(fpath, irods_metadata, header_metadata,
-                       samples_irods_vs_header=True, samples_irods_vs_seqscape=True,
-                       libraries_irods_vs_header=True, libraries_irods_vs_seqscape=True,
-                       study_irods_vs_seqscape=True, desired_ref=None)
+                       samples_irods_vs_header=true, samples_irods_vs_seqscape=true,
+                       libraries_irods_vs_header=true, libraries_irods_vs_seqscape=true,
+                       study_irods_vs_seqscape=true, desired_ref=none)
 
 if __name__ == '__main__':
     main()
