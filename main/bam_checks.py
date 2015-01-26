@@ -680,9 +680,9 @@ def main():
             header_metadata = get_header_metadata_from_irods_file(fpath)
 
         run_metadata_tests(fpath, irods_metadata, header_metadata,
-                       samples_irods_vs_header=true, samples_irods_vs_seqscape=true,
-                       libraries_irods_vs_header=true, libraries_irods_vs_seqscape=true,
-                       study_irods_vs_seqscape=true, desired_ref=none)
+                       args.samples_irods_vs_header, args.samples_irods_vs_seqscape,
+                       args.libraries_irods_vs_header, args.libraries_irods_vs_seqscape,
+                       args.study_irods_vs_seqscape, args.desired_ref)
 
 if __name__ == '__main__':
     main()
