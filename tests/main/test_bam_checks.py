@@ -109,8 +109,8 @@ class IRODSvsHeaderMetadataTests(unittest.TestCase):
         result = bam_checks.get_diff_irods_and_header_metadata(header_dict, irods_dict)
         self.assertEqual(len(result), 0)
 
-        header_dict = {'accession_number': ['EGAN00001218652'], 'name': ['491STDY5478742']}
-        irods_dict = {'accession_number': ['EGAN00001218652'], 'name': []}
+        header_dict = {'accession_number': ['EGAN00001218652']}
+        irods_dict = {'accession_number': ['EGAN00001218652'], 'name': ['491STDY5478742']}
         result = bam_checks.get_diff_irods_and_header_metadata(header_dict, irods_dict)
         self.assertEqual(len(result), 1)
 
