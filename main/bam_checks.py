@@ -489,18 +489,18 @@ def run_tests_on_studies(irods_metadata):
     return diffs
 
 
-def run_metadata_tests(irods_fpath,
+def run_metadata_tests(irods_fpath, irods_metadata, header_metadata=None,
                        samples_irods_vs_header=True, samples_irods_vs_seqscape=True,
                        libraries_irods_vs_header=True, libraries_irods_vs_seqscape=True,
                        study_irods_vs_seqscape=True, desired_ref=None):
-    if not irods_fpath:
-        print "No file path provided. Returning."
-        return
-
-    irods_metadata = get_irods_metadata(irods_fpath)
-    header_metadata = None
-    if samples_irods_vs_header or libraries_irods_vs_header:
-        header_metadata = get_header_metadata_from_irods_file(irods_fpath)
+    # if not irods_fpath:
+    #     print "No file path provided. Returning."
+    #     return
+    #
+    # irods_metadata = get_irods_metadata(irods_fpath)
+    # header_metadata = None
+    # if samples_irods_vs_header or libraries_irods_vs_header:
+    #     header_metadata = get_header_metadata_from_irods_file(irods_fpath)
 
     issues = []
     if samples_irods_vs_header or samples_irods_vs_seqscape:
@@ -625,21 +625,20 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--study', required=False, help='Study name')
     parser.add_argument('--fpath_irods', required=False, help='Path in iRODS to a BAM')
-    parser.add_argument('--check_samples', required=False, help='Add this flag if you want the samples to be checked')
-    parser.add_argument('--check_libraries', required=False, help='Add this flag if you want the libraries '
-                                                                  'to be checked')
-    parser.add_argument('--check_study_per_sample', required=False, help='Add this flag if you want for each file, '
-                                                                         'for each sample the study will be checked '
-                                                                         '(it applies for --irods_vs_seqscape flag, '
-                                                                         'does nothing if ran with '
-                                                                         '--irods_vs_header flag, '
-                                                                         'since the header doesnt contain '
-                                                                         'any information regarding the study')
-    parser.add_argument('--check_irods_vs_header', required=False, help='Add this flag if you want to check '
-                                                                        'the metadata in iRODS versus the header')
-    parser.add_argument('--check_irods_vs_seqscape', required=False, help='Add this flag if you want to check '
-                                                                          'the metadata in iRODS versus '
-                                                                          'what is in SequenceScape')
+    parser.add_argument('--samples_irods_vs_header', required=False, help='Add this flag if you want the samples '
+                                                                          'to be checked - irods vs header')
+    parser.add_argument('--samples_irods_vs_seqscape', required=False, help='Add this flag if you want the samples '
+                                                                            'to be checked - irods vs sequencescape')
+    parser.add_argument('--libraries_irods_vs_header', required=False, help='Add this flag if you want the libraries '
+                                                                            'to he checked - irods vs header')
+
+    parser.add_argument('--libraries_irods_vs_seqscape', required=False, help='Add this flag if you want to check '
+                                                                              'the libraries irods vs sequencescape')
+    parser.add_argument('--study_irods_vs_seqscape', required=False, help='Add this flag if you want to check '
+                                                                          'the study from irods metadata')
+    parser.add_argument('--desired_ref', required=False, help='Add this parameter if you want the reference '
+                                                              'in irods metadata to be checked against this reference.')
+
 
     args = parser.parse_args()
     if not args.study and not args.path_irods:
@@ -670,8 +669,19 @@ def main():
         print "No arguments provided! Exitting"
         return
     for fpath in fpaths_irods:
-        test_file_metadata(fpath)
+#        test_file_metadata(fpath)
+        if not fpath:
+            continue
 
+        irods_metadata = get_irods_metadata(fpath)
+        header_metadata = None
+        if args.samples_irods_vs_header or args.libraries_irods_vs_header:
+            header_metadata = get_header_metadata_from_irods_file(fpath)
+
+        run_metadata_tests(fpath, irods_metadata, header_metadata,
+                       samples_irods_vs_header=True, samples_irods_vs_seqscape=True,
+                       libraries_irods_vs_header=True, libraries_irods_vs_seqscape=True,
+                       study_irods_vs_seqscape=True, desired_ref=None)
 
 if __name__ == '__main__':
     main()
