@@ -643,13 +643,9 @@ def parse_args():
 
     if not args.path_irods and not args.study:
         parser.print_help()
-        print "No arguments provided -- either study or irods file path are mandatory."
-
-
-    if not args.study and not args.path_irods:
         print "No study provided, no BAM path given => NOTHING TO DO! EXITTING"
-        parser.print_help()
         exit(0)
+
     if not args.samples_irods_vs_header and not args.samples_irods_vs_seqscape \
             and not args.libraries_irods_vs_header \
             and not args.libraries_irods_vs_seqscape \
