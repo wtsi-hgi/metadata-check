@@ -215,10 +215,13 @@ def get_samples_from_irods_metadata(irods_metadata):
 
 
 def get_library_from_irods_metadata(irods_metadata):
-    irods_lib_names_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'library')
+
     irods_lib_internal_id_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'library_id')
-    irods_libraries = {'name': irods_lib_names_list,
-                       'internal_id': irods_lib_internal_id_list}
+    if not irods_lib_internal_id_list:
+        irods_lib_names_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'library')
+        irods_libraries = {'name': irods_lib_names_list}
+    else:
+        irods_libraries = {'internal_id': irods_lib_internal_id_list}
     return irods_libraries
 
 
