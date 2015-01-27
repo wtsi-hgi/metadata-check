@@ -199,6 +199,43 @@ class SampleMetadataWholeTests(unittest.TestCase):
 
 class AuxiliaryFctsTests(unittest.TestCase):
 
+
+# def check_all_identifiers_in_metadata(metadata, name=True, internal_id=True, accession_number=True):
+#     error_report = []
+#     if name and not 'name' in metadata or not metadata['name']:
+#         error_report.append("NO names in IRODS metadata")
+#     if internal_id and not 'internal_id' in metadata or not metadata['internal_id']:
+#         error_report.append("NO  internal_ids in IRODS metadata")
+#     if accession_number and not 'accession_number' in metadata or not metadata['accession_number']:
+#         error_report.append("NO accession numbers in IRODS metadata")
+#     return error_report
+#
+#
+
+    def test_check_all_identifiers_in_metadata(self):
+        metadata = {'name': ['aaa'], 'internal_id': [1,2,3]}
+        expected = []
+        result = bam_checks.check_all_identifiers_in_metadata(metadata, accession_number=False)
+        self.assertEqual(expected, result)
+
+        metadata = {'name': ['aaa'], 'internal_id': [1,2,3], 'accession_number': []}
+        expected = []
+        result = bam_checks.check_all_identifiers_in_metadata(metadata, accession_number=False)
+        self.assertEqual(expected, result)
+
+        metadata = {'name': ['aaa'], 'internal_id': [1,2,3], 'accession_number': ['EGA123']}
+        expected = []
+        result = bam_checks.check_all_identifiers_in_metadata(metadata, accession_number=False)
+        self.assertEqual(expected, result)
+
+        metadata = {'name': ['aaa'], 'internal_id': [1,2,3], 'accession_number': []}
+        expected = []
+        result = bam_checks.check_all_identifiers_in_metadata(metadata, accession_number=False)
+        self.assertEqual(expected, result)
+
+
+
+
     def test_get_run_from_irods_path(self):
         # Testing for a normal path:
         path = '/seq/1234/1234_3#12.bam'
