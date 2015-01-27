@@ -95,17 +95,17 @@ def get_studies_from_seqsc(ids_list, id_type):
 def get_diff_seqsc_and_irods_samples_metadata(irods_samples):
     differences = []
     seqsc_samples_by_acc_nr, seqsc_samples_by_name, seqsc_samples_by_internal_id = None, None, None
-    if irods_samples['name']:
+    if irods_samples.get('name'):
         seqsc_samples_by_name = get_samples_from_seqsc(irods_samples['name'], 'name')
         if not seqsc_samples_by_name:
             differences.append("NO SAMPLES found in SEQSCAPE by sample names taken from iRODS metadata = " +
                                str(irods_samples['name']))
-    if irods_samples['accession_number']:
+    if irods_samples.get('accession_number'):
         seqsc_samples_by_acc_nr = get_samples_from_seqsc(irods_samples['accession_number'], 'accession_number')
         if not seqsc_samples_by_acc_nr:
             differences.append("NO SAMPLES found in SEQSCAPE by sample accession_number from iRODS metadata = " +
                                str(irods_samples['accession_number']))
-    if irods_samples['internal_id']:
+    if irods_samples.get('internal_id'):
         seqsc_samples_by_internal_id = get_samples_from_seqsc(irods_samples['internal_id'], 'internal_id')
         if not seqsc_samples_by_internal_id:
             differences.append("NO SAMPLES found in SEQSCAPE by sample internal_id from iRODS metadata = " +
@@ -131,16 +131,16 @@ def get_diff_seqsc_and_irods_samples_metadata(irods_samples):
 def get_diff_seqsc_and_irods_studies_metadata(irods_studies):
     differences = []
     seqsc_studies_by_name, seqsc_studies_by_acc_nr, seqsc_studies_by_internal_id = None, None, None
-    if irods_studies['name']:
+    if irods_studies.get('name'):
         seqsc_studies_by_name = get_studies_from_seqsc(irods_studies['name'], 'name')
         if not seqsc_studies_by_name:
             differences.append("NO STUDIES in SEQSCAPE by study names from iRODS = " + str(irods_studies['name']))
-    if irods_studies['accession_number']:
+    if irods_studies.get('accession_number'):
         seqsc_studies_by_acc_nr = get_studies_from_seqsc(irods_studies['accession_number'], 'accession_number')
         if not seqsc_studies_by_acc_nr:
             differences.append("NO STUDIES in SEQSCAPE by study accession_number from iRODS = " + str(
                 irods_studies['accession_number']))
-    if irods_studies['internal_id']:
+    if irods_studies.get('internal_id'):
         seqsc_studies_by_internal_id = get_studies_from_seqsc(irods_studies['internal_id'], 'internal_id')
         if not seqsc_studies_by_internal_id:
             differences.append(
@@ -166,11 +166,11 @@ def get_diff_seqsc_and_irods_studies_metadata(irods_studies):
 def get_diff_seqsc_and_irods_libraries_metadata(irods_libraries):
     differences = []
     seqsc_libraries_by_name, seqsc_libraries_by_internal_id = None, None
-    if irods_libraries['name']:
+    if irods_libraries.get('name'):
         seqsc_libraries_by_name = get_all_possible_libraries_from_seqsc(irods_libraries['name'], 'name')
         if not seqsc_libraries_by_name:
             differences.append("NO LIBRARIES in SEQSCAPE by library names from iRODS = " + str(irods_libraries['name']))
-    if irods_libraries['internal_id']:
+    if irods_libraries.get('internal_id'):
         seqsc_libraries_by_internal_id = get_all_possible_libraries_from_seqsc(irods_libraries['internal_id'],
                                                                                'internal_id')
         if not seqsc_libraries_by_internal_id:
@@ -246,11 +246,11 @@ def get_entities_from_header_metadata(header_entities):
 
 def check_all_identifiers_in_metadata(metadata, name=True, internal_id=True, accession_number=True):
     error_report = []
-    if name and (not 'name' in metadata or not metadata['name']):
+    if name and not metadata.get('name'):
         error_report.append("NO names in IRODS metadata")
-    if internal_id and (not 'internal_id' in metadata or not metadata['internal_id']):
+    if internal_id and not metadata.get('internal_id'):
         error_report.append("NO  internal_ids in IRODS metadata")
-    if accession_number and (not 'accession_number' in metadata or not metadata['accession_number']):
+    if accession_number and not metadata.get('accession_number'):
         error_report.append("NO accession numbers in IRODS metadata")
     return error_report
 
