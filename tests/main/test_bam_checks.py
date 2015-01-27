@@ -158,43 +158,42 @@ class MD5Test(unittest.TestCase):
 
 class LibraryMetadataWholeTests(unittest.TestCase):
 
-    @unittest.skipIf(config.RUNNING_LOCATION == 'localhost', "Skipping checks because it runs locally")
-    def test_check_library_metadata(self):
-        irods_fpath = '/seq/14761/14761_4.bam'
-        header_metadata = bam_checks.get_header_metadata_from_irods_file(irods_fpath)
-        irods_metadata = bam_checks.get_irods_metadata(irods_fpath)
-        result = bam_checks.check_library_metadata(header_metadata, irods_metadata)
+    # This will fail..cause I commented out these fct, refactored to smth else.
+    # @unittest.skipIf(config.RUNNING_LOCATION == 'localhost', "Skipping checks because it runs locally")
+    # def test_check_library_metadata(self):
+    #     irods_fpath = '/seq/14761/14761_4.bam'
+    #     header_metadata = bam_checks.get_header_metadata_from_irods_file(irods_fpath)
+    #     irods_metadata = bam_checks.get_irods_metadata(irods_fpath)
+    #     result = bam_checks.check_library_metadata(header_metadata, irods_metadata)
+    #     self.assertEqual(len(result), 1)
+
+    def test_get_all_possible_libraries_from_seqsc(self):
+        ids_list = ['12219508']
+        id_type = 'internal_id'
+        result = bam_checks.get_all_possible_libraries_from_seqsc(ids_list, id_type)
         self.assertEqual(len(result), 1)
+
+
+# def get_all_possible_libraries_from_seqsc(ids_list, id_type):
+#     libs = seqsc.query_all_libraries_as_batch(ids_list, id_type)
+#     if not libs:
+#         libs = seqsc.query_all_wells_as_batch(ids_list, id_type)
+#     if not libs:
+#         libs = seqsc.query_all_multiplexed_libraries_as_batch(ids_list, id_type)
+#     return libs
 
 
 class SampleMetadataWholeTests(unittest.TestCase):
+    pass
+    #won't run because I've commented out the fct called
+    # @unittest.skipIf(config.RUNNING_LOCATION == 'localhost', "Skipping checks because it runs locally")
+    # def test_check_sample_metadata(self):
+    #     irods_fpath = '/seq/11010/11010_8#21.bam'
+    #     header_metadata = bam_checks.get_header_metadata_from_irods_file(irods_fpath)
+    #     irods_metadata = bam_checks.get_irods_metadata(irods_fpath)
+    #     result = bam_checks.check_library_metadata(header_metadata, irods_metadata)
+    #     self.assertEqual(len(result), 1)
 
-    @unittest.skipIf(config.RUNNING_LOCATION == 'localhost', "Skipping checks because it runs locally")
-    def test_check_sample_metadata(self):
-        irods_fpath = '/seq/11010/11010_8#21.bam'
-        header_metadata = bam_checks.get_header_metadata_from_irods_file(irods_fpath)
-        irods_metadata = bam_checks.get_irods_metadata(irods_fpath)
-        result = bam_checks.check_library_metadata(header_metadata, irods_metadata)
-        self.assertEqual(len(result), 1)
-
-
-# def check_library_metadata(header_metadata, irods_metadata):
-#     irods_lib_names_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'library')
-#     irods_lib_internal_id_list = extract_values_by_key_from_irods_metadata(irods_metadata, 'library_id')
-#     irods_libraries = {'name': irods_lib_names_list,
-#                        'internal_id': irods_lib_internal_id_list}
-#     header_libraries = {'name': [], 'internal_id': []}
-#
-#     for lib in header_metadata.libraries:
-#         id_type = Identif.guess_identifier_type(lib)
-#         header_libraries[id_type].append(lib)
-#
-#     # Compare IRODS vs. HEADER:
-#     irods_vs_head_diffs = get_diff_irods_and_header_metadata(header_libraries, irods_libraries)
-#
-#     # Compare IRODS vs. SEQSCAPE:
-#     irods_vs_seqsc_diffs = get_diff_seqsc_and_irods_libraries_metadata(irods_libraries)
-#     return irods_vs_head_diffs + irods_vs_seqsc_diffs
 
 
 class AuxiliaryFctsTests(unittest.TestCase):
