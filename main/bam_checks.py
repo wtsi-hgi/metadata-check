@@ -243,11 +243,11 @@ def get_entities_from_header_metadata(header_entities):
 
 def check_all_identifiers_in_metadata(metadata, name=True, internal_id=True, accession_number=True):
     error_report = []
-    if name and not 'name' in metadata or not metadata['name']:
+    if name and (not 'name' in metadata or not metadata['name']):
         error_report.append("NO names in IRODS metadata")
-    if internal_id and not 'internal_id' in metadata or not metadata['internal_id']:
+    if internal_id and (not 'internal_id' in metadata or not metadata['internal_id']):
         error_report.append("NO  internal_ids in IRODS metadata")
-    if accession_number and not 'accession_number' in metadata or not metadata['accession_number']:
+    if accession_number and (not 'accession_number' in metadata or not metadata['accession_number']):
         error_report.append("NO accession numbers in IRODS metadata")
     return error_report
 
