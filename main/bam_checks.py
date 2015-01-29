@@ -254,53 +254,6 @@ def check_all_identifiers_in_metadata(metadata, name=True, internal_id=True, acc
         error_report.append("NO accession numbers in IRODS metadata")
     return error_report
 
-#
-# def check_sample_metadata(header_metadata, irods_metadata):
-#     errors = []
-#
-#     header_samples = get_entities_from_header_metadata(header_metadata.samples)
-#     irods_samples = get_samples_from_irods_metadata(irods_metadata)
-#
-#     missing_ids = check_all_identifiers_in_metadata(irods_samples)
-#     errors.extend(missing_ids)
-#
-#     # Compare IRODS vs. HEADER:
-#     irods_vs_head_diffs = get_diff_irods_and_header_metadata(header_samples, irods_samples)
-#
-#     # Compare IRODS vs. SEQSCAPE:
-#     irods_vs_seqsc_diffs = get_diff_seqsc_and_irods_samples_metadata(irods_samples)
-#     return errors + irods_vs_head_diffs + irods_vs_seqsc_diffs
-#
-#
-# def check_library_metadata(header_metadata, irods_metadata):
-#     errors = []
-#
-#     header_libraries = get_entities_from_header_metadata(header_metadata.libraries)
-#     irods_libraries = get_library_from_irods_metadata(irods_metadata)
-#
-#     missing_ids = check_all_identifiers_in_metadata(irods_libraries, name=True, internal_id=True, accession_number=False)
-#     errors.extend(missing_ids)
-#
-#     # Compare IRODS vs. HEADER:
-#     irods_vs_head_diffs = get_diff_irods_and_header_metadata(header_libraries, irods_libraries)
-#
-#     # Compare IRODS vs. SEQSCAPE:
-#     irods_vs_seqsc_diffs = get_diff_seqsc_and_irods_libraries_metadata(irods_libraries)
-#     return irods_vs_head_diffs + irods_vs_seqsc_diffs + errors
-#
-#
-# def check_study_metadata(irods_metadata):
-#     errors = []
-#
-#     irods_studies = get_studies_from_irods_metadata(irods_metadata)
-#
-#     missing_ids = check_all_identifiers_in_metadata(irods_studies)
-#     errors.extend(missing_ids)
-#
-#     # Compare IRODS vs. SEQSCAPE:
-#     irods_vs_seqsc_diffs = get_diff_seqsc_and_irods_studies_metadata(irods_studies)
-#     return irods_vs_seqsc_diffs + errors
-
 
 def check_md5_metadata(irods_metadata, irods_fpath):
     md5_metadata = extract_values_by_key_from_irods_metadata(irods_metadata, 'md5')
@@ -459,7 +412,7 @@ def run_tests_on_libraries(irods_metadata, header_metadata=None,
     diffs = []
     if irods_vs_header or irods_vs_seqscape:
         irods_libraries = get_library_from_irods_metadata(irods_metadata)
-        missing_ids = check_all_identifiers_in_metadata(irods_libraries, accession_number=False)
+        missing_ids = check_all_identifiers_in_metadata(irods_libraries, accession_number=False, name=False)
         diffs.extend(missing_ids)
 
     # Compare IRODS vs. HEADER:
@@ -503,6 +456,9 @@ def run_metadata_tests(irods_fpath, irods_metadata, header_metadata=None,
     # header_metadata = None
     # if samples_irods_vs_header or libraries_irods_vs_header:
     #     header_metadata = get_header_metadata_from_irods_file(irods_fpath)
+
+
+    print "File: "+irods_fpath
 
     issues = []
     if samples_irods_vs_header or samples_irods_vs_seqscape:
@@ -548,6 +504,9 @@ def run_metadata_tests(irods_fpath, irods_metadata, header_metadata=None,
         if ref_issues:
             print "REFERENCE: " + str(ref_issues)
             issues.extend(ref_issues)
+
+    if not issues:
+        print "OK"
 
 
 
