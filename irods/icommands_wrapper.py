@@ -109,7 +109,7 @@ class iRODSListOperations(iRODSOperations):
         try:
             return cls._run_icmd(cmd_args)
         except exceptions.iRODSException as e:
-            raise exceptions.iLSException(err=e.err, output=e.out, cmd=e.cmd)
+            raise exceptions.iLSException(err=e.error, output=e.output, cmd=e.cmd)
         
     
     @classmethod
@@ -233,7 +233,7 @@ class iRODSRMOperations(iRODSOperations):
         try:
             cls._run_icmd(cmd_args)
         except exceptions.iRODSException as e:
-            raise exceptions.iRMException(error=e.err, output=e.out, cmd=e.cmd)
+            raise exceptions.iRMException(error=e.error, output=e.output, cmd=e.cmd)
         
 #         cmd_args_list = cls._build_icommand_args('irm', options, path)
 #         irm_proc = subprocess.Popen(cmd_args_list, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
@@ -281,7 +281,7 @@ class iRODSMakeCollOperations(iRODSOperations):
         try:
             cls._run_icmd(cmd_args)
         except exceptions.iRODSException as e:
-            raise exceptions.iMkDirException(error=e.err, output=e.out, cmd=e.cmd)
+            raise exceptions.iMkDirException(error=e.error, output=e.output, cmd=e.cmd)
         
 #         imkdir_proc = subprocess.Popen(icmd_args, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
 #         (out, err) = imkdir_proc.communicate()
@@ -313,7 +313,7 @@ class iRODSiPutOperations(iRODSOperations):
         try:
             cls._run_icmd(cmd_args)
         except exceptions.iRODSException as e:
-            raise exceptions.iPutException(error=e.err, output=e.out, cmd=cmd_args)
+            raise exceptions.iPutException(error=e.error, output=e.output, cmd=e.cmd)
     
     @classmethod
     def iput(cls, src_path, dest_path, options):
@@ -368,7 +368,7 @@ class iRODSChecksumOperations(iRODSOperations):
         try:
             return cls._run_icmd(cmd_args)
         except exceptions.iRODSException as e:
-            raise exceptions.iChksumException(error=e.err, output=e.out, cmd=cmd_args)
+            raise exceptions.iChksumException(error=e.error, output=e.output, cmd=e.cmd)
         
 #         #md5_ick = None
 #         process_opts_list = ["ichksum"]
@@ -501,7 +501,7 @@ class iRODSMetaQueryOperations(iRODSOperations):
         try:
             return cls._run_icmd(cmd_args)
         except exceptions.iRODSException as e:
-            raise exceptions.iMetaException(error=e.err, output=e.out, cmd=cmd_args)
+            raise exceptions.iMetaException(error=e.error, output=e.output, cmd=e.cmd)
 
 
     @classmethod
@@ -566,7 +566,7 @@ class iRODSMetaListOperations(iRODSOperations):
         try:
             return cls._run_icmd(cmd_args)
         except exceptions.iRODSException as e:
-            raise exceptions.iMetaException(error=e.err, output=e.out, cmd=cmd_args)
+            raise exceptions.iMetaException(error=e.error, output=e.output, cmd=e.cmd)
 
 #     @staticmethod
 #     def get_file_meta_from_irods(file_path_irods):
@@ -666,7 +666,7 @@ class iRODSMetaAddOperations(iRODSOperations):
         try:
             return cls._run_icmd(cmd_args)
         except exceptions.iRODSException as e:
-            raise exceptions.iMetaException(error=e.err, output=e.out, cmd=cmd_args)
+            raise exceptions.iMetaException(error=e.error, output=e.output, cmd=e.cmd)
         
     @classmethod
     @wrappers.check_args_not_none
@@ -749,7 +749,7 @@ class iRODSMetaRMOperations(iRODSOperations):
         try:
             return cls._run_icmd(cmd_args)
         except exceptions.iRODSException as e:
-            raise exceptions.iMetaException(error=e.err, output=e.out, cmd=cmd_args)
+            raise exceptions.iMetaException(error=e.error, output=e.output, cmd=e.cmd)
 
     
     @classmethod
@@ -834,7 +834,7 @@ class iRODSiChmodOperations(iRODSOperations):
         try:
             return cls._run_icmd(cmd_args)
         except exceptions.iRODSException as e:
-            raise exceptions.iMetaException(error=e.err, output=e.out, cmd=cmd_args)
+            raise exceptions.iMetaException(error=e.error, output=e.output, cmd=e.cmd)
 
     
     @classmethod
@@ -877,7 +877,7 @@ class iRODSiMVOperations(iRODSOperations):
         try:
             return cls._run_icmd(cmd_args)
         except exceptions.iRODSException as e:
-            raise exceptions.iMVException(error=e.err, output=e.out, cmd=cmd_args)
+            raise exceptions.iMVException(error=e.error, output=e.output, cmd=e.cmd)
 
     @classmethod
     def move(cls, src_path, dest_path):
