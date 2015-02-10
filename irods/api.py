@@ -25,7 +25,7 @@ from an iRODS API wrapper.
 This file has been created on Oct 24, 2014
 """
 
-from irods import api_wrapper as irods_api
+from irods import icommands_wrapper as irods_api
 from irods import exceptions as irods_exc
 from irods import data_types as irods_types
 
@@ -70,7 +70,7 @@ class iRODSAPI:
         
     @classmethod
     def get_file_checksum(cls, path):
-        ''' This method checksums a file and returns the checksum.
+        """ This method checksums a file and returns the checksum.
             Parameters
             ----------
             path : str
@@ -82,7 +82,7 @@ class iRODSAPI:
             Raises
             ------
             BackendException
-        '''
+        """
         try:
             return irods_api.iRODSChecksumOperations.run_file_checksum(path)
         except irods_exc.iChksumException as e:
@@ -91,11 +91,34 @@ class iRODSAPI:
     
 
     @classmethod
-    def get_metadata(cls, irods_path):
-        return irods_api.iRODSMetaListOperations.get_metadata(irods_path)
+    def retrieve_metadata_for_file(cls, path):
+        return irods_api.iRODSMetaListOperations.get_metadata(path)
 
 
     @classmethod
-    def get_files_list_by_metadata(cls, avu_dict):
+    def search_files_by_metadata(cls, avu_dict):
         return irods_api.iRODSMetaQueryOperations.query_by_metadata(avu_dict)
 
+
+    @classmethod
+    def modify_metadata_avu(cls, path, old_avu, new_avu):
+        """ This method modifies one AVU, but removing the old one and adding the new one.
+            Parameters
+            ----------
+            path : str
+                The path to the file in iRODS
+            old_avu : data_types.MetaAVU
+                The old avu, to be removed
+            new_avu : data_types.MetaAVU
+                The new avu to be added
+            Returns
+            -------
+            bool
+        """
+        irods_api.iRODSMetaRMOperations.remove_avu(path, old_avu.attribute, old_avu.value)    #path, attribute, value
+        irods_api.iRODSMetaAddOperations.add_avu(path, new_avu.attribute, old_avu.value)
+        return True
+
+    @classmethod
+    def add_metadata_avu(cls, path, avu):
+        return irods_api.iRODSMetaAddOperations.add_avu(path, avu)

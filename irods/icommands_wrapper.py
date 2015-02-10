@@ -442,7 +442,7 @@ class iRODSChecksumOperations(iRODSOperations):
     @classmethod
     def get_checksum(cls, path):
         ''' 
-            Retrieves the md5 from iCAT and returns it.
+            Retrieves the md5 from iCAT and returns it. If there is no checksum in iCAT, returns None.
         '''
         output = cls._run_ichksum(path)
         return cls._process_icmd_output(output)
@@ -648,10 +648,10 @@ class iRODSMetaListOperations(iRODSOperations):
 
     @classmethod
     def get_metadata(cls, path, attribute=''):
-        ''' 
+        """
             This function extracts the metadata for a file from irods
             and returns it as a list of tuples (key, value).
-        '''
+        """
         output = cls._run_imeta_ls(path, attribute)
         return cls._process_icmd_output(output)
         

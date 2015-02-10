@@ -24,7 +24,7 @@ from collections import namedtuple
 from header_parser import bam_h_analyser as h_analyser
 from identifiers import EntityIdentifier as Identif
 from irods import api as irods
-from irods import api_wrapper as irods_wrapper
+from irods import icommands_wrapper as irods_wrapper
 from seqscape import queries as seqsc
 
 
@@ -53,7 +53,7 @@ def get_header_metadata_from_irods_file(irods_path):
 
 
 def get_irods_metadata(irods_path):
-    return irods.iRODSAPI.get_metadata(irods_path)
+    return irods.iRODSAPI.retrieve_metadata_for_file(irods_path)
 
 
 def extract_values_by_key_from_irods_metadata(avus_list, key):
