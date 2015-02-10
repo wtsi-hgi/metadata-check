@@ -7,7 +7,7 @@ import unittest
 #import mock
 import config
 
-import irods.api_wrapper as irods_api
+import irods.icommands_wrapper as irods_api
 from irods import data_types as irods_types
 from irods import exceptions as irods_exc
 
