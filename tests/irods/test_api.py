@@ -27,14 +27,21 @@ from irods import  data_types
 
 class TestiRODSAPI(unittest.TestCase):
 
+    def setUp(self):
+        self.path = '/humgen/projects/serapis_staging/test-metadata/upl-worker.out'
+        # First adding an avu:
+        self.avu1 = data_types.MetaAVU(attribute='name', value='Irina')
+        self.avu2 = data_types.MetaAVU(attribute='name', value='Gabriela')
+        iRODSAPI.add_metadata_avu(self.path, self.avu1)
+
+
     @unittest.skipIf(config.RUNNING_LOCATION == 'localhost', "Skipping imeta qu test because it runs locally")
     def test_modify_metadata_avu(self):
-        path = '/humgen/projects/serapis_staging/test-metadata/upl-worker.out'
-        # First adding an avu:
-        avu1 = data_types.MetaAVU(attribute='name', value='Irina')
-        avu2 = data_types.MetaAVU(attribute='name', value='Gabriela')
-        iRODSAPI.add_metadata_avu(path, avu1)
-        iRODSAPI.modify_metadata_avu(path, avu1, avu2)
-        avus = iRODSAPI.retrieve_metadata_for_file(path)
+        iRODSAPI.modify_metadata_avu(self.path, self.avu1, self.avu2)
+        avus = iRODSAPI.retrieve_metadata_for_file(self.path)
         self.assertEqual(len(avus), 1)
         self.assertEqual(avus[0].value, 'Gabriela')
+
+
+    def tearDown(self):
+        iRODSAPI.remove_metadata_avu(self.path, self.avu2)
