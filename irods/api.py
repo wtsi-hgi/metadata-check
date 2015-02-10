@@ -122,3 +122,7 @@ class iRODSAPI:
     @classmethod
     def add_metadata_avu(cls, path, avu):
         return irods_api.iRODSMetaAddOperations.add_avu(path, avu)
+
+    @classmethod
+    def remove_metadata_avu(cls, path, avu):
+        return irods_api.iRODSMetaRMOperations.remove_avu(path, avu)
