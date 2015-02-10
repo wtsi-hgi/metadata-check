@@ -115,8 +115,8 @@ class iRODSAPI:
             -------
             bool
         """
-        irods_api.iRODSMetaRMOperations.remove_avu(path, old_avu.attribute, old_avu.value)    #path, attribute, value
-        irods_api.iRODSMetaAddOperations.add_avu(path, new_avu.attribute, old_avu.value)
+        irods_api.iRODSMetaRMOperations.remove_avu(path, old_avu)
+        irods_api.iRODSMetaAddOperations.add_avu(path, new_avu)
         return True
 
     @classmethod
