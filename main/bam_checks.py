@@ -176,24 +176,33 @@ def get_files_from_fofn(fofn_path):
     pass
 
 
+def read_fofn_into_list(fofn_path):
+    fofn_fd = open(fofn_path)
+    files_list = [f for f in fofn_fd]
+    fofn_fd.close()
+    return files_list
+
+
+def collect_fpaths_from_args(study=None, files_list=None, fofn_path=None):
+    if study:
+        fpaths_irods = utils.retrieve_list_of_bams_by_study_from_irods(study)
+        print "fpaths for this study: " + str(fpaths_irods)
+    elif fofn_path:
+        fpaths_irods = read_fofn_into_list(fofn_path)
+    elif files_list:
+        fpaths_irods = files_list
+    return fpaths_irods
+
+
 # TODO: write in README - actually all these tests apply only to irods seq data...
 def main():
     args = parse_args()
-
-    if args.fpath_irods:
-        fpaths_irods = [args.fpath_irods]
-    elif args.study:
-        fpaths_irods = utils.retrieve_list_of_bams_by_study_from_irods(args.study)
-        print "fpaths for this study: " + str(fpaths_irods)
-    else:
-        print "No study provided, no BAM path given => NOTHING TO DO! EXITTING"
-        return
+    fpaths_irods = collect_fpaths_from_args(args.study, args.fpaths, args.fofn_path)
 
     for fpath in fpaths_irods:
         if not fpath:
             continue
 
-        header_metadata = None
         if args.samples_irods_vs_header or args.libraries_irods_vs_header:
             irods_metadata = utils.iRODSUtils.retrieve_irods_metadata(fpath)
             header_metadata = utils.iRODSUtils.get_header_metadata_from_irods_file(fpath)
