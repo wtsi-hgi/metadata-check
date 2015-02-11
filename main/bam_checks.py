@@ -32,6 +32,34 @@ import library_tests, study_tests, sample_tests
 from main import irods_seq_data_tests as seq_tests
 
 
+
+def check_all_identifiers_in_metadata(metadata, name=True, internal_id=True, accession_number=True):
+    error_report = []
+    if name and not metadata.get('name'):
+        error_report.append("NO names in IRODS metadata")
+    if internal_id and not metadata.get('internal_id'):
+        error_report.append("NO  internal_ids in IRODS metadata")
+    if accession_number and not metadata.get('accession_number'):
+        error_report.append("NO accession numbers in IRODS metadata")
+    return error_report
+
+
+def get_diff_irods_and_header_metadata(header_dict, irods_dict):
+    """
+        where: (e.g.)
+         irods_dict = dict('name': [sample_name], accession_number: [samples_acc_nr], internal_id: [internal_id])
+         header_dict = dict('name': [sample_name], accession_number: [samples_acc_nr], internal_id: [internal_id])
+    """
+    differences = []
+    for id_type, head_ids_list in header_dict.iteritems():
+        if irods_dict.get(id_type) and header_dict.get(id_type):
+            if set(head_ids_list).difference(set(irods_dict[id_type])):
+                differences.append(
+                    " HEADER " + str(id_type) + " (" + str(head_ids_list) + ") != iRODS  " + str(irods_dict))
+    return differences
+
+
+
 def run_metadata_tests(irods_fpath, irods_metadata, header_metadata=None,
                        samples_irods_vs_header=True, samples_irods_vs_seqscape=True,
                        libraries_irods_vs_header=True, libraries_irods_vs_seqscape=True,
@@ -49,12 +77,12 @@ def run_metadata_tests(irods_fpath, irods_metadata, header_metadata=None,
     issues = []
     if samples_irods_vs_header or samples_irods_vs_seqscape:
         irods_samples = sample_tests.extract_samples_from_irods_metadata(irods_metadata)
-        missing_ids = utils.check_all_identifiers_in_metadata(irods_samples)
+        missing_ids = check_all_identifiers_in_metadata(irods_samples)
         issues.extend(missing_ids)
 
     if samples_irods_vs_header:
-        header_samples = utils.sort_entities_by_guessing_id_type(header_metadata.samples)
-        irods_vs_head_diffs = utils.get_diff_irods_and_header_metadata(header_samples, irods_samples)
+        header_samples = utils.HeaderUtils.sort_entities_by_guessing_id_type(header_metadata.samples)
+        irods_vs_head_diffs = get_diff_irods_and_header_metadata(header_samples, irods_samples)
         issues.extend(irods_vs_head_diffs)
 
     if samples_irods_vs_seqscape:
@@ -64,13 +92,13 @@ def run_metadata_tests(irods_fpath, irods_metadata, header_metadata=None,
 
     # LIBRARY TESTS:
     if libraries_irods_vs_header or libraries_irods_vs_seqscape:
-        irods_libraries = utils.extract_libraries_from_irods_metadata(irods_metadata)
-        missing_ids = utils.check_all_identifiers_in_metadata(irods_libraries, accession_number=False, name=False)
+        irods_libraries = utils.iRODSUtils.extract_libraries_from_irods_metadata(irods_metadata)
+        missing_ids = check_all_identifiers_in_metadata(irods_libraries, accession_number=False, name=False)
         issues.extend(missing_ids)
 
     if libraries_irods_vs_header:
-        header_libraries = utils.sort_entities_by_guessing_id_type(header_metadata.libraries)
-        irods_vs_head_diffs = utils.get_diff_irods_and_header_metadata(header_libraries, irods_libraries)
+        header_libraries = utils.HeaderUtils.sort_entities_by_guessing_id_type(header_metadata.libraries)
+        irods_vs_head_diffs = get_diff_irods_and_header_metadata(header_libraries, irods_libraries)
         issues.extend(irods_vs_head_diffs)
 
     if libraries_irods_vs_seqscape:
@@ -80,8 +108,8 @@ def run_metadata_tests(irods_fpath, irods_metadata, header_metadata=None,
 
     # STUDY TESTS:
     if study_irods_vs_seqscape:
-        irods_studies = utils.extract_studies_from_irods_metadata(irods_metadata)
-        missing_ids = utils.check_all_identifiers_in_metadata(irods_studies)
+        irods_studies = utils.iRODSUtils.extract_studies_from_irods_metadata(irods_metadata)
+        missing_ids = check_all_identifiers_in_metadata(irods_studies)
         issues.extend(missing_ids)
 
         # Compare IRODS vs. SEQSCAPE:
