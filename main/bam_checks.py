@@ -29,110 +29,7 @@ from seqscape import queries as seqsc
 
 import utils
 import library_tests, study_tests, sample_tests
-
-
-def check_md5_metadata(irods_metadata, irods_fpath):
-    md5_metadata = utils.extract_values_by_key_from_irods_metadata(irods_metadata, 'md5')
-    if not md5_metadata:
-        print "This file doesn't have md5 in irods metadata"
-        return []
-
-
-    md5_chksum = irods_wrapper.iRODSChecksumOperations.get_checksum(irods_fpath)
-    if md5_chksum:
-        if not md5_metadata[0] == md5_chksum.md5:
-            return [
-                "iRODS metadata md5 (" + str(md5_metadata) + ") != ichksum (" + str(md5_chksum) + ") "]
-    return []
-
-
-def check_run_id(irods_metadata, irods_fpath):
-    """
-    This test assumes that all the files in iRODS have exactly 1 run (=LANELETS)
-    """
-    irods_run_ids = utils.extract_values_by_key_from_irods_metadata(irods_metadata, 'id_run')
-    path_run_id = utils.get_run_from_irods_path(irods_fpath)
-    if len(irods_run_ids) > 1:
-        return ["ERROR: > 1 runs for this file."]
-    elif len(irods_run_ids) < 1:
-        return ["ERROR: MISSING run_id from iRODS metadata"]
-    else:
-        irods_run_id = irods_run_ids[0]
-    if not irods_run_id == path_run_id:
-        return ["The run id in the iRODS file path is not the same as the run id in the iRODS metadata: " + \
-                str(irods_run_id) + " vs. " + str(path_run_id)]
-    return []
-
-
-def check_lane_metadata(irods_metadata, irods_fpath):
-    lane_id = utils.get_lane_from_irods_path(irods_fpath)
-    irods_lane_ids = utils.extract_values_by_key_from_irods_metadata(irods_metadata, 'lane')
-    if len(irods_lane_ids) > 1:
-        return [" > 1 LANE in iRODS metadata"]
-    elif len(irods_lane_ids) < 1:
-        return ["NO LANE in iRODS metadata"]
-    else:
-        irods_lane_id = irods_lane_ids[0]
-    if not irods_lane_id == lane_id:
-        return ["iRODS fpath lane_id != lane_id in iRODS metadata: " +
-                str(irods_lane_id) + " vs. " + str(lane_id)]
-    return []
-
-
-
-def check_lanelet_name(irods_fpath, header_lanelets):
-    if len(header_lanelets) != 1:
-        return [" > 1 lanelets in the header."]
-    irods_lanelet_name = utils.extract_lanelet_name_from_irods_fpath(irods_fpath)
-    if irods_lanelet_name != header_lanelets[0]:
-        return [
-            "HEADER LANELET = " + str(header_lanelets[0]) + " different from FILE NAME = " + str(irods_lanelet_name)]
-    return []
-
-
-
-def check_reference(irods_metadata, desired_ref):
-    ref_paths = utils.extract_values_by_key_from_irods_metadata(irods_metadata, 'reference')
-    if len(ref_paths) > 1:
-        return [" > 1 REFERENCE ATTRIBUTE in iRODS metadata"]
-    elif len(ref_paths) < 1:
-        return ["NO REFERENCE ATTRIBUTE in iRODS metadata"]
-    else:
-        ref_path = ref_paths[0]
-    ref_name = utils.extract_reference_name_from_path(ref_path)
-    if ref_name != desired_ref:
-        return ["WANTED REFERENCE =: " + str(desired_ref) + " different from ACTUAL REFERENCE = " + str(ref_name)]
-    return []
-
-
-def run_irods_seq_specific_tests(irods_path, irods_metadata, header_metadata, desired_ref=None):
-    issues = []
-    checksum_issues = check_md5_metadata(irods_metadata, irods_path)
-    if checksum_issues:
-        print "CHECKSUM: " + str(checksum_issues)
-        issues.extend(checksum_issues)
-
-    run_id_issues = check_run_id(irods_metadata, irods_path)
-    if run_id_issues:
-        print "RUN IDS: " + str(run_id_issues)
-        issues.extend(run_id_issues)
-
-    lane_metadata_issues = check_lane_metadata(irods_metadata, irods_path)
-    if lane_metadata_issues:
-        print "LANE METADATA: " + str(lane_metadata_issues)
-        issues.extend(lane_metadata_issues)
-
-    lane_name_issues = check_lanelet_name(irods_path, header_metadata.lanelets)
-    if lane_name_issues:
-        print "LANE METADATA: " + str(lane_metadata_issues)
-        issues.extend(lane_name_issues)
-
-    if desired_ref:
-        ref_issues = check_reference(irods_metadata, desired_ref)
-        if ref_issues:
-            print "REFERENCE: " + str(ref_issues)
-            issues.extend(ref_issues)
-    return issues
+from main import irods_seq_data_tests as seq_tests
 
 
 def run_metadata_tests(irods_fpath, irods_metadata, header_metadata=None,
@@ -161,7 +58,7 @@ def run_metadata_tests(irods_fpath, irods_metadata, header_metadata=None,
             print "STUDIES: " + str(study_issues)
 
     if collateral_irods_seq_tests:
-        collateral_issues = run_irods_seq_specific_tests(irods_fpath, irods_metadata, header_metadata, desired_ref)
+        collateral_issues = seq_tests.run_irods_seq_specific_tests(irods_fpath, irods_metadata, header_metadata, desired_ref)
         if collateral_issues:
             issues.extend(collateral_issues)
             print "IRODS SEQUENCING SPECIFIC TESTS - ISSUES: " + str(collateral_issues)
@@ -216,7 +113,7 @@ def parse_args():
 
 
 def get_files_by_study_in_irods(study_name):
-    return utils.get_list_of_bams_for_study(study_name)
+    return utils.retrieve_list_of_bams_by_study_from_irods(study_name)
 
 
 def get_files_from_fofn(fofn_path):
@@ -241,22 +138,21 @@ def main():
             continue
 
         # determine location....
-        location = 'irods'
-        irods_metadata = None
-        if location is 'irods':
-            irods_metadata = utils.get_irods_metadata(fpath)
-
+        location = 'irods' # for now
         header_metadata = None
         if args.samples_irods_vs_header or args.libraries_irods_vs_header:
             if location == 'irods':
+                irods_metadata = utils.retrieve_irods_metadata(fpath)
                 header_metadata = utils.get_header_metadata_from_irods_file(fpath)
-            else:
-                header_metadata = utils.get_header_metadata_from_lustre_file(fpath)
 
-        run_metadata_tests(fpath, irods_metadata, header_metadata,
+                run_metadata_tests(fpath, irods_metadata, header_metadata,
                        args.samples_irods_vs_header, args.samples_irods_vs_seqscape,
                        args.libraries_irods_vs_header, args.libraries_irods_vs_seqscape,
                        args.study_irods_vs_seqscape, args.desired_ref)
+            else:
+                header_metadata = utils.get_header_metadata_from_lustre_file(fpath)
+                #TODO: Think of use cases in which we check a file on lustre...
+                pass
 
 if __name__ == '__main__':
     main()

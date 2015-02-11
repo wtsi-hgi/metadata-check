@@ -73,7 +73,7 @@ def get_header_metadata_from_lustre_file(lustre_path):
     return _get_file_header_metadata(lustre_path, 'lustre')
 
 
-def get_list_of_bams_for_study(study_name):
+def retrieve_list_of_bams_by_study_from_irods(study_name):
     avus = {'study': study_name, 'type': 'bam'}
     bams = icommands_wrapper.iRODSMetaQueryOperations.query_by_metadata(avus)
     filtered_bams = icommands_wrapper.iRODSMetaQueryOperations.filter_out_phix_files(bams)
@@ -91,18 +91,23 @@ def extract_lanelet_name(lanelet_path):
     return lanelet_file
 
 
-def guess_irods_path(lustre_path):
+# TODO: test - what if the lanelet is a whole lane (x10 data)? TO add unittest for this!
+def guess_seq_irods_path_from_lustre_path(lustre_path):
+    """
+        Applies only for the data delivered by NPG.
+
+    """
     fname = extract_fname_from_path(lustre_path)
     run_id = fname.split("_")
     irods_fpath = "/seq/" + run_id[0] + "/" + fname
     return irods_fpath
 
 
-def get_irods_metadata(irods_path):
+def retrieve_irods_metadata(irods_path):
     return irods_api.iRODSAPI.retrieve_metadata_for_file(irods_path)
 
 
-def extract_values_by_key_from_irods_metadata(avus_list, key):
+def extract_values_for_key_from_irods_metadata(avus_list, key):
     results = []
     for avu in avus_list:
         if avu.attribute == key:
@@ -110,12 +115,23 @@ def extract_values_by_key_from_irods_metadata(avus_list, key):
     return results
 
 
-def extract_entities_from_header_metadata(header_entities):
-    grouped_entities = {'name': [], 'accession_number': [], 'internal_id': []}
-    for entity_id in header_entities:
+def sort_entities_by_guessing_id_type(ids_list):
+    """
+        This function takes a list of ids, which it doesn't know what type they are,
+        guesses the id type and then returns a dict containing 3 lists - one for each type of id
+        (internal_id, accession_number, name).
+        Parameters
+        ----------
+            ids_list : list - containing together all sorts of ids that identify entities.
+        Returns
+        -------
+            sorted_ids : dict - {'name': list, 'accession_number': list, 'internal_id': list}
+    """
+    sorted_ids = {'name': [], 'accession_number': [], 'internal_id': []}
+    for entity_id in ids_list:
         id_type = Identif.guess_identifier_type(entity_id)
-        grouped_entities[id_type].append(entity_id)
-    return grouped_entities
+        sorted_ids[id_type].append(entity_id)
+    return sorted_ids
 
 
 def get_run_from_irods_path(irods_fpath):
