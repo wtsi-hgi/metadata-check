@@ -75,31 +75,3 @@ def compare_study_sets_obtained_by_seqscape_ids_lookup(irods_studies):
             differences.append(diff)
     return differences
 
-
-
-def extract_studies_from_irods_metadata(irods_metadata):
-    irods_study_names_list = utils.extract_values_for_key_from_irods_metadata(irods_metadata, 'study')
-    irods_study_internal_id_list = utils.extract_values_for_key_from_irods_metadata(irods_metadata, 'study_id')
-    irods_study_acc_nr_list = utils.extract_values_for_key_from_irods_metadata(irods_metadata, 'study_accession_number')
-    irods_studies = {'name': irods_study_names_list,
-                     'internal_id': irods_study_internal_id_list,
-                     'accession_number': irods_study_acc_nr_list
-    }
-    return irods_studies
-
-
-
-def run_tests_on_studies(irods_metadata):
-    if not irods_metadata:
-        print "ERROR - irods_metadata parameter missing. Returning now!"
-        return
-
-    issues = []
-    irods_studies = utils.extract_studies_from_irods_metadata(irods_metadata)
-    missing_ids = utils.check_all_identifiers_in_metadata(irods_studies)
-    issues.extend(missing_ids)
-
-    # Compare IRODS vs. SEQSCAPE:
-    irods_vs_seqsc_diffs = compare_study_sets_obtained_by_seqscape_ids_lookup(irods_studies)
-    issues.extend(irods_vs_seqsc_diffs)
-    return issues

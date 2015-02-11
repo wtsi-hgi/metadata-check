@@ -20,12 +20,12 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import argparse
-from collections import namedtuple
-from header_parser import bam_h_analyser as h_analyser
-from identifiers import EntityIdentifier as Identif
-from irods import api as irods
-from irods import icommands_wrapper as irods_wrapper
-from seqscape import queries as seqsc
+# from collections import namedtuple
+# from header_parser import bam_h_analyser as h_analyser
+# from identifiers import EntityIdentifier as Identif
+# from irods import api as irods
+# from irods import icommands_wrapper as irods_wrapper
+# from seqscape import queries as seqsc
 
 import utils
 import library_tests, study_tests, sample_tests
@@ -37,26 +37,59 @@ def run_metadata_tests(irods_fpath, irods_metadata, header_metadata=None,
                        libraries_irods_vs_header=True, libraries_irods_vs_seqscape=True,
                        study_irods_vs_seqscape=True, collateral_irods_seq_tests=True, desired_ref=None):
 
+    if not irods_metadata and (samples_irods_vs_header or samples_irods_vs_seqscape
+                               or libraries_irods_vs_header or libraries_irods_vs_seqscape or study_irods_vs_seqscape):
+        raise ValueError("ERROR - the irods_metadata param hasn't been given, though the irods tests were requested.")
+    if not header_metadata and (samples_irods_vs_header or libraries_irods_vs_header):
+        raise ValueError("ERROR - the header_metadata param hasn't been given, though the header tests were requested.")
+
     print "File: "+irods_fpath
+
+    # SAMPLE TESTS:
     issues = []
     if samples_irods_vs_header or samples_irods_vs_seqscape:
-        sample_issues = sample_tests.run_tests_on_samples(irods_metadata, header_metadata, samples_irods_vs_header, samples_irods_vs_seqscape)
-        if sample_issues:
-            issues.extend(sample_issues)
-            print "SAMPLES: " + str(sample_issues)
+        irods_samples = sample_tests.extract_samples_from_irods_metadata(irods_metadata)
+        missing_ids = utils.check_all_identifiers_in_metadata(irods_samples)
+        issues.extend(missing_ids)
 
+    if samples_irods_vs_header:
+        header_samples = utils.sort_entities_by_guessing_id_type(header_metadata.samples)
+        irods_vs_head_diffs = utils.get_diff_irods_and_header_metadata(header_samples, irods_samples)
+        issues.extend(irods_vs_head_diffs)
+
+    if samples_irods_vs_seqscape:
+        irods_vs_seqsc_diffs = sample_tests.compare_sample_sets_obtained_by_seqscape_ids_lookup(irods_samples)
+        issues.extend(irods_vs_seqsc_diffs)
+
+
+    # LIBRARY TESTS:
     if libraries_irods_vs_header or libraries_irods_vs_seqscape:
-        library_issues = library_tests.run_tests_on_libraries(irods_metadata, header_metadata, libraries_irods_vs_header, libraries_irods_vs_seqscape)
-        if library_issues:
-            issues.extend(library_issues)
-            print "LIBRARIES: " + str(library_issues)
+        irods_libraries = utils.extract_libraries_from_irods_metadata(irods_metadata)
+        missing_ids = utils.check_all_identifiers_in_metadata(irods_libraries, accession_number=False, name=False)
+        issues.extend(missing_ids)
 
+    if libraries_irods_vs_header:
+        header_libraries = utils.sort_entities_by_guessing_id_type(header_metadata.libraries)
+        irods_vs_head_diffs = utils.get_diff_irods_and_header_metadata(header_libraries, irods_libraries)
+        issues.extend(irods_vs_head_diffs)
+
+    if libraries_irods_vs_seqscape:
+        irods_vs_seqsc_diffs = library_tests.compare_library_sets_obtained_by_seqscape_ids_lookup(irods_libraries)
+        issues.extend(irods_vs_seqsc_diffs)
+
+
+    # STUDY TESTS:
     if study_irods_vs_seqscape:
-        study_issues = study_tests.run_tests_on_studies(irods_metadata)
-        if study_issues:
-            issues.extend(study_issues)
-            print "STUDIES: " + str(study_issues)
+        irods_studies = utils.extract_studies_from_irods_metadata(irods_metadata)
+        missing_ids = utils.check_all_identifiers_in_metadata(irods_studies)
+        issues.extend(missing_ids)
 
+        # Compare IRODS vs. SEQSCAPE:
+        irods_vs_seqsc_diffs = study_tests.compare_study_sets_obtained_by_seqscape_ids_lookup(irods_studies)
+        issues.extend(irods_vs_seqsc_diffs)
+
+
+    # OTHER TESTS:
     if collateral_irods_seq_tests:
         collateral_issues = seq_tests.run_irods_seq_specific_tests(irods_fpath, irods_metadata, header_metadata, desired_ref)
         if collateral_issues:
@@ -111,48 +144,40 @@ def parse_args():
     return args
 
 
-
-def get_files_by_study_in_irods(study_name):
-    return utils.retrieve_list_of_bams_by_study_from_irods(study_name)
-
-
 def get_files_from_fofn(fofn_path):
     pass
 
 
+# TODO: write in README - actually all these tests apply only to irods seq data...
 def main():
     args = parse_args()
 
     if args.fpath_irods:
         fpaths_irods = [args.fpath_irods]
     elif args.study:
-        fpaths_irods = get_files_by_study_in_irods(args.study)
+        fpaths_irods = utils.retrieve_list_of_bams_by_study_from_irods(args.study)
         print "fpaths for this study: " + str(fpaths_irods)
     else:
         print "No study provided, no BAM path given => NOTHING TO DO! EXITTING"
         return
 
     for fpath in fpaths_irods:
-#        test_file_metadata(fpath)
         if not fpath:
             continue
 
-        # determine location....
-        location = 'irods' # for now
         header_metadata = None
         if args.samples_irods_vs_header or args.libraries_irods_vs_header:
-            if location == 'irods':
-                irods_metadata = utils.retrieve_irods_metadata(fpath)
-                header_metadata = utils.get_header_metadata_from_irods_file(fpath)
+            irods_metadata = utils.retrieve_irods_metadata(fpath)
+            header_metadata = utils.get_header_metadata_from_irods_file(fpath)
 
-                run_metadata_tests(fpath, irods_metadata, header_metadata,
-                       args.samples_irods_vs_header, args.samples_irods_vs_seqscape,
-                       args.libraries_irods_vs_header, args.libraries_irods_vs_seqscape,
-                       args.study_irods_vs_seqscape, args.desired_ref)
-            else:
-                header_metadata = utils.get_header_metadata_from_lustre_file(fpath)
-                #TODO: Think of use cases in which we check a file on lustre...
-                pass
+            run_metadata_tests(fpath, irods_metadata, header_metadata,
+                   args.samples_irods_vs_header, args.samples_irods_vs_seqscape,
+                   args.libraries_irods_vs_header, args.libraries_irods_vs_seqscape,
+                   args.study_irods_vs_seqscape, args.desired_ref)
+            # else:
+            #     header_metadata = utils.get_header_metadata_from_lustre_file(fpath)
+            #     #TODO: Think of use cases in which we check a file on lustre...
+            #     pass
 
 if __name__ == '__main__':
     main()
