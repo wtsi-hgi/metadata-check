@@ -195,8 +195,8 @@ def main():
 
         header_metadata = None
         if args.samples_irods_vs_header or args.libraries_irods_vs_header:
-            irods_metadata = utils.retrieve_irods_metadata(fpath)
-            header_metadata = utils.get_header_metadata_from_irods_file(fpath)
+            irods_metadata = utils.iRODSUtils.retrieve_irods_metadata(fpath)
+            header_metadata = utils.iRODSUtils.get_header_metadata_from_irods_file(fpath)
 
             run_metadata_tests(fpath, irods_metadata, header_metadata,
                    args.samples_irods_vs_header, args.samples_irods_vs_seqscape,
