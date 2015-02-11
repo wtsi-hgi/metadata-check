@@ -37,5 +37,5 @@ class LibraryMetadataWholeTests(unittest.TestCase):
     def test_get_all_possible_libraries_from_seqsc(self):
         ids_list = ['12219508']
         id_type = 'internal_id'
-        result = library_tests.get_all_possible_libraries_from_seqsc(ids_list, id_type)
+        result = library_tests.search_library_ids_in_different_tables_from_seqsc(ids_list, id_type)
         self.assertEqual(len(result), 1)

@@ -46,11 +46,11 @@ class IRODSvsSeqscMetadataTests(unittest.TestCase):
 
     def test_get_diff_seqsc_and_irods_samples_metadata(self):
         irods_samples = {'name': ['491STDY5478742'], 'accession_number': ['EGAN00001096108'], 'internal_id': [1571544]}
-        result = sample_tests.get_diff_seqsc_and_irods_samples_metadata(irods_samples)
+        result = sample_tests.compare_sample_sets_obtained_by_seqscape_ids_lookup(irods_samples)
         self.assertEqual(len(result), 0)
 
         irods_samples = {'name': ['491STDY5478742'], 'accession_number': ['EGAN0000'], 'internal_id': [1571544]}
-        result = sample_tests.get_diff_seqsc_and_irods_samples_metadata(irods_samples)
+        result = sample_tests.compare_sample_sets_obtained_by_seqscape_ids_lookup(irods_samples)
         self.assertEqual(len(result), 1)
 
 

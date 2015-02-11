@@ -29,7 +29,7 @@ def get_studies_from_seqsc(ids_list, id_type):
 
 
 # TODO: rename all these methods to a more general name - check consistencies across different types of ids against Seqscape
-def get_diff_seqsc_and_irods_studies_metadata(irods_studies):
+def compare_study_sets_obtained_by_seqscape_ids_lookup(irods_studies):
     """
         This function receives list of studies and checks that the studies identified by internal_id in Sequencescape
         are the same as the studies identified by accession number and name (also in Sequencescape).
@@ -78,9 +78,9 @@ def get_diff_seqsc_and_irods_studies_metadata(irods_studies):
 
 
 def extract_studies_from_irods_metadata(irods_metadata):
-    irods_study_names_list = utils.extract_values_by_key_from_irods_metadata(irods_metadata, 'study')
-    irods_study_internal_id_list = utils.extract_values_by_key_from_irods_metadata(irods_metadata, 'study_id')
-    irods_study_acc_nr_list = utils.extract_values_by_key_from_irods_metadata(irods_metadata, 'study_accession_number')
+    irods_study_names_list = utils.extract_values_for_key_from_irods_metadata(irods_metadata, 'study')
+    irods_study_internal_id_list = utils.extract_values_for_key_from_irods_metadata(irods_metadata, 'study_id')
+    irods_study_acc_nr_list = utils.extract_values_for_key_from_irods_metadata(irods_metadata, 'study_accession_number')
     irods_studies = {'name': irods_study_names_list,
                      'internal_id': irods_study_internal_id_list,
                      'accession_number': irods_study_acc_nr_list
@@ -100,6 +100,6 @@ def run_tests_on_studies(irods_metadata):
     issues.extend(missing_ids)
 
     # Compare IRODS vs. SEQSCAPE:
-    irods_vs_seqsc_diffs = get_diff_seqsc_and_irods_studies_metadata(irods_studies)
+    irods_vs_seqsc_diffs = compare_study_sets_obtained_by_seqscape_ids_lookup(irods_studies)
     issues.extend(irods_vs_seqsc_diffs)
     return issues

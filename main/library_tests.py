@@ -23,13 +23,11 @@ import seqscape.queries as seqsc
 from main import utils
 
 
-
-
 def get_libraries_from_seqsc(ids_list, id_type):
     return seqsc.query_all_libraries_as_batch(ids_list, id_type)
 
 
-def get_all_possible_libraries_from_seqsc(ids_list, id_type):
+def search_library_ids_in_different_tables_from_seqsc(ids_list, id_type):
     libs = seqsc.query_all_libraries_as_batch(ids_list, id_type)
     if not libs:
         libs = seqsc.query_all_wells_as_batch(ids_list, id_type)
@@ -38,16 +36,18 @@ def get_all_possible_libraries_from_seqsc(ids_list, id_type):
     return libs
 
 
-# TODO: rename all these methods to a more general name - check consistencies across different types of ids against Seqscape
-def get_diff_seqsc_and_irods_libraries_metadata(irods_libraries):
+def compare_library_sets_obtained_by_seqscape_ids_lookup(irods_libraries):
+    """
+        This function checks consistencies across different types of ids against Seqscape
+    """
     differences = []
     seqsc_libraries_by_name, seqsc_libraries_by_internal_id = None, None
     if irods_libraries.get('name'):
-        seqsc_libraries_by_name = get_all_possible_libraries_from_seqsc(irods_libraries['name'], 'name')
+        seqsc_libraries_by_name = search_library_ids_in_different_tables_from_seqsc(irods_libraries['name'], 'name')
         if not seqsc_libraries_by_name:
             differences.append("NO LIBRARIES in SEQSCAPE by library names from iRODS = " + str(irods_libraries['name']))
     if irods_libraries.get('internal_id'):
-        seqsc_libraries_by_internal_id = get_all_possible_libraries_from_seqsc(irods_libraries['internal_id'],
+        seqsc_libraries_by_internal_id = search_library_ids_in_different_tables_from_seqsc(irods_libraries['internal_id'],
                                                                                'internal_id')
         if not seqsc_libraries_by_internal_id:
             differences.append(
@@ -64,9 +64,9 @@ def get_diff_seqsc_and_irods_libraries_metadata(irods_libraries):
 
 
 def extract_libraries_from_irods_metadata(irods_metadata):
-    irods_lib_internal_id_list = utils.extract_values_by_key_from_irods_metadata(irods_metadata, 'library_id')
+    irods_lib_internal_id_list = utils.extract_values_for_key_from_irods_metadata(irods_metadata, 'library_id')
     if not irods_lib_internal_id_list:
-        irods_lib_names_list = utils.extract_values_by_key_from_irods_metadata(irods_metadata, 'library')
+        irods_lib_names_list = utils.extract_values_for_key_from_irods_metadata(irods_metadata, 'library')
         irods_libraries = {'name': irods_lib_names_list}
     else:
         irods_libraries = {'internal_id': irods_lib_internal_id_list}
@@ -94,12 +94,12 @@ def run_tests_on_libraries(irods_metadata, header_metadata=None,
 
     # Compare IRODS vs. HEADER:
     if irods_vs_header:
-        header_libraries = utils.extract_entities_from_header_metadata(header_metadata.libraries)
+        header_libraries = utils.sort_entities_by_guessing_id_type(header_metadata.libraries)
         irods_vs_head_diffs = utils.get_diff_irods_and_header_metadata(header_libraries, irods_libraries)
         issues.extend(irods_vs_head_diffs)
 
     # Compare IRODS vs. SEQSCAPE:
     if irods_vs_seqscape:
-        irods_vs_seqsc_diffs = get_diff_seqsc_and_irods_libraries_metadata(irods_libraries)
+        irods_vs_seqsc_diffs = compare_library_sets_obtained_by_seqscape_ids_lookup(irods_libraries)
         issues.extend(irods_vs_seqsc_diffs)
     return issues
