@@ -31,7 +31,7 @@ class MD5Test(unittest.TestCase):
     @unittest.skipIf(config.RUNNING_LOCATION == 'localhost', "Skipping checksum test because it runs locally")
     def test_check_md5_metadata(self):
         irods_fpath = '/seq/14761/14761_4.bam'
-        irods_metadata = [('md5', 'df8afb9196ea7080cd261e65d4ab2ef9')]
+        irods_metadata = [irods_types.MetaAVU('md5', 'df8afb9196ea7080cd261e65d4ab2ef9')]
         result = irods_seq_tests.check_md5_metadata(irods_metadata, irods_fpath)
         self.assertEqual(len(result), 0)
 
