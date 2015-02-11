@@ -63,7 +63,7 @@ def get_diff_irods_and_header_metadata(header_dict, irods_dict):
 def run_metadata_tests(irods_fpath, irods_metadata, header_metadata=None,
                        samples_irods_vs_header=True, samples_irods_vs_seqscape=True,
                        libraries_irods_vs_header=True, libraries_irods_vs_seqscape=True,
-                       study_irods_vs_seqscape=True, collateral_irods_seq_tests=True, desired_ref=None):
+                       study_irods_vs_seqscape=True, collateral_tests=True, desired_ref=None):
 
     if not irods_metadata and (samples_irods_vs_header or samples_irods_vs_seqscape
                                or libraries_irods_vs_header or libraries_irods_vs_seqscape or study_irods_vs_seqscape):
@@ -118,7 +118,7 @@ def run_metadata_tests(irods_fpath, irods_metadata, header_metadata=None,
 
 
     # OTHER TESTS:
-    if collateral_irods_seq_tests:
+    if collateral_tests:
         collateral_issues = seq_tests.run_irods_seq_specific_tests(irods_fpath, irods_metadata, header_metadata, desired_ref)
         if collateral_issues:
             issues.extend(collateral_issues)
@@ -132,7 +132,7 @@ def run_metadata_tests(irods_fpath, irods_metadata, header_metadata=None,
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--study', required=False, help='Study name')
-    parser.add_argument('--fpath_irods', required=False, help='Path in iRODS to a BAM')
+    parser.add_argument('--fpaths_irods', required=False, help='List of file paths in iRODS')
     parser.add_argument('--samples_irods_vs_header', action='store_true', required=False,
                         help='Add this flag if you want the samples to be checked - irods vs header')
     parser.add_argument('--samples_irods_vs_seqscape', action='store_true', required=False,
@@ -147,10 +147,12 @@ def parse_args():
     parser.add_argument('--desired_ref', required=False,
                         help='Add this parameter if you want the reference in irods metadata to be checked '
                              'against this reference.')
-    parser.add_argument('--collateral_irods_seq_tests', required=False,
+    parser.add_argument('--collateral_tests', required=False,
                         help='This is a test suite consisting of checks specific for sequencing data released by NPG, '
                              'such as md5, lane id, run id')
-
+    parser.add_argument('--fofn', required=False,
+                        help='The path to a fofn containing file paths from iRODS '
+                             'for the files one wants to run tests on')
 
 
     args = parser.parse_args()
@@ -172,10 +174,6 @@ def parse_args():
     return args
 
 
-def get_files_from_fofn(fofn_path):
-    pass
-
-
 def read_fofn_into_list(fofn_path):
     fofn_fd = open(fofn_path)
     files_list = [f for f in fofn_fd]
@@ -194,27 +192,30 @@ def collect_fpaths_from_args(study=None, files_list=None, fofn_path=None):
     return fpaths_irods
 
 
-# TODO: write in README - actually all these tests apply only to irods seq data...
-def main():
-    args = parse_args()
-    fpaths_irods = collect_fpaths_from_args(args.study, args.fpaths, args.fofn_path)
+def start_tests(study=None, fpaths=None, fofn_path=None, samples_irods_vs_header=True, samples_irods_vs_seqscape=True,
+                libraries_irods_vs_header=True, libraries_irods_vs_seqscape=True, study_irods_vs_seqscape=True,
+                collateral_tests=True, desired_ref=None):
 
+    fpaths_irods = collect_fpaths_from_args(study, fpaths, fofn_path)
     for fpath in fpaths_irods:
         if not fpath:
             continue
-
-        if args.samples_irods_vs_header or args.libraries_irods_vs_header:
+        if samples_irods_vs_header or libraries_irods_vs_header:
             irods_metadata = utils.iRODSUtils.retrieve_irods_metadata(fpath)
             header_metadata = utils.iRODSUtils.get_header_metadata_from_irods_file(fpath)
-
             run_metadata_tests(fpath, irods_metadata, header_metadata,
-                   args.samples_irods_vs_header, args.samples_irods_vs_seqscape,
-                   args.libraries_irods_vs_header, args.libraries_irods_vs_seqscape,
-                   args.study_irods_vs_seqscape, args.desired_ref)
-            # else:
-            #     header_metadata = utils.get_header_metadata_from_lustre_file(fpath)
-            #     #TODO: Think of use cases in which we check a file on lustre...
-            #     pass
+                   samples_irods_vs_header, samples_irods_vs_seqscape,
+                   libraries_irods_vs_header, libraries_irods_vs_seqscape,
+                   study_irods_vs_seqscape, collateral_tests, desired_ref)
+
+
+# TODO: write in README - actually all these tests apply only to irods seq data...
+def main():
+    args = parse_args()
+    start_tests(args.study, args.fpaths_irods, args.fofn, args.samples_irods_vs_header, args.samples_irods_vs_seqscape,
+                args.libraries_irods_vs_header, args.libraries_irods_vs_seqscape, args.study_irods_vs_seqscape,
+                args.collatera_tests, args.desired_ref)
+
 
 if __name__ == '__main__':
     main()
