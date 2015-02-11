@@ -162,8 +162,6 @@ def extract_reference_name_from_path(ref_path):
     return ''
 
 
-
-
 def extract_lanelet_name_from_irods_fpath(irods_fpath):
     fname = os.path.basename(irods_fpath)
     if fname.find("_") == -1:
@@ -171,3 +169,35 @@ def extract_lanelet_name_from_irods_fpath(irods_fpath):
     if fname.find(".bam") != -1:
         return fname.split(".bam")[0]
     return ''
+
+
+def extract_samples_from_irods_metadata(irods_metadata):
+    irods_sample_names_list = extract_values_for_key_from_irods_metadata(irods_metadata, 'sample')
+    irods_sample_acc_nr_list = extract_values_for_key_from_irods_metadata(irods_metadata, 'sample_accession_number')
+    irods_sample_internal_id_list = extract_values_for_key_from_irods_metadata(irods_metadata, 'sample_id')
+    irods_samples = {'name': irods_sample_names_list,
+                     'accession_number': irods_sample_acc_nr_list,
+                     'internal_id': irods_sample_internal_id_list
+    }
+    return irods_samples
+
+
+def extract_studies_from_irods_metadata(irods_metadata):
+    irods_study_names_list = extract_values_for_key_from_irods_metadata(irods_metadata, 'study')
+    irods_study_internal_id_list = extract_values_for_key_from_irods_metadata(irods_metadata, 'study_id')
+    irods_study_acc_nr_list = extract_values_for_key_from_irods_metadata(irods_metadata, 'study_accession_number')
+    irods_studies = {'name': irods_study_names_list,
+                     'internal_id': irods_study_internal_id_list,
+                     'accession_number': irods_study_acc_nr_list
+    }
+    return irods_studies
+
+
+def extract_libraries_from_irods_metadata(irods_metadata):
+    irods_lib_internal_id_list = extract_values_for_key_from_irods_metadata(irods_metadata, 'library_id')
+    if not irods_lib_internal_id_list:
+        irods_lib_names_list = extract_values_for_key_from_irods_metadata(irods_metadata, 'library')
+        irods_libraries = {'name': irods_lib_names_list}
+    else:
+        irods_libraries = {'internal_id': irods_lib_internal_id_list}
+    return irods_libraries
