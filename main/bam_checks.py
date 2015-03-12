@@ -78,43 +78,43 @@ def run_metadata_tests(irods_fpath, irods_metadata, header_metadata=None,
     if samples_irods_vs_header or samples_irods_vs_seqscape:
         irods_samples = sample_tests.extract_samples_from_irods_metadata(irods_metadata)
         missing_ids = check_all_identifiers_in_metadata(irods_samples)
-        issues.extend(missing_ids)
+        issues.extend(["SAMPLE IDENTIFIERS MISSING - inconsistencies between irods metadata that identifies samples : " + id for id in missing_ids])
 
     if samples_irods_vs_header:
         header_samples = utils.HeaderUtils.sort_entities_by_guessing_id_type(header_metadata.samples)
         irods_vs_head_diffs = get_diff_irods_and_header_metadata(header_samples, irods_samples)
-        issues.extend(irods_vs_head_diffs)
+        issues.extend(["SAMPLE differences IRODS vs HEADER METADATA: " + diff for diff in irods_vs_head_diffs])
 
     if samples_irods_vs_seqscape:
         irods_vs_seqsc_diffs = sample_tests.compare_sample_sets_obtained_by_seqscape_ids_lookup(irods_samples)
-        issues.extend(irods_vs_seqsc_diffs)
+        issues.extend(["SAMPLE differences IRODS vs SEQSCAPE METADATA: " + diff for diff in irods_vs_seqsc_diffs])
 
 
     # LIBRARY TESTS:
     if libraries_irods_vs_header or libraries_irods_vs_seqscape:
         irods_libraries = utils.iRODSUtils.extract_libraries_from_irods_metadata(irods_metadata)
         missing_ids = check_all_identifiers_in_metadata(irods_libraries, accession_number=False, name=False)
-        issues.extend(missing_ids)
+        issues.extend(["LIBRARY IDENTIFIERS MISSING - inconsistencies between sample identifiers extracted from IRODS metadata :" + id for id in missing_ids])
 
     if libraries_irods_vs_header:
         header_libraries = utils.HeaderUtils.sort_entities_by_guessing_id_type(header_metadata.libraries)
         irods_vs_head_diffs = get_diff_irods_and_header_metadata(header_libraries, irods_libraries)
-        issues.extend(irods_vs_head_diffs)
+        issues.extend(["LIBRARY differences IRODS vs HEADER:" + diff for diff in irods_vs_head_diffs])
 
     if libraries_irods_vs_seqscape:
         irods_vs_seqsc_diffs = library_tests.compare_library_sets_obtained_by_seqscape_ids_lookup(irods_libraries)
-        issues.extend(irods_vs_seqsc_diffs)
+        issues.extend(["LIBRARY differences IRODS vs SEQSCAPE: " + diff for diff in irods_vs_seqsc_diffs])
 
 
     # STUDY TESTS:
     if study_irods_vs_seqscape:
         irods_studies = utils.iRODSUtils.extract_studies_from_irods_metadata(irods_metadata)
         missing_ids = check_all_identifiers_in_metadata(irods_studies)
-        issues.extend(missing_ids)
+        issues.extend(["STUDY IDENTIFIERS MISSING  - inconsistencies between study identifiers extracted from IRODS metadata" + id for id in missing_ids])
 
         # Compare IRODS vs. SEQSCAPE:
         irods_vs_seqsc_diffs = study_tests.compare_study_sets_obtained_by_seqscape_ids_lookup(irods_studies)
-        issues.extend(irods_vs_seqsc_diffs)
+        issues.extend(["STUDY differences IRODS vs. SEQSCAPE: " + diff for diff in irods_vs_seqsc_diffs])
 
 
     # OTHER TESTS:
@@ -157,7 +157,7 @@ def parse_args():
 
     args = parser.parse_args()
 
-    if not args.fpath_irods and not args.study:
+    if not args.fpaths_irods and not args.study:
         parser.print_help()
         print "No study provided, no BAM path given => NOTHING TO DO! EXITTING"
         exit(0)
@@ -167,7 +167,7 @@ def parse_args():
             and not args.libraries_irods_vs_seqscape \
             and not args.study_irods_vs_seqscape:
         print "WARNING! You haven't selected neither samples to be checked, nor libraries, nor study. " \
-              "Is this what you want? I will only check the adjacent metadata."
+              "Nothing to be done!"
         parser.print_help()
         exit(0)
 
@@ -183,7 +183,7 @@ def read_fofn_into_list(fofn_path):
 
 def collect_fpaths_from_args(study=None, files_list=None, fofn_path=None):
     if study:
-        fpaths_irods = utils.retrieve_list_of_bams_by_study_from_irods(study)
+        fpaths_irods = utils.iRODSUtils.retrieve_list_of_bams_by_study_from_irods(study)
         print "fpaths for this study: " + str(fpaths_irods)
     elif fofn_path:
         fpaths_irods = read_fofn_into_list(fofn_path)
