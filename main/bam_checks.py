@@ -76,7 +76,7 @@ def run_metadata_tests(irods_fpath, irods_metadata, header_metadata=None,
     # SAMPLE TESTS:
     issues = []
     if samples_irods_vs_header or samples_irods_vs_seqscape:
-        irods_samples = sample_tests.extract_samples_from_irods_metadata(irods_metadata)
+        irods_samples = utils.iRODSUtils.extract_samples_from_irods_metadata(irods_metadata)
         missing_ids = check_all_identifiers_in_metadata(irods_samples)
         issues.extend(["SAMPLE IDENTIFIERS MISSING - inconsistencies between irods metadata that identifies samples : " + id for id in missing_ids])
 
@@ -126,6 +126,8 @@ def run_metadata_tests(irods_fpath, irods_metadata, header_metadata=None,
 
     if not issues:
         print "OK"
+    else:
+        print issues
 
 
 
@@ -202,7 +204,7 @@ def start_tests(study=None, fpaths=None, fofn_path=None, samples_irods_vs_header
             continue
         if samples_irods_vs_header or libraries_irods_vs_header:
             irods_metadata = utils.iRODSUtils.retrieve_irods_metadata(fpath)
-            header_metadata = utils.iRODSUtils.get_header_metadata_from_irods_file(fpath)
+            header_metadata = utils.HeaderUtils.get_header_metadata_from_irods_file(fpath)
             run_metadata_tests(fpath, irods_metadata, header_metadata,
                    samples_irods_vs_header, samples_irods_vs_seqscape,
                    libraries_irods_vs_header, libraries_irods_vs_seqscape,
@@ -214,7 +216,7 @@ def main():
     args = parse_args()
     start_tests(args.study, args.fpaths_irods, args.fofn, args.samples_irods_vs_header, args.samples_irods_vs_seqscape,
                 args.libraries_irods_vs_header, args.libraries_irods_vs_seqscape, args.study_irods_vs_seqscape,
-                args.collatera_tests, args.desired_ref)
+                args.collateral_tests, args.desired_ref)
 
 
 if __name__ == '__main__':
