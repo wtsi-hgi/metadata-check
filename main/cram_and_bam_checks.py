@@ -31,6 +31,9 @@ import utils
 import library_tests, study_tests, sample_tests
 from main import irods_seq_data_tests as seq_tests
 
+CRAM_FILE_TYPE = 'cram'
+BAM_FILE_TYPE = 'bam'
+BOTH_FILE_TYPES = 'both'
 
 
 def check_all_identifiers_in_metadata(metadata, name=True, internal_id=True, accession_number=True):
@@ -135,6 +138,7 @@ def run_metadata_tests(irods_fpath, irods_metadata, header_metadata=None,
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--study', required=False, help='Study name')
+    parser.add_argument('--file_type', required=False, default=BOTH_FILE_TYPES, help='Options are: bam | cram | both. If you choose any, then it checks both - whatever it finds.')
     parser.add_argument('--fpaths_irods', required=False, help='List of file paths in iRODS')
     parser.add_argument('--samples_irods_vs_header', action='store_true', required=False,
                         help='Add this flag if you want the samples to be checked - irods vs header')
@@ -183,10 +187,21 @@ def read_fofn_into_list(fofn_path):
     fofn_fd.close()
     return files_list
 
-
-def collect_fpaths_from_args(study=None, files_list=None, fofn_path=None):
-    if study:
+def collect_fpaths_for_study(study, file_type=BOTH_FILE_TYPES):
+    fpaths_irods = []
+    if file_type == CRAM_FILE_TYPE:
+        fpaths_irods = utils.iRODSUtils.retrieve_list_of_crams_by_study_from_irods(study)
+    elif file_type == BAM_FILE_TYPE:
         fpaths_irods = utils.iRODSUtils.retrieve_list_of_bams_by_study_from_irods(study)
+    elif file_type == BOTH_FILE_TYPES:
+        bams_fpaths_irods = utils.iRODSUtils.retrieve_list_of_bams_by_study_from_irods(study)
+        crams_fpaths_irods = utils.iRODSUtils.retrieve_list_of_crams_by_study_from_irods(study)
+        fpaths_irods = bams_fpaths_irods + crams_fpaths_irods
+    return fpaths_irods
+
+def collect_fpaths_from_args(study=None, file_type=BOTH_FILE_TYPES, files_list=None, fofn_path=None):
+    if study:
+        fpaths_irods = collect_fpaths_for_study(study, file_type)
         print "fpaths for this study: " + str(fpaths_irods)
     elif fofn_path:
         fpaths_irods = read_fofn_into_list(fofn_path)
@@ -195,18 +210,18 @@ def collect_fpaths_from_args(study=None, files_list=None, fofn_path=None):
     return fpaths_irods
 
 
-def start_tests(study=None, fpaths=None, fofn_path=None, samples_irods_vs_header=True, samples_irods_vs_seqscape=True,
+def start_tests(study=None, file_type='both', fpaths=None, fofn_path=None, samples_irods_vs_header=True, samples_irods_vs_seqscape=True,
                 libraries_irods_vs_header=True, libraries_irods_vs_seqscape=True, study_irods_vs_seqscape=True,
                 collateral_tests=True, desired_ref=None):
 
-    fpaths_irods = collect_fpaths_from_args(study, fpaths, fofn_path)
+    fpaths_irods = collect_fpaths_from_args(study, file_type, fpaths, fofn_path)
     for fpath in fpaths_irods:
         if not fpath:
             continue
         if samples_irods_vs_header or libraries_irods_vs_header:
             irods_metadata = utils.iRODSUtils.retrieve_irods_metadata(fpath)
             header_metadata = utils.HeaderUtils.get_header_metadata_from_irods_file(fpath)
-            run_metadata_tests(fpath, irods_metadata, header_metadata,
+            run_metadata_tests(fpath, file_type, irods_metadata, header_metadata,
                    samples_irods_vs_header, samples_irods_vs_seqscape,
                    libraries_irods_vs_header, libraries_irods_vs_seqscape,
                    study_irods_vs_seqscape, collateral_tests, desired_ref)
@@ -215,7 +230,7 @@ def start_tests(study=None, fpaths=None, fofn_path=None, samples_irods_vs_header
 # TODO: write in README - actually all these tests apply only to irods seq data...
 def main():
     args = parse_args()
-    start_tests(args.study, args.fpaths_irods, args.fofn, args.samples_irods_vs_header, args.samples_irods_vs_seqscape,
+    start_tests(args.study, args.file_type, args.fpaths_irods, args.fofn, args.samples_irods_vs_header, args.samples_irods_vs_seqscape,
                 args.libraries_irods_vs_header, args.libraries_irods_vs_seqscape, args.study_irods_vs_seqscape,
                 args.collateral_tests, args.desired_ref)
 
