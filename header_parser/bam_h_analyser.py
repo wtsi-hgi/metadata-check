@@ -67,7 +67,7 @@ class _RGTagAnalyser(object):
         if 'PL' in rg_dict:
             platform = rg_dict['PL']
         if 'PU' in rg_dict:
-            platform = platform + ' ' + cls._extract_platform_from_pu_entry(rg_dict['PU'])
+            platform = str(platform) + ' ' + str(cls._extract_platform_from_pu_entry(rg_dict['PU']))
         return platform
 
 
