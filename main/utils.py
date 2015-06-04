@@ -79,7 +79,16 @@ class iRODSUtils:
     def retrieve_list_of_bams_by_study_from_irods(cls, study_name):
         avus = {'study': study_name, 'type': 'bam'}
         bams = icommands_wrapper.iRODSMetaQueryOperations.query_by_metadata(avus)
-        filtered_bams = icommands_wrapper.iRODSMetaQueryOperations.filter_out_phix_files(bams)
+        print "BAMS returned by the search: " + str(bams)
+        filtered_bams = icommands_wrapper.iRODSMetaQueryOperations.filter_out_bam_phix_files(bams)
+        return filtered_bams
+
+    @classmethod
+    def retrieve_list_of_crams_by_study_from_irods(cls, study_name):
+        avus = {'study': study_name, 'type': 'cram'}
+        crams = icommands_wrapper.iRODSMetaQueryOperations.query_by_metadata(avus)
+        print "CRAMS returned by the search: " + str(crams)
+        filtered_bams = icommands_wrapper.iRODSMetaQueryOperations.filter_out_cram_phix_files(crams)
         return filtered_bams
 
     @classmethod

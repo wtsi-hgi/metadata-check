@@ -526,11 +526,18 @@ class iRODSMetaQueryOperations(iRODSOperations):
 
 
     @classmethod
-    def filter_out_phix_files(cls, file_paths):
+    def filter_out_bam_phix_files(cls, file_paths):
         """
             This method is filtering the list of file paths by eliminating the phix data and #0 files.
         """
-        return [fpath for fpath in file_paths if fpath.find("#0.bam") == -1 and fpath.find("phix.bam")==-1]
+        return [fpath for fpath in file_paths if fpath.find("#0.bam") == -1 and fpath.find("phix.bam") == -1]
+
+    @classmethod
+    def filter_out_cram_phix_files(cls, file_paths):
+        """
+            This method is filtering the list of file paths by eliminating the phix data and #0 files.
+        """
+        return [fpath for fpath in file_paths if fpath.find("#0.cram") == -1 and fpath.find("phix.cram") == -1]
 
 
     @classmethod
