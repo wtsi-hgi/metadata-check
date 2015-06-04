@@ -123,6 +123,7 @@ def run_metadata_tests(irods_fpath, irods_metadata, header_metadata=None,
         if collateral_issues:
             issues.extend(collateral_issues)
             print "IRODS SEQUENCING SPECIFIC TESTS - ISSUES: " + str(collateral_issues)
+    
 
     if not issues:
         print "OK"
@@ -149,7 +150,7 @@ def parse_args():
     parser.add_argument('--desired_ref', required=False,
                         help='Add this parameter if you want the reference in irods metadata to be checked '
                              'against this reference.')
-    parser.add_argument('--collateral_tests', required=False,
+    parser.add_argument('--collateral_tests', required=False, default=True,
                         help='This is a test suite consisting of checks specific for sequencing data released by NPG, '
                              'such as md5, lane id, run id')
     parser.add_argument('--fofn', required=False,
