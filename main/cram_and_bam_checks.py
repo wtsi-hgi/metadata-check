@@ -221,7 +221,7 @@ def start_tests(study=None, file_type='both', fpaths=None, fofn_path=None, sampl
         if samples_irods_vs_header or libraries_irods_vs_header:
             irods_metadata = utils.iRODSUtils.retrieve_irods_metadata(fpath)
             header_metadata = utils.HeaderUtils.get_header_metadata_from_irods_file(fpath)
-            run_metadata_tests(fpath, file_type, irods_metadata, header_metadata,
+            run_metadata_tests(fpath, irods_metadata, header_metadata,
                    samples_irods_vs_header, samples_irods_vs_seqscape,
                    libraries_irods_vs_header, libraries_irods_vs_seqscape,
                    study_irods_vs_seqscape, collateral_tests, desired_ref)
