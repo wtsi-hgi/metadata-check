@@ -134,14 +134,20 @@ class iRODSUtils:
 
     @classmethod
     def get_lane_from_irods_path(cls, irods_fpath):
-        fname = os.path.basename(irods_fpath)
+        #fname = os.path.basename(irods_fpath)
+        fname = common_utils.extract_basename(irods_fpath)
         if fname.find("_") != -1:
             lane_id = ''
             lane_token = fname.split("_")[1]
             if lane_token.find("#") != -1:
                 lane_id = lane_token.split("#")[0]
-            elif lane_token.find(".bam") != -1:
-                lane_id = lane_token.split(".bam")[0]
+            else:
+                if lane_token.isdigit():
+                    lane_id = lane_token
+                else:
+                    raise NameError("Donno how to parse "+str(irods_fpath)+" in order to extract the lane id. You might to implement this for your case.")
+            # elif lane_token.find(".bam") != -1:
+            #     lane_id = lane_token.split(".bam")[0]
             return lane_id
         return ''
 
@@ -159,9 +165,12 @@ class iRODSUtils:
         fname = os.path.basename(irods_fpath)
         if fname.find("_") == -1:
             return ''
-        if fname.find(".bam") != -1:
-            return fname.split(".bam")[0]
-        return ''
+        #file_extention = common_utils.extract_file_extension(fname)
+        fname_no_ext = common_utils.extract_basename(fname)
+        # if fname.find("."+str(file_type)) != -1:
+        #     return fname.split("."+str(file_type))[0]
+
+        return fname_no_ext
 
 
     @classmethod

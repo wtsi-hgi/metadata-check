@@ -27,7 +27,7 @@ import argparse
 # from irods import icommands_wrapper as irods_wrapper
 # from seqscape import queries as seqsc
 
-import utils
+import metadata_utils
 import library_tests, study_tests, sample_tests
 from main import irods_seq_data_tests as seq_tests
 
@@ -79,12 +79,12 @@ def run_metadata_tests(irods_fpath, irods_metadata, header_metadata=None,
     # SAMPLE TESTS:
     issues = []
     if samples_irods_vs_header or samples_irods_vs_seqscape:
-        irods_samples = utils.iRODSUtils.extract_samples_from_irods_metadata(irods_metadata)
+        irods_samples = metadata_utils.iRODSUtils.extract_samples_from_irods_metadata(irods_metadata)
         missing_ids = check_all_identifiers_in_metadata(irods_samples)
         issues.extend(["SAMPLE IDENTIFIERS MISSING - inconsistencies between irods metadata that identifies samples : " + id for id in missing_ids])
 
     if samples_irods_vs_header:
-        header_samples = utils.HeaderUtils.sort_entities_by_guessing_id_type(header_metadata.samples)
+        header_samples = metadata_utils.HeaderUtils.sort_entities_by_guessing_id_type(header_metadata.samples)
         irods_vs_head_diffs = get_diff_irods_and_header_metadata(header_samples, irods_samples)
         issues.extend(["SAMPLE differences IRODS vs HEADER METADATA: " + diff for diff in irods_vs_head_diffs])
 
@@ -95,12 +95,12 @@ def run_metadata_tests(irods_fpath, irods_metadata, header_metadata=None,
 
     # LIBRARY TESTS:
     if libraries_irods_vs_header or libraries_irods_vs_seqscape:
-        irods_libraries = utils.iRODSUtils.extract_libraries_from_irods_metadata(irods_metadata)
+        irods_libraries = metadata_utils.iRODSUtils.extract_libraries_from_irods_metadata(irods_metadata)
         missing_ids = check_all_identifiers_in_metadata(irods_libraries, accession_number=False, name=False)
         issues.extend(["LIBRARY IDENTIFIERS MISSING - inconsistencies between sample identifiers extracted from IRODS metadata :" + id for id in missing_ids])
 
     if libraries_irods_vs_header:
-        header_libraries = utils.HeaderUtils.sort_entities_by_guessing_id_type(header_metadata.libraries)
+        header_libraries = metadata_utils.HeaderUtils.sort_entities_by_guessing_id_type(header_metadata.libraries)
         irods_vs_head_diffs = get_diff_irods_and_header_metadata(header_libraries, irods_libraries)
         issues.extend(["LIBRARY differences IRODS vs HEADER:" + diff for diff in irods_vs_head_diffs])
 
@@ -111,7 +111,7 @@ def run_metadata_tests(irods_fpath, irods_metadata, header_metadata=None,
 
     # STUDY TESTS:
     if study_irods_vs_seqscape:
-        irods_studies = utils.iRODSUtils.extract_studies_from_irods_metadata(irods_metadata)
+        irods_studies = metadata_utils.iRODSUtils.extract_studies_from_irods_metadata(irods_metadata)
         missing_ids = check_all_identifiers_in_metadata(irods_studies)
         issues.extend(["STUDY IDENTIFIERS MISSING  - inconsistencies between study identifiers extracted from IRODS metadata" + id for id in missing_ids])
 
@@ -189,12 +189,12 @@ def read_fofn_into_list(fofn_path):
 def collect_fpaths_for_study(study, file_type=BOTH_FILE_TYPES):
     fpaths_irods = []
     if file_type == CRAM_FILE_TYPE:
-        fpaths_irods = utils.iRODSUtils.retrieve_list_of_crams_by_study_from_irods(study)
+        fpaths_irods = metadata_utils.iRODSUtils.retrieve_list_of_crams_by_study_from_irods(study)
     elif file_type == BAM_FILE_TYPE:
-        fpaths_irods = utils.iRODSUtils.retrieve_list_of_bams_by_study_from_irods(study)
+        fpaths_irods = metadata_utils.iRODSUtils.retrieve_list_of_bams_by_study_from_irods(study)
     elif file_type == BOTH_FILE_TYPES:
-        bams_fpaths_irods = utils.iRODSUtils.retrieve_list_of_bams_by_study_from_irods(study)
-        crams_fpaths_irods = utils.iRODSUtils.retrieve_list_of_crams_by_study_from_irods(study)
+        bams_fpaths_irods = metadata_utils.iRODSUtils.retrieve_list_of_bams_by_study_from_irods(study)
+        crams_fpaths_irods = metadata_utils.iRODSUtils.retrieve_list_of_crams_by_study_from_irods(study)
         fpaths_irods = bams_fpaths_irods + crams_fpaths_irods
     return fpaths_irods
 
@@ -218,8 +218,8 @@ def start_tests(study=None, file_type='both', fpaths=None, fofn_path=None, sampl
         if not fpath:
             continue
         if samples_irods_vs_header or libraries_irods_vs_header:
-            irods_metadata = utils.iRODSUtils.retrieve_irods_metadata(fpath)
-            header_metadata = utils.HeaderUtils.get_header_metadata_from_irods_file(fpath)
+            irods_metadata = metadata_utils.iRODSUtils.retrieve_irods_metadata(fpath)
+            header_metadata = metadata_utils.HeaderUtils.get_header_metadata_from_irods_file(fpath)
             run_metadata_tests(fpath, file_type, irods_metadata, header_metadata,
                    samples_irods_vs_header, samples_irods_vs_seqscape,
                    libraries_irods_vs_header, libraries_irods_vs_seqscape,
