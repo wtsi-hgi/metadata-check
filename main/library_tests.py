@@ -20,7 +20,7 @@ This file has been created on Feb 10, 2015.
 """
 
 import seqscape.queries as seqsc
-from main import utils
+from main import metadata_utils
 
 
 def get_libraries_from_seqsc(ids_list, id_type):

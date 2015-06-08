@@ -19,13 +19,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 This file has been created on Feb 11, 2015.
 """
 
-from main import utils
+from main import metadata_utils
+from com import utils
 from irods import icommands_wrapper as irods_wrapper
 
 
 
 def check_md5_metadata(irods_metadata, irods_fpath):
-    md5_metadata = utils.iRODSUtils.extract_values_for_key_from_irods_metadata(irods_metadata, 'md5')
+    md5_metadata = metadata_utils.iRODSUtils.extract_values_for_key_from_irods_metadata(irods_metadata, 'md5')
     if not md5_metadata:
         print "This file doesn't have md5 in irods metadata"
         return []
@@ -42,8 +43,8 @@ def check_run_id(irods_metadata, irods_fpath):
     """
     This test assumes that all the files in iRODS have exactly 1 run (=LANELETS)
     """
-    irods_run_ids = utils.iRODSUtils.extract_values_for_key_from_irods_metadata(irods_metadata, 'id_run')
-    path_run_id = utils.iRODSUtils.get_run_from_irods_path(irods_fpath)
+    irods_run_ids = metadata_utils.iRODSUtils.extract_values_for_key_from_irods_metadata(irods_metadata, 'id_run')
+    path_run_id = metadata_utils.iRODSUtils.get_run_from_irods_path(irods_fpath)
     if len(irods_run_ids) > 1:
         return ["ERROR: > 1 runs for this file."]
     elif len(irods_run_ids) < 1:
@@ -57,8 +58,8 @@ def check_run_id(irods_metadata, irods_fpath):
 
 
 def check_lane_metadata(irods_metadata, irods_fpath):
-    lane_id = utils.iRODSUtils.get_lane_from_irods_path(irods_fpath)
-    irods_lane_ids = utils.iRODSUtils.extract_values_for_key_from_irods_metadata(irods_metadata, 'lane')
+    lane_id = metadata_utils.iRODSUtils.get_lane_from_irods_path(irods_fpath)
+    irods_lane_ids = metadata_utils.iRODSUtils.extract_values_for_key_from_irods_metadata(irods_metadata, 'lane')
     if len(irods_lane_ids) > 1:
         return [" > 1 LANE in iRODS metadata"]
     elif len(irods_lane_ids) < 1:
@@ -75,8 +76,9 @@ def check_lane_metadata(irods_metadata, irods_fpath):
 def check_lanelet_name(irods_fpath, header_lanelets):
     if len(header_lanelets) != 1:
         return [" > 1 lanelets in the header."]
-    irods_lanelet_name = utils.iRODSUtils.extract_lanelet_name_from_irods_fpath(irods_fpath)
-    if irods_lanelet_name != header_lanelets[0]:
+    irods_lanelet_name = metadata_utils.iRODSUtils.extract_lanelet_name_from_irods_fpath(irods_fpath)
+    fname = utils.extract_basename(irods_lanelet_name)
+    if fname != header_lanelets[0]:
         return [
             "HEADER LANELET = " + str(header_lanelets[0]) + " different from FILE NAME = " + str(irods_lanelet_name)]
     return []
@@ -84,14 +86,14 @@ def check_lanelet_name(irods_fpath, header_lanelets):
 
 
 def check_reference(irods_metadata, desired_ref):
-    ref_paths = utils.iRODSUtils.extract_values_for_key_from_irods_metadata(irods_metadata, 'reference')
+    ref_paths = metadata_utils.iRODSUtils.extract_values_for_key_from_irods_metadata(irods_metadata, 'reference')
     if len(ref_paths) > 1:
         return [" > 1 REFERENCE ATTRIBUTE in iRODS metadata"]
     elif len(ref_paths) < 1:
         return ["NO REFERENCE ATTRIBUTE in iRODS metadata"]
     else:
         ref_path = ref_paths[0]
-    ref_name = utils.iRODSUtils.extract_reference_name_from_path(ref_path)
+    ref_name = metadata_utils.iRODSUtils.extract_reference_name_from_path(ref_path)
     if ref_name != desired_ref:
         return ["WANTED REFERENCE =: " + str(desired_ref) + " different from ACTUAL REFERENCE = " + str(ref_name)]
     return []
