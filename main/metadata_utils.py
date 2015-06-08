@@ -79,7 +79,6 @@ class iRODSUtils:
     def retrieve_list_of_bams_by_study_from_irods(cls, study_name):
         avus = {'study': study_name, 'type': 'bam'}
         bams = icommands_wrapper.iRODSMetaQueryOperations.query_by_metadata(avus)
-        print "BAMS returned by the search: " + str(bams)
         filtered_bams = icommands_wrapper.iRODSMetaQueryOperations.filter_out_bam_phix_files(bams)
         return filtered_bams
 
@@ -87,7 +86,6 @@ class iRODSUtils:
     def retrieve_list_of_crams_by_study_from_irods(cls, study_name):
         avus = {'study': study_name, 'type': 'cram'}
         crams = icommands_wrapper.iRODSMetaQueryOperations.query_by_metadata(avus)
-        print "CRAMS returned by the search: " + str(crams)
         filtered_bams = icommands_wrapper.iRODSMetaQueryOperations.filter_out_cram_phix_files(crams)
         return filtered_bams
 
@@ -134,14 +132,20 @@ class iRODSUtils:
 
     @classmethod
     def get_lane_from_irods_path(cls, irods_fpath):
-        fname = os.path.basename(irods_fpath)
+        #fname = os.path.basename(irods_fpath)
+        fname = common_utils.extract_basename(irods_fpath)
         if fname.find("_") != -1:
             lane_id = ''
             lane_token = fname.split("_")[1]
             if lane_token.find("#") != -1:
                 lane_id = lane_token.split("#")[0]
-            elif lane_token.find(".bam") != -1:
-                lane_id = lane_token.split(".bam")[0]
+            else:
+                if lane_token.isdigit():
+                    lane_id = lane_token
+                else:
+                    raise NameError("Donno how to parse "+str(irods_fpath)+" in order to extract the lane id. You might to implement this for your case.")
+            # elif lane_token.find(".bam") != -1:
+            #     lane_id = lane_token.split(".bam")[0]
             return lane_id
         return ''
 
@@ -159,9 +163,12 @@ class iRODSUtils:
         fname = os.path.basename(irods_fpath)
         if fname.find("_") == -1:
             return ''
-        if fname.find(".bam") != -1:
-            return fname.split(".bam")[0]
-        return ''
+        #file_extention = common_utils.extract_file_extension(fname)
+        fname_no_ext = common_utils.extract_basename(fname)
+        # if fname.find("."+str(file_type)) != -1:
+        #     return fname.split("."+str(file_type))[0]
+
+        return fname_no_ext
 
 
     @classmethod

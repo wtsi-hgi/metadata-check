@@ -37,10 +37,11 @@ class TestBamChecks(unittest.TestCase):
         result = cram_and_bam_checks.get_diff_irods_and_header_metadata(header_dict, irods_dict)
         self.assertEqual(len(result), 0)
 
+        # This tests that it's ok even if the irods metadata is a superset of header,
         header_dict = {'accession_number': ['EGAN00001218652']}
         irods_dict = {'accession_number': ['EGAN00001218652'], 'name': ['491STDY5478742']}
         result = cram_and_bam_checks.get_diff_irods_and_header_metadata(header_dict, irods_dict)
-        self.assertEqual(len(result), 1)
+        self.assertEqual(len(result), 0)
 
         header_dict = {'accession_number': [], 'name': ['SC_WES_INT5899561']}
         irods_dict = {'accession_number': ['EGAN00001218652'], 'name': ['SC_WES_INT5899561']}
