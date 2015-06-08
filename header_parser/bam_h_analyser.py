@@ -92,8 +92,9 @@ class _RGTagAnalyser(object):
             run = cls._extract_run_from_pu_entry(pu_entry)
             lane = cls._extract_lane_from_pu_entry(pu_entry)
             tag = cls._extract_tag_from_pu_entry(pu_entry)
-            lanelet = cls._build_lanelet_name(run, lane, tag)
-            return lanelet
+            if run and lane and tag:
+                return cls._build_lanelet_name(run, lane, tag)
+        return None
 
 
     @classmethod
@@ -154,7 +155,9 @@ class _RGTagAnalyser(object):
         run_beat = beats_list[2]
         if run_beat[0] == '0':
             return int(run_beat[1:])
-        return int(run_beat)
+        if run_beat.isdigit():
+            return int(run_beat)
+        return None
 
 
     @classmethod
@@ -197,8 +200,12 @@ class _RGTagAnalyser(object):
             if 'LB' in read_grp:
                 libraries.append(read_grp['LB'])
             if 'PU' in read_grp and is_sanger_sample:
-                lanelets.append(cls._extract_lanelet_name_from_pu_entry(read_grp['PU']))
-                platforms.append(cls._extract_platform_list_from_rg(read_grp))
+                lanelet = cls._extract_lanelet_name_from_pu_entry(read_grp['PU'])
+                if lanelet:
+                    lanelets.append(lanelet)
+                platf = cls._extract_platform_list_from_rg(read_grp)
+                if platf:
+                    platforms.append(platf)
             if not is_sanger_sample and 'PL' in read_grp:
                 platforms.append(read_grp['PL'])
 
