@@ -197,10 +197,10 @@ class iRODSUtils:
     @classmethod
     def extract_libraries_from_irods_metadata(cls, irods_metadata):
         irods_lib_internal_id_list = cls.extract_values_for_key_from_irods_metadata(irods_metadata, 'library_id')
-        if not irods_lib_internal_id_list:
+        if irods_lib_internal_id_list:
+            irods_libraries = {'internal_id': irods_lib_internal_id_list}
+        else:
             irods_lib_names_list = cls.extract_values_for_key_from_irods_metadata(irods_metadata, 'library')
             irods_libraries = {'name': irods_lib_names_list}
-        else:
-            irods_libraries = {'internal_id': irods_lib_internal_id_list}
         return irods_libraries
 

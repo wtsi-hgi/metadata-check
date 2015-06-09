@@ -74,8 +74,10 @@ def check_lane_metadata(irods_metadata, irods_fpath):
 
 
 def check_lanelet_name(irods_fpath, header_lanelets):
-    if len(header_lanelets) != 1:
-        return [" > 1 lanelets in the header."]
+    if len(header_lanelets) > 1:
+        return [" > 1 lanelets in the header: "+str(header_lanelets)]
+    elif len(header_lanelets) < 1:
+        return [" < 1 lanelets in the header."]
     irods_lanelet_name = metadata_utils.iRODSUtils.extract_lanelet_name_from_irods_fpath(irods_fpath)
     fname = utils.extract_basename(irods_lanelet_name)
     if fname != header_lanelets[0]:
