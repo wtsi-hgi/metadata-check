@@ -30,7 +30,8 @@ import argparse
 import metadata_utils
 import library_tests, study_tests, sample_tests
 from main import irods_seq_data_tests as seq_tests
-
+from com import utils
+import irods_meta_checks
 
 CRAM_FILE_TYPE = 'cram'
 BAM_FILE_TYPE = 'bam'
@@ -101,6 +102,17 @@ def run_metadata_tests(irods_fpath, irods_metadata, header_metadata=None,
 
         if libraries_irods_vs_header:
             header_libraries = metadata_utils.HeaderUtils.sort_entities_by_guessing_id_type(header_metadata.libraries)
+
+            # for id_type, head_ids_list in header_libraries.iteritems():
+            #     if irods_libraries.get(id_type) and header_libraries.get(id_type):
+            #         print irods_fpath+"\t"+str(head_ids_list[0])+"\t"+str(irods_libraries[id_type][0])
+            #     else:
+            #         if not irods_libraries.get(id_type) and  head_ids_list:
+            #             print "Irods_lib_missing"+"\t"+str(head_ids_list)
+            #         if not head_ids_list and irods_libraries.get(id_type):
+            #             print "Header_lib_missing"+"\t"+str(irods_libraries[id_type])
+
+
             irods_vs_head_diffs = get_diff_irods_and_header_metadata(header_libraries, irods_libraries)
             issues.extend(["LIBRARY differences IRODS vs HEADER:" + diff for diff in irods_vs_head_diffs])
 
@@ -137,9 +149,15 @@ def run_metadata_tests(irods_fpath, irods_metadata, header_metadata=None,
 
 def parse_args():
     parser = argparse.ArgumentParser()
+    # Getting the input (filepaths, etc..)
     parser.add_argument('--study', required=False, help='Study name')
     parser.add_argument('--file_type', required=False, default=BOTH_FILE_TYPES, help='Options are: bam | cram | both. If you choose any, then it checks both - whatever it finds.')
     parser.add_argument('--fpaths_irods', required=False, help='List of file paths in iRODS')
+    parser.add_argument('--fofn', required=False,
+                        help='The path to a fofn containing file paths from iRODS '
+                             'for the files one wants to run tests on')
+
+    # Getting the list of tests to be done:
     parser.add_argument('--samples_irods_vs_header', action='store_true', required=False,
                         help='Add this flag if you want the samples to be checked - irods vs header')
     parser.add_argument('--samples_irods_vs_seqscape', action='store_true', required=False,
@@ -157,13 +175,14 @@ def parse_args():
     parser.add_argument('--collateral_tests', required=False, default=True,
                         help='This is a test suite consisting of checks specific for sequencing data released by NPG, '
                              'such as md5, lane id, run id')
-    parser.add_argument('--fofn', required=False,
-                        help='The path to a fofn containing file paths from iRODS '
-                             'for the files one wants to run tests on')
     parser.add_argument('--check_irods_meta_against_config', required=False,
                         help='This option takes also the path to a config file, to check the irods metadata of each file'
                              ' against the structure given as config file. The conf file should contain: '
                              '{field_name: expected_frequency,..} ')
+
+    # Outputting the report:
+    # TODO
+
 
 
     args = parser.parse_args()
@@ -195,19 +214,23 @@ def collect_fpaths_for_study(study, file_type=BOTH_FILE_TYPES):
     fpaths_irods = []
     if file_type == CRAM_FILE_TYPE:
         fpaths_irods = metadata_utils.iRODSUtils.retrieve_list_of_crams_by_study_from_irods(study)
+        print "NUMBER of CRAMs found: " + str(len(fpaths_irods))
     elif file_type == BAM_FILE_TYPE:
         fpaths_irods = metadata_utils.iRODSUtils.retrieve_list_of_bams_by_study_from_irods(study)
+        print "NUMBER of BAMs found: " + str(len(fpaths_irods))
     elif file_type == BOTH_FILE_TYPES:
         bams_fpaths_irods = metadata_utils.iRODSUtils.retrieve_list_of_bams_by_study_from_irods(study)
         crams_fpaths_irods = metadata_utils.iRODSUtils.retrieve_list_of_crams_by_study_from_irods(study)
         fpaths_irods = bams_fpaths_irods + crams_fpaths_irods
-    print "FILE PATHS found for this study: "+ str(fpaths_irods)
+        print "NUMBER of BAMs found: " + str(len(bams_fpaths_irods))
+        print "NUMBER of CRAMs found: " + str(len(crams_fpaths_irods))
+        print "BAMS: " + str(bams_fpaths_irods)
+        print "CRAMs: " + str(crams_fpaths_irods)
     return fpaths_irods
 
 def collect_fpaths_from_args(study=None, file_type=BOTH_FILE_TYPES, files_list=None, fofn_path=None):
     if study:
         fpaths_irods = collect_fpaths_for_study(study, file_type)
-        print "fpaths for this study: " + str(fpaths_irods)
     elif fofn_path:
         fpaths_irods = read_fofn_into_list(fofn_path)
     elif files_list:
@@ -220,22 +243,27 @@ def start_tests(study=None, file_type='both', fpaths=None, fofn_path=None, sampl
                 collateral_tests=True, desired_ref=None, irods_meta_conf=None):
 
     fpaths_irods = collect_fpaths_from_args(study, file_type, fpaths, fofn_path)
-    print "I have collected paths.....starting to analyze......."
+    print "I have collected "+ str(len(fpaths_irods)) + " paths.....starting to analyze......."
+
     for fpath in fpaths_irods:
         if not fpath:
             continue
-        print "FPATH analyzed: " + str(fpath)
-        if irods_meta_conf:
-
+        #print "FPATH analyzed: " + str(fpath)
 
         if samples_irods_vs_header or libraries_irods_vs_header:
             irods_metadata = metadata_utils.iRODSUtils.retrieve_irods_metadata(fpath)
             header_metadata = metadata_utils.HeaderUtils.get_header_metadata_from_irods_file(fpath)
+            if irods_meta_conf:
+
+                pass
             run_metadata_tests(fpath, irods_metadata, header_metadata,
                    samples_irods_vs_header, samples_irods_vs_seqscape,
                    libraries_irods_vs_header, libraries_irods_vs_seqscape,
                    study_irods_vs_seqscape, collateral_tests, desired_ref)
-
+        if irods_meta_conf:
+            diffs = irods_meta_checks.compare_irods_meta_with_configured_attributes(fpath, irods_meta_conf)
+            print "IRODS METADATA CHECKS: "+ str(diffs)
+    #print "FILES PER TYPE: CRAMs = " + str(nr_crams) + " and BAMs = " + str(nr_bams)
 
 # TODO: write in README - actually all these tests apply only to irods seq data...
 def main():

@@ -491,6 +491,10 @@ class iRODSMetaQueryOperations(iRODSOperations):
         cmd_args = []
         cmd_args.extend(["imeta", "qu", "-z", zone])
         cmd_args.append("-d")
+        # cmd_args.append("manual_qc")
+        # cmd_args.append("=")
+        # cmd_args.append("1")
+        # cmd_args.append('and')
         for attribute, value in avu_dict.iteritems():
             cmd_args.append(attribute)
             cmd_args.append(operator)
@@ -645,7 +649,7 @@ class iRODSMetaListOperations(iRODSOperations):
             elif line.startswith('value: '):
                 attr_val = cls._extract_value_from_line(line)
                 if not attr_val:
-                    raise ValueError("Attirbute: "+attr_name+" has a None value!")
+                    raise ValueError("Attribute: "+attr_name+" has a None value!")
             
             if attr_name and attr_val:
                 avus_list.append(irods_types.MetaAVU(attr_name, attr_val))
