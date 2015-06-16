@@ -24,7 +24,7 @@ import unittest
 from main import sample_tests
 
 
-class SeqscapeQueriesTests(unittest.TestCase):
+class TestSeqscapeQueries(unittest.TestCase):
 
     def test_get_samples_from_seqsc(self):
         identif_list = ['491STDY5478742']
@@ -42,7 +42,7 @@ class SeqscapeQueriesTests(unittest.TestCase):
         self.assertEqual(results[0].internal_id, 2040105)
 
 
-class IRODSvsSeqscMetadataTests(unittest.TestCase):
+class TestIRODSvsSeqscMetadata(unittest.TestCase):
 
     def test_get_diff_seqsc_and_irods_samples_metadata(self):
         irods_samples = {'name': ['491STDY5478742'], 'accession_number': ['EGAN00001096108'], 'internal_id': [1571544]}
@@ -54,7 +54,7 @@ class IRODSvsSeqscMetadataTests(unittest.TestCase):
         self.assertEqual(len(result), 1)
 
 
-class SampleMetadataWholeTests(unittest.TestCase):
+class TestSampleMetadata(unittest.TestCase):
     pass
     #won't run because I've commented out the fct called
     # @unittest.skipIf(config.RUNNING_LOCATION == 'localhost', "Skipping checks because it runs locally")

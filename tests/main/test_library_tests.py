@@ -23,7 +23,7 @@ import unittest
 from main import library_tests
 
 
-class LibraryMetadataWholeTests(unittest.TestCase):
+class TestLibraryMetadata(unittest.TestCase):
 
     # This will fail..cause I commented out these fct, refactored to smth else.
     # @unittest.skipIf(config.RUNNING_LOCATION == 'localhost', "Skipping checks because it runs locally")
