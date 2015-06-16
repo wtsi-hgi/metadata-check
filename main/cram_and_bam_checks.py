@@ -137,7 +137,7 @@ def run_metadata_tests(irods_fpath, irods_metadata, header_metadata=None,
         collateral_issues = seq_tests.run_irods_seq_specific_tests(irods_fpath, irods_metadata, header_metadata, desired_ref)
         if collateral_issues:
             issues.extend(collateral_issues)
-            print "IRODS SEQUENCING SPECIFIC TESTS - ISSUES: " + str(collateral_issues)
+            #print "IRODS SEQUENCING SPECIFIC TESTS - ISSUES: " + str(collateral_issues)
     
 
     if not issues:

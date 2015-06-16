@@ -94,6 +94,7 @@ class IrodsMetadataAttributeFrequencyError(Exception):
     def __repr__(self):
         return self.__str__()
 
+
 class WrongReferenceError(Exception):
 
     def __init__(self, fpath, desired_ref, irods_ref, header_ref=None):
@@ -125,3 +126,15 @@ class WrongMD5Error(Exception):
         return self.__str__()
 
 
+class TestImpossibleToRunError(Exception):
+
+    def __init__(self, fpath, test_name, reason):
+        self.fpath = fpath
+        self.test_name = test_name
+        self.reason = reason
+
+    def __str__(self):
+        return "Can't run test " + str(self.test_name) + " on file: " + str(self.fpath) + ". Reason: " + str(self.reason)
+
+    def __repr__(self):
+        return self.__str__()
