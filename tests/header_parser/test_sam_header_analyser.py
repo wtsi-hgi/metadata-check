@@ -22,6 +22,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 import os
 from hamcrest import *
 import unittest
+import config
 
 # from Celery_Django_Prj import configs
 # from serapis.com import constants
@@ -130,7 +131,7 @@ class Test_RGTagAnalyser(unittest.TestCase):
 
 
     def test_parse_RG(self):
-        fpath = os.path.join(configs.LUSTRE_HOME, 'bams/agv-ethiopia/egpg5306022.bam')
+        fpath = os.path.join(config.LUSTRE_HOME, 'bams/agv-ethiopia/egpg5306022.bam')
         #header = BAMHeaderParser.parse(fpath, sq=False, hd=False,pg=False)
         header = BAMHeaderParser.extract_header(fpath)
         header_rg = _RGTagAnalyser.parse_all(header['RG'])
@@ -140,7 +141,7 @@ class Test_RGTagAnalyser(unittest.TestCase):
         assert_that(header_rg.sample_list, has_item('EGAN00001071830'))
 
 
-        fpath = os.path.join(configs.LUSTRE_HOME, 'bams/crohns/WTCCC113699.bam')
+        fpath = os.path.join(config.LUSTRE_HOME, 'bams/crohns/WTCCC113699.bam')
         header = BAMHeaderParser.extract_header(fpath)
         header_rg = _RGTagAnalyser.parse_all(header['RG'])
         assert_that(header_rg, hasattr(header_rg, 'samples'))
@@ -151,7 +152,7 @@ class Test_RGTagAnalyser(unittest.TestCase):
         assert_that(header_rg, hasattr(header_rg, 'lanelets'))
         assert_that(header_rg.platform_list, instance_of(list))
 
-        fpath = os.path.join(configs.LUSTRE_HOME, 'bams/agv-ethiopia/egpg5306042.bam')
+        fpath = os.path.join(config.LUSTRE_HOME, 'bams/agv-ethiopia/egpg5306042.bam')
         header = BAMHeaderParser.extract_header(fpath)
         header_rg = _RGTagAnalyser.parse_all(header['RG'])
         assert_that(header_rg, hasattr(header_rg, 'samples'))
@@ -192,7 +193,7 @@ class Test_RGTagAnalyser(unittest.TestCase):
 
 
     def test_parse(self):
-        path = os.path.join(configs.LUSTRE_HOME, 'bams/crohns/WTCCC113699.bam')
+        path = os.path.join(config.LUSTRE_HOME, 'bams/crohns/WTCCC113699.bam')
         header = BAMHeaderParser.extract_header(path)
         header_parsed = BAMHeaderParser.parse(header, rg=True, pg=False, hd=False, sq=False)
         assert_that(header_parsed.rg.platform_list, has_item('ILLUMINA HS'))
