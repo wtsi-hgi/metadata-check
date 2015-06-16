@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 This file has been created on Jun 12, 2015.
 """
-from collections import namedtuple
+#from collections import namedtuple
 
 # HeaderVsIrodsMetadataError = namedtuple('HeaderVsIrodsMetadataError', ['fpath', 'h_value', 'i_value'])
 # IrodsVsSeqscapeMetadataError = namedtuple('IrodsVsSeqscapeMetadataError', ['fpath', 'i_value', 'ss_value'])
@@ -28,20 +28,54 @@ from collections import namedtuple
 #
 
 
-class HeaderVsIrodsMetadataError(Exception):
+class HeaderVsIrodsMetadataAttributeError(Exception):
 
-    def __init__(self, fpath, header_value, irods_value):
+    def __init__(self, fpath, attribute, header_value, irods_value):
         self.fpath = fpath
+        self.attribute = attribute
         self.header_value = header_value
         self.irods_value = irods_value
 
+    def __str__(self):
+        return "File: " + str(self.fpath) + "'s metadata attribute: " + str(self.attribute) + \
+               " is inconsistent between iRODS: " + str(self.irods_value) + " and header value: " + \
+               str(self.header_value)
 
-class IrodsVsSeqscapeMetadataError(Exception):
+    def __repr__(self):
+        return self.__str__()
 
-    def __init__(self, fpath, irods_value, seqsc_Value):
+
+class IrodsVsSeqscapeMetadataAttributeError(Exception):
+
+    def __init__(self, fpath, attribute, irods_value, seqsc_value):
         self.fpath = fpath
+        self.attribute = attribute
         self.irods_value = irods_value
-        self.seqsc_value = seqsc_Value
+        self.seqsc_value = seqsc_value
+
+    def __str__(self):
+        return "File: " + str(self.fpath) + "'s metadata attribute: " + str(self.attribute) + \
+               " is inconsistent between iRODS " + str(self.irods_value) + " and seqscape value: " + \
+               str(self.seqsc_value)
+
+    def __repr__(self):
+        return self.__str__()
+
+
+class IrodsMetadataAttributeVsFileNameError(Exception):
+
+    def __init__(self, fpath, attribute, irods_value, filename_value):
+        self.fpath = fpath
+        self.attribute = attribute
+        self.irods_value = irods_value
+        self.filename_value = filename_value
+
+    def __str__(self):
+        return "File: " + str(fpath) + " has in iRODS " + str(self.attribute) + " = " + str(self.irods_value) + \
+               " while in the file name it is " +str(self.filename_value)
+
+    def __repr__(self):
+        return self.__str__()
 
 
 class IrodsMetadataAttributeFrequencyError(Exception):
@@ -52,14 +86,28 @@ class IrodsMetadataAttributeFrequencyError(Exception):
         self.desired_occurances = desired_occurances
         self.actual_occurances = actual_occurances
 
+    def __str__(self):
+        return "In file: " + str(self.fpath) + "'s metadata attribute: " + str(self.attribute) + " appears" + \
+               str(self.actual_occurances) + " times, while it should appear " + str(self.desired_occurances) + \
+               " according to the config you've given."
+
+    def __repr__(self):
+        return self.__str__()
 
 class WrongReferenceError(Exception):
 
-    def __init__(self, fpath, desired_ref, header_ref, irods_ref):
+    def __init__(self, fpath, desired_ref, irods_ref, header_ref=None):
         self.fpath = fpath
         self.desired_ref = desired_ref
-        self.header_ref = header_ref
+        #self.header_ref = header_ref
         self.irods_ref = irods_ref
+
+    def __str__(self):
+        return "File: " + str(self.fpath) + " was aligned to reference: " + str(self.irods_ref) + \
+               " while the desired ref is: " + str(self.desired_ref)
+
+    def __repr__(self):
+        return self.__str__()
 
 
 class WrongMD5Error(Exception):
@@ -69,5 +117,11 @@ class WrongMD5Error(Exception):
         self.imeta_value = imeta_value
         self.ichksum_value = ichksum_value
 
+    def __str__(self):
+        return "File: " + str(self.fpath) + " has different MD5 checksum in iRODS metadata: " + str(self.imeta_value) +\
+               " compared to the value returned by ichksum: " + str(self.ichksum_value)
+
+    def __repr__(self):
+        return self.__str__()
 
 
