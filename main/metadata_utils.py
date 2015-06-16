@@ -21,7 +21,7 @@ This file has been created on Feb 10, 2015.
 
 from irods import api as irods_api
 from irods import icommands_wrapper
-from header_parser import bam_h_analyser as header_analyser
+from header_parser import sam_header_analyser as header_analyser
 import os
 from identifiers import EntityIdentifier as Identif
 from com import  utils as common_utils

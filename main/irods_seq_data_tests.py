@@ -23,23 +23,22 @@ from main import metadata_utils
 from com import utils
 from irods import icommands_wrapper as irods_wrapper
 
+import error_types
 
-
-def check_md5_metadata(irods_metadata, irods_fpath):
+def check_md5_metadata(irods_fpath, irods_metadata):
     md5_metadata = metadata_utils.iRODSUtils.extract_values_for_key_from_irods_metadata(irods_metadata, 'md5')
     if not md5_metadata:
         print "This file doesn't have md5 in irods metadata"
-        return []
+        return None
 
     md5_chksum = irods_wrapper.iRODSChecksumOperations.get_checksum(irods_fpath)
     if md5_chksum:
         if not md5_metadata[0] == md5_chksum.md5:
-            return [
-                "iRODS metadata md5 (" + str(md5_metadata) + ") != ichksum (" + str(md5_chksum) + ") "]
-    return []
+            return error_types.WrongMD5Error(imeta_value=md5_metadata[0], ichksum_value=md5_chksum.md5, fpath=irods_fpath)
+    return None
 
 
-def check_run_id(irods_metadata, irods_fpath):
+def check_run_id(irods_fpath, irods_metadata):
     """
     This test assumes that all the files in iRODS have exactly 1 run (=LANELETS)
     """
@@ -57,7 +56,7 @@ def check_run_id(irods_metadata, irods_fpath):
     return []
 
 
-def check_lane_metadata(irods_metadata, irods_fpath):
+def check_lane_metadata(irods_fpath, irods_metadata):
     lane_id = metadata_utils.iRODSUtils.get_lane_from_irods_path(irods_fpath)
     irods_lane_ids = metadata_utils.iRODSUtils.extract_values_for_key_from_irods_metadata(irods_metadata, 'lane')
     if len(irods_lane_ids) > 1:
@@ -87,45 +86,47 @@ def check_lanelet_name(irods_fpath, header_lanelets):
 
 
 
-def check_reference(irods_metadata, desired_ref):
+def check_reference(irods_fpath, irods_metadata, desired_ref):
     ref_paths = metadata_utils.iRODSUtils.extract_values_for_key_from_irods_metadata(irods_metadata, 'reference')
     if len(ref_paths) > 1:
-        return [" > 1 REFERENCE ATTRIBUTE in iRODS metadata"]
+        #return [" > 1 REFERENCE ATTRIBUTE in iRODS metadata"]
+        raise error_types.WrongReferenceError(fpath=irods_fpath, desired_ref=desired_ref, header_ref='not implemented', irods_ref=str(ref_paths))
     elif len(ref_paths) < 1:
-        return ["NO REFERENCE ATTRIBUTE in iRODS metadata"]
+        #return ["NO REFERENCE ATTRIBUTE in iRODS metadata"]
+        raise error_types.WrongReferenceError(fpath=irods_fpath, desired_ref=desired_ref, header_ref='not implemented', irods_ref='missing')
     else:
         ref_path = ref_paths[0]
     ref_name = metadata_utils.iRODSUtils.extract_reference_name_from_path(ref_path)
+    print "REF NAME = " + str(ref_name) + " and desired_ref: " + str(desired_ref)
     if ref_name != desired_ref:
-        return ["WANTED REFERENCE =: " + str(desired_ref) + " different from ACTUAL REFERENCE = " + str(ref_name)]
-    return []
+        #return ["WANTED REFERENCE =: " + str(desired_ref) + " different from ACTUAL REFERENCE = " + str(ref_name)]
+        raise error_types.WrongReferenceError(fpath=irods_fpath, desired_ref=desired_ref, header_ref='not implemented', irods_ref=ref_name)
+    return None
 
 
 def run_irods_seq_specific_tests(irods_path, irods_metadata, header_metadata, desired_ref=None):
     issues = []
-    checksum_issues = check_md5_metadata(irods_metadata, irods_path)
-    if checksum_issues:
-        print "CHECKSUM: " + str(checksum_issues)
-        issues.extend(checksum_issues)
+    try:
+        check_md5_metadata(irods_path, irods_metadata)
+    except error_types.WrongMD5Error as e:
+        issues.append(e)
 
-    run_id_issues = check_run_id(irods_metadata, irods_path)
-    if run_id_issues:
-        print "RUN IDS: " + str(run_id_issues)
+    try:
+        run_id_issues = check_run_id(irods_path, irods_metadata)
+    except Exception as e:
         issues.extend(run_id_issues)
 
-    lane_metadata_issues = check_lane_metadata(irods_metadata, irods_path)
+    lane_metadata_issues = check_lane_metadata(irods_path, irods_metadata)
     if lane_metadata_issues:
-        print "LANE METADATA: " + str(lane_metadata_issues)
         issues.extend(lane_metadata_issues)
 
     lane_name_issues = check_lanelet_name(irods_path, header_metadata.lanelets)
     if lane_name_issues:
-        print "LANE METADATA: " + str(lane_metadata_issues)
         issues.extend(lane_name_issues)
 
     if desired_ref:
-        ref_issues = check_reference(irods_metadata, desired_ref)
-        if ref_issues:
-            print "REFERENCE: " + str(ref_issues)
-            issues.extend(ref_issues)
+        try:
+            check_reference(irods_path, irods_metadata, desired_ref)
+        except error_types.WrongReferenceError as e:
+            issues.append(str(e))
     return issues
