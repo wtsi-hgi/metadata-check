@@ -81,8 +81,8 @@ def run_metadata_tests(irods_fpath, irods_metadata, header_metadata=None,
     issues = []
     if samples_irods_vs_header or samples_irods_vs_seqscape:
         irods_samples = metadata_utils.iRODSUtils.extract_samples_from_irods_metadata(irods_metadata)
-        missing_ids = check_all_identifiers_in_metadata(irods_samples)
-        issues.extend(["SAMPLE IDENTIFIERS MISSING - inconsistencies between irods metadata that identifies samples : " + id for id in missing_ids])
+        # missing_ids = check_all_identifiers_in_metadata(irods_samples)
+        # issues.extend(["SAMPLE IDENTIFIERS MISSING from IRODS metadata : " + id for id in missing_ids])
 
         if samples_irods_vs_header:
             header_samples = metadata_utils.HeaderUtils.sort_entities_by_guessing_id_type(header_metadata.samples)
@@ -97,8 +97,8 @@ def run_metadata_tests(irods_fpath, irods_metadata, header_metadata=None,
     # LIBRARY TESTS:
     if libraries_irods_vs_header or libraries_irods_vs_seqscape:
         irods_libraries = metadata_utils.iRODSUtils.extract_libraries_from_irods_metadata(irods_metadata)
-        missing_ids = check_all_identifiers_in_metadata(irods_libraries, accession_number=False, name=False)
-        issues.extend(["LIBRARY IDENTIFIERS MISSING - inconsistencies between sample identifiers extracted from IRODS metadata :" + id for id in missing_ids])
+        # missing_ids = check_all_identifiers_in_metadata(irods_libraries, accession_number=False, name=False)
+        # issues.extend(["LIBRARY IDENTIFIERS MISSING from IRODS metadata :" + id for id in missing_ids])
 
         if libraries_irods_vs_header:
             header_libraries = metadata_utils.HeaderUtils.sort_entities_by_guessing_id_type(header_metadata.libraries)
@@ -124,8 +124,8 @@ def run_metadata_tests(irods_fpath, irods_metadata, header_metadata=None,
     # STUDY TESTS:
     if study_irods_vs_seqscape:
         irods_studies = metadata_utils.iRODSUtils.extract_studies_from_irods_metadata(irods_metadata)
-        missing_ids = check_all_identifiers_in_metadata(irods_studies)
-        issues.extend(["STUDY IDENTIFIERS MISSING  - inconsistencies between study identifiers extracted from IRODS metadata" + id for id in missing_ids])
+        # missing_ids = check_all_identifiers_in_metadata(irods_studies)
+        # issues.extend(["STUDY IDENTIFIERS MISSING from IRODS metadata" + id for id in missing_ids])
 
         # Compare IRODS vs. SEQSCAPE:
         irods_vs_seqsc_diffs = study_tests.compare_study_sets_obtained_by_seqscape_ids_lookup(irods_studies)
@@ -187,21 +187,26 @@ def parse_args():
 
     args = parser.parse_args()
 
-    if not args.fpaths_irods and not args.study:
-        parser.print_help()
-        print "No study provided, no BAM path given => NOTHING TO DO! EXITTING"
-        exit(0)
 
+    return args
+
+def check_args(args):
+    if not args.fpaths_irods and not args.study:
+        #parser.print_help()
+        #print "No study provided, no BAM path given => NOTHING TO DO! EXITTING"
+        #exit(0)
+        raise ValueError("No study provided, no BAM path given => NOTHING TO DO! EXITTING")
     if not args.samples_irods_vs_header and not args.samples_irods_vs_seqscape \
             and not args.libraries_irods_vs_header \
             and not args.libraries_irods_vs_seqscape \
-            and not args.study_irods_vs_seqscape:
-        print "WARNING! You haven't selected neither samples to be checked, nor libraries, nor study. " \
-              "Nothing to be done!"
-        parser.print_help()
-        exit(0)
-
-    return args
+            and not args.study_irods_vs_seqscape\
+            and not args.desired_ref\
+            and not args.collateral_tests\
+            and not args.check_irods_meta_against_config:
+        raise ValueError("You haven't selected neither samples to be checked, nor libraries, nor study. " \
+              "Nothing to be done!")
+        # parser.print_help()
+        # exit(0)
 
 
 def read_fofn_into_list(fofn_path):
@@ -210,14 +215,22 @@ def read_fofn_into_list(fofn_path):
     fofn_fd.close()
     return files_list
 
+def write_list_to_file(input_list, output_file):
+    out_fd = open(output_file, 'w')
+    for entry in input_list:
+        out_fd.write(entry+'\n')
+    out_fd.close()
+
 def collect_fpaths_for_study(study, file_type=BOTH_FILE_TYPES):
     fpaths_irods = []
     if file_type == CRAM_FILE_TYPE:
         fpaths_irods = metadata_utils.iRODSUtils.retrieve_list_of_crams_by_study_from_irods(study)
         print "NUMBER of CRAMs found: " + str(len(fpaths_irods))
+        write_list_to_file(fpaths_irods, 'hiv-crams.out')
     elif file_type == BAM_FILE_TYPE:
         fpaths_irods = metadata_utils.iRODSUtils.retrieve_list_of_bams_by_study_from_irods(study)
         print "NUMBER of BAMs found: " + str(len(fpaths_irods))
+        write_list_to_file(fpaths_irods, 'hiv-bams.out')
     elif file_type == BOTH_FILE_TYPES:
         bams_fpaths_irods = metadata_utils.iRODSUtils.retrieve_list_of_bams_by_study_from_irods(study)
         crams_fpaths_irods = metadata_utils.iRODSUtils.retrieve_list_of_crams_by_study_from_irods(study)

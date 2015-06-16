@@ -31,6 +31,7 @@ import config
 from com import wrappers
 
 LANELET_NAME_REGEX = '[0-9]{4}_[0-9]{1}#[0-9]{1,2}'
+LANE_NAME_REGEX = '[0-9]{4}_[0-9]{1}'
 
 
 # Named tuples for each header type used as container for returning results:
@@ -86,7 +87,7 @@ class _RGTagAnalyser(object):
                 This is the name of the lanelet extracted from this part of the header, looking like: e.g. 1234_1#1
         """
         pattern = re.compile(LANELET_NAME_REGEX)
-        if pattern.match(pu_entry) is not None:  # PU entry is just a list of lanelet names
+        if pattern.match(pu_entry) is not None:  # PU entry is just the name of a lanelet
             return pu_entry
         else:
             run = cls._extract_run_from_pu_entry(pu_entry)
@@ -143,7 +144,7 @@ class _RGTagAnalyser(object):
                 return int(pu_entry[last_hash_index + 1:])
         return None
 
-    @classmethod
+    @classmethod    #to unittest this one - cause it seems to be correct but it doesn't detect the lane correctly...
     @wrappers.check_args_not_none
     def _extract_run_from_pu_entry(cls, pu_entry):
         """ This method extracts the run nr from the string found in
