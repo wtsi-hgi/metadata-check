@@ -28,15 +28,22 @@ This file has been created on Jun 12, 2015.
 #
 
 
+
 class HeaderVsIrodsMetadataAttributeError(Exception):
 
-    def __init__(self, fpath, attribute, header_value, irods_value):
+    def __init__(self, fpath, attribute, header_value, irods_value, entity_type=None):
         self.fpath = fpath
         self.attribute = attribute
         self.header_value = header_value
         self.irods_value = irods_value
+        self.entity_type = entity_type
 
     def __str__(self):
+        #entity_type = self.entity_type if self.entity_type else ""
+        if self.entity_type:
+            return "File: " + str(self.fpath) + "'s metadata for " +str(self.entity_type) + ", attribute: " + str(self.attribute) + \
+               " is inconsistent between iRODS: " + str(self.irods_value) + " and header value: " + \
+               str(self.header_value)
         return "File: " + str(self.fpath) + "'s metadata attribute: " + str(self.attribute) + \
                " is inconsistent between iRODS: " + str(self.irods_value) + " and header value: " + \
                str(self.header_value)
@@ -47,13 +54,18 @@ class HeaderVsIrodsMetadataAttributeError(Exception):
 
 class IrodsVsSeqscapeMetadataAttributeError(Exception):
 
-    def __init__(self, fpath, attribute, irods_value, seqsc_value):
+    def __init__(self, fpath, attribute, irods_value, seqsc_value, entity_type=None):
         self.fpath = fpath
         self.attribute = attribute
         self.irods_value = irods_value
         self.seqsc_value = seqsc_value
+        self.entity_type = entity_type
 
     def __str__(self):
+        if self.entity_type:
+            return "File: " + str(self.fpath) + "'s metadata for "+str(self.entity_type)+", attribute: " + str(self.attribute) + \
+               " is inconsistent between iRODS " + str(self.irods_value) + " and seqscape value: " + \
+               str(self.seqsc_value)
         return "File: " + str(self.fpath) + "'s metadata attribute: " + str(self.attribute) + \
                " is inconsistent between iRODS " + str(self.irods_value) + " and seqscape value: " + \
                str(self.seqsc_value)
@@ -124,6 +136,60 @@ class WrongMD5Error(Exception):
 
     def __repr__(self):
         return self.__str__()
+
+
+class NotFoundInSeqscapeError(Exception):
+
+    def __init__(self, id_type, id_missing, entity_type, fpath=None):
+        self.fpath = fpath
+        self.id_type = id_type
+        self.id_missing = id_missing
+        self.entity_type = entity_type
+
+    def __str__(self):
+        if not self.fpath:
+            return "The " + str(self.entity_type) + " couldn't be found in Seqscape when querying by "+ str(self.id_type) +" = " + str(self.id_missing)
+        return "For file " + str(self.fpath) + " the " + str(self.entity_type) + " couldn't be found in Seqscape when querying by "+ str(self.id_type) +" = " + str(self.id_missing)
+
+    def __repr__(self):
+        return self.__str__()
+
+class TooManyEntitiesSameIdSeqscapeError(Exception):
+
+    def __init__(self, id_type, id_value, entities, entity_type, fpath=None):
+        self.fpath = fpath
+        self.id_type = id_type
+        self.ids_list = id_value
+        self.entity_type = entity_type
+        self.entites = entities
+
+    def __str__(self):
+        if not self.fpath:
+            return "There were more than 1 " + str(self.entity_type) + "s with  "+ str(self.id_type) + " = " + \
+                   str(self.ids_list) +" found in Seqscape: " + str(self.entites)
+        return "For file " + str(self.fpath) + " there were more than 1 " + str(self.entity_type) + "s with  " + \
+               str(self.id_type) + " = " + str(self.ids_list) +" found in Seqscape: " + str(self.entites)
+
+
+class DifferentEntitiesFoundInSeqscapeQueryingByDiffIdTypesError(Exception):
+
+    def __init__(self, entity_type, id_type1, entities_set1, id_type2, entities_set2, fpath=None):
+        self.entity_type = entity_type
+        self.id_type1 = id_type1
+        self.id_type2 = id_type2
+        self.entities_set1 = entities_set1
+        self.entities_set2 = entities_set2
+        self.fpath = fpath
+
+    def __str__(self):
+        if not self.fpath:
+            return "I found different "+ str(self.entity_type) +"s in Seqscape when querying by " + \
+               str(self.id_type1) +": " + str(self.entities_set1) + " compared to querying by " + \
+               str(self.id_type2) + ": " + str(self.entities_set2)
+        return "For file: " + str(self.fpath) + " I found different "+ str(self.entity_type) + \
+               "s in Seqscape when querying by " + \
+               str(self.id_type1) +": " + str(self.entities_set1) + " compared to querying by " + \
+               str(self.id_type2) + ": " + str(self.entities_set2)
 
 
 class TestImpossibleToRunError(Exception):

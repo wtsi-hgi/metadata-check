@@ -30,14 +30,15 @@ import argparse
 import metadata_utils
 import library_tests, study_tests, sample_tests
 from main import irods_seq_data_tests as seq_tests
+from main import error_types
 from com import utils
-import irods_meta_checks
+import complete_irods_metadata_checks
 
 CRAM_FILE_TYPE = 'cram'
 BAM_FILE_TYPE = 'bam'
 BOTH_FILE_TYPES = 'both'
 
-
+# NOT USED - replaced by the tests of complete metadata
 def check_all_identifiers_in_metadata(metadata, name=True, internal_id=True, accession_number=True):
     error_report = []
     if name and not metadata.get('name'):
@@ -49,19 +50,21 @@ def check_all_identifiers_in_metadata(metadata, name=True, internal_id=True, acc
     return error_report
 
 
-def get_diff_irods_and_header_metadata(header_dict, irods_dict):
+def check_irods_vs_header_metadata(irods_path, header_dict, irods_dict, entity_type):
     """
         where: (e.g.)
          irods_dict = dict('name': [sample_name], accession_number: [samples_acc_nr], internal_id: [internal_id])
          header_dict = dict('name': [sample_name], accession_number: [samples_acc_nr], internal_id: [internal_id])
     """
-    differences = []
     for id_type, head_ids_list in header_dict.iteritems():
         if irods_dict.get(id_type) and header_dict.get(id_type):
             if set(head_ids_list).difference(set(irods_dict[id_type])):
-                differences.append(
-                    " HEADER " + str(id_type) + " (" + str(head_ids_list) + ") != iRODS  " + str(irods_dict))
-    return differences
+                raise error_types.HeaderVsIrodsMetadataAttributeError(fpath=irods_path, attribute=id_type,
+                                                                      header_value=str(head_ids_list),
+                                                                      irods_value=irods_dict[id_type],
+                                                                      entity_type=entity_type)
+
+
 
 
 def run_metadata_tests(irods_fpath, irods_metadata, header_metadata=None,
@@ -86,12 +89,16 @@ def run_metadata_tests(irods_fpath, irods_metadata, header_metadata=None,
 
         if samples_irods_vs_header:
             header_samples = metadata_utils.HeaderUtils.sort_entities_by_guessing_id_type(header_metadata.samples)
-            irods_vs_head_diffs = get_diff_irods_and_header_metadata(header_samples, irods_samples)
-            issues.extend(["SAMPLE differences IRODS vs HEADER METADATA: " + diff for diff in irods_vs_head_diffs])
+            try:
+                check_irods_vs_header_metadata(irods_fpath, header_samples, irods_samples, 'sample')
+            except error_types.HeaderVsIrodsMetadataAttributeError as e:
+                issues.append(str(e))
 
         if samples_irods_vs_seqscape:
-            irods_vs_seqsc_diffs = sample_tests.compare_sample_sets_obtained_by_seqscape_ids_lookup(irods_samples)
-            issues.extend(["SAMPLE differences IRODS vs SEQSCAPE METADATA: " + diff for diff in irods_vs_seqsc_diffs])
+            #irods_vs_seqsc_diffs = sample_tests.compare_sample_sets_obtained_by_seqscape_ids_lookup(irods_samples)
+            problems = sample_tests.compare_sample_sets_in_seqsc(irods_samples)
+            #issues.extend(["SAMPLE differences IRODS vs SEQSCAPE METADATA: " + diff for diff in irods_vs_seqsc_diffs])
+            issues.extend(problems)
 
 
     # LIBRARY TESTS:
@@ -103,18 +110,10 @@ def run_metadata_tests(irods_fpath, irods_metadata, header_metadata=None,
         if libraries_irods_vs_header:
             header_libraries = metadata_utils.HeaderUtils.sort_entities_by_guessing_id_type(header_metadata.libraries)
 
-            # for id_type, head_ids_list in header_libraries.iteritems():
-            #     if irods_libraries.get(id_type) and header_libraries.get(id_type):
-            #         print irods_fpath+"\t"+str(head_ids_list[0])+"\t"+str(irods_libraries[id_type][0])
-            #     else:
-            #         if not irods_libraries.get(id_type) and  head_ids_list:
-            #             print "Irods_lib_missing"+"\t"+str(head_ids_list)
-            #         if not head_ids_list and irods_libraries.get(id_type):
-            #             print "Header_lib_missing"+"\t"+str(irods_libraries[id_type])
-
-
-            irods_vs_head_diffs = get_diff_irods_and_header_metadata(header_libraries, irods_libraries)
-            issues.extend(["LIBRARY differences IRODS vs HEADER:" + diff for diff in irods_vs_head_diffs])
+            try:
+                check_irods_vs_header_metadata(irods_fpath, header_libraries, irods_libraries, 'library')
+            except error_types.HeaderVsIrodsMetadataAttributeError as e:
+                issues.append(str(e))
 
         if libraries_irods_vs_seqscape:
             irods_vs_seqsc_diffs = library_tests.compare_library_sets_obtained_by_seqscape_ids_lookup(irods_libraries)
@@ -274,7 +273,7 @@ def start_tests(study=None, file_type='both', fpaths=None, fofn_path=None, sampl
                    libraries_irods_vs_header, libraries_irods_vs_seqscape,
                    study_irods_vs_seqscape, collateral_tests, desired_ref)
         if irods_meta_conf:
-            diffs = irods_meta_checks.compare_irods_meta_with_configured_attributes(fpath, irods_meta_conf)
+            diffs = complete_irods_metadata_checks.check_irods_meta_complete(fpath, irods_meta_conf)
             print "IRODS METADATA CHECKS: "+ str(diffs)
     #print "FILES PER TYPE: CRAMs = " + str(nr_crams) + " and BAMs = " + str(nr_bams)
 
