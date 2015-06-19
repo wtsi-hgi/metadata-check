@@ -18,60 +18,75 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 This file has been created on Feb 10, 2015.
 """
+#from __builtin__ import getattr
 
 import seqscape.queries as seqsc
 from main import metadata_utils
+from main import error_types
 
 
-def get_samples_from_seqsc(ids_list, id_type):
-    return seqsc.query_all_samples_as_batch(ids_list, id_type)
+
+def is_id_missing(id, id_type, entities):
+    for entity in entities:
+        if str(id) == str(getattr(entity, id_type)):
+            return False
+    return True
+
+def is_id_duplicated(id, id_type, entities):
+    found_already = False
+    for entity in entities:
+        if getattr(entity, id_type) == id:
+            if found_already:
+                return True
+            else:
+                found_already = True
+    return False
+
+def get_entities_by_id(id, id_type, entities):
+    result = []
+    for ent in  entities:
+        if getattr(ent, id_type) == id:
+            result.append(ent)
+    return result
 
 
-# TODO: check consistencies across different types of ids against Seqscape
-def compare_sample_sets_obtained_by_seqscape_ids_lookup(samples_dict):
-    """
-        This function compares the sample sets identified by different types of ids,
-        by looking up each set of ids in Seqscape, and comparing them with the samples found
-        when querying by the other types of ids.
-        Parameters
-        ----------
-            irods_samples : dict - {'name' : list, 'accession_number' : list, 'internal_id' : list}
-        Returns
-        -------
-            differences : list - list of differences between the samples found by querying by name,
-                                as opposed to those found by querying by accession number and internal_id
-    """
-    differences = []
-    seqsc_samples_by_acc_nr, seqsc_samples_by_name, seqsc_samples_by_internal_id = None, None, None
-    if samples_dict.get('name'):
-        seqsc_samples_by_name = get_samples_from_seqsc(samples_dict['name'], 'name')
-        if not seqsc_samples_by_name:
-            differences.append("NO SAMPLES found in SEQSCAPE by sample names taken from iRODS metadata = " +
-                               str(samples_dict['name']))
-    if samples_dict.get('accession_number'):
-        seqsc_samples_by_acc_nr = get_samples_from_seqsc(samples_dict['accession_number'], 'accession_number')
-        if not seqsc_samples_by_acc_nr:
-            differences.append("NO SAMPLES found in SEQSCAPE by sample accession_number from iRODS metadata = " +
-                               str(samples_dict['accession_number']))
-    if samples_dict.get('internal_id'):
-        seqsc_samples_by_internal_id = get_samples_from_seqsc(samples_dict['internal_id'], 'internal_id')
-        if not seqsc_samples_by_internal_id:
-            differences.append("NO SAMPLES found in SEQSCAPE by sample internal_id from iRODS metadata = " +
-                               str(samples_dict['internal_id']))
+def compare_sample_sets_in_seqsc(samples_dict):
+    '''
+        This function extracts a list of samples for each list of ids, and then compares the samples obtained by
+        querying seqscape per id. If a list of ids is empty, it won't do anything about it. It will output an error
+        only when querying by an id that doesn't exist in Seqscape.
+        :param samples_dict: a dict like: {'name' : ['sang1', 'sang2'], 'accession_number' : ['EGA123', 'EGA345'], 'internal_id' : []}
+        :return: a list of exceptions from error_types module
 
-    # Compare samples found in Seqscape by different identifiers:
-    if seqsc_samples_by_acc_nr and seqsc_samples_by_name:
-        if not set(seqsc_samples_by_acc_nr) == set(seqsc_samples_by_name):
-            diff = "The samples found in Seqscape when querying it by sample names from iRODS metadata: " + \
-                   str(seqsc_samples_by_name) + " != as when querying by accession number from iRODS metadata: " + \
-                   str(seqsc_samples_by_acc_nr)
-            differences.append(diff)
+    '''
+    problems = []
+    seqsc_samples = {}
 
-    if seqsc_samples_by_internal_id and seqsc_samples_by_name:
-        if not set(seqsc_samples_by_internal_id) == set(seqsc_samples_by_internal_id):
-            diff = "The samples found in Seqscape when querying it by sample names from iRODS metadata: " + \
-                   str(seqsc_samples_by_name) + " != as when querying by internal_ids from iRODS metadata: " + \
-                   str(seqsc_samples_by_internal_id)
-            differences.append(diff)
-    return differences
+    # SEARCH FOR ENTITIES in SEQSCAPE BY ID_TYPE:
+    for id_type, ids_list in samples_dict.items():
+        samples = seqsc.query_all_samples_as_batch(ids_list, id_type)
+        for id in ids_list:
+            if is_id_missing(id, id_type, samples):
+                problems.append(str(error_types.NotFoundInSeqscapeError(id_type, id, 'sample')))
+            if is_id_duplicated(id, id_type, samples):
+                duplicates = get_entities_by_id(id, id_type, samples)
+                problems.append(str(error_types.TooManyEntitiesSameIdSeqscapeError(id_type, id, duplicates, 'sample')))
+        seqsc_samples[id_type] = samples
 
+    # HERE I assume I know what the id_types are (internal_id, etc..):
+    if seqsc_samples.get('name') and seqsc_samples.get('internal_id'):
+        if not set(seqsc_samples['name']) == set(seqsc_samples['internal_id']):
+            problems.append(str(error_types.DifferentEntitiesFoundInSeqscapeQueryingByDiffIdTypesError(entity_type='sample',
+                                                                                     id_type1='name',
+                                                                                     id_type2='internal_id',
+                                                                                     entities_set1=seqsc_samples['name'],
+                                                                                     entities_set2=seqsc_samples['internal_id'])))
+    if seqsc_samples.get('name') and seqsc_samples.get('accession_number'):
+        if not set(seqsc_samples['name']) == set(seqsc_samples['accession_number']):
+            problems.append(str(error_types.DifferentEntitiesFoundInSeqscapeQueryingByDiffIdTypesError(entity_type='sample',
+                                                                                     id_type1='name',
+                                                                                     id_type2='accession_number',
+                                                                                     entities_set1=seqsc_samples['name'],
+                                                                                     entities_set2=seqsc_samples['accession_number'])))
+
+    return problems

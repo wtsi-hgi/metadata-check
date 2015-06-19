@@ -23,8 +23,8 @@ import seqscape.queries as seqsc
 from main import metadata_utils
 
 
-def get_libraries_from_seqsc(ids_list, id_type):
-    return seqsc.query_all_libraries_as_batch(ids_list, id_type)
+# def get_libraries_from_seqsc(ids_list, id_type):
+#     return seqsc.query_all_libraries_as_batch(ids_list, id_type)
 
 
 def search_library_ids_in_different_tables_from_seqsc(ids_list, id_type):
