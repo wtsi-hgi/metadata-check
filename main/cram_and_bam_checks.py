@@ -33,6 +33,7 @@ from main import irods_seq_data_tests as seq_tests
 from main import error_types
 from com import utils
 import complete_irods_metadata_checks
+import irods_metadata_consistency_checks as irods_checks
 
 CRAM_FILE_TYPE = 'cram'
 BAM_FILE_TYPE = 'bam'
@@ -84,8 +85,6 @@ def run_metadata_tests(irods_fpath, irods_metadata, header_metadata=None,
     issues = []
     if samples_irods_vs_header or samples_irods_vs_seqscape:
         irods_samples = metadata_utils.iRODSUtils.extract_samples_from_irods_metadata(irods_metadata)
-        # missing_ids = check_all_identifiers_in_metadata(irods_samples)
-        # issues.extend(["SAMPLE IDENTIFIERS MISSING from IRODS metadata : " + id for id in missing_ids])
 
         if samples_irods_vs_header:
             header_samples = metadata_utils.HeaderUtils.sort_entities_by_guessing_id_type(header_metadata.samples)
@@ -95,17 +94,14 @@ def run_metadata_tests(irods_fpath, irods_metadata, header_metadata=None,
                 issues.append(str(e))
 
         if samples_irods_vs_seqscape:
-            #irods_vs_seqsc_diffs = sample_tests.compare_sample_sets_obtained_by_seqscape_ids_lookup(irods_samples)
-            problems = sample_tests.compare_sample_sets_in_seqsc(irods_samples)
-            #issues.extend(["SAMPLE differences IRODS vs SEQSCAPE METADATA: " + diff for diff in irods_vs_seqsc_diffs])
+            #problems = sample_tests.compare_sample_sets_in_seqsc(irods_samples)
+            problems = irods_checks.compare_entity_sets_in_seqsc(irods_samples, 'sample')
             issues.extend(problems)
 
 
     # LIBRARY TESTS:
     if libraries_irods_vs_header or libraries_irods_vs_seqscape:
         irods_libraries = metadata_utils.iRODSUtils.extract_libraries_from_irods_metadata(irods_metadata)
-        # missing_ids = check_all_identifiers_in_metadata(irods_libraries, accession_number=False, name=False)
-        # issues.extend(["LIBRARY IDENTIFIERS MISSING from IRODS metadata :" + id for id in missing_ids])
 
         if libraries_irods_vs_header:
             header_libraries = metadata_utils.HeaderUtils.sort_entities_by_guessing_id_type(header_metadata.libraries)
@@ -116,19 +112,20 @@ def run_metadata_tests(irods_fpath, irods_metadata, header_metadata=None,
                 issues.append(str(e))
 
         if libraries_irods_vs_seqscape:
-            irods_vs_seqsc_diffs = library_tests.compare_library_sets_obtained_by_seqscape_ids_lookup(irods_libraries)
-            issues.extend(["LIBRARY differences IRODS vs SEQSCAPE: " + diff for diff in irods_vs_seqsc_diffs])
+            #problems = library_tests.compare_library_sets_in_seqsc(irods_libraries)
+            problems = irods_checks.compare_entity_sets_in_seqsc(irods_libraries, 'library')
+            issues.extend(problems)
 
 
     # STUDY TESTS:
     if study_irods_vs_seqscape:
         irods_studies = metadata_utils.iRODSUtils.extract_studies_from_irods_metadata(irods_metadata)
-        # missing_ids = check_all_identifiers_in_metadata(irods_studies)
-        # issues.extend(["STUDY IDENTIFIERS MISSING from IRODS metadata" + id for id in missing_ids])
 
         # Compare IRODS vs. SEQSCAPE:
-        irods_vs_seqsc_diffs = study_tests.compare_study_sets_obtained_by_seqscape_ids_lookup(irods_studies)
-        issues.extend(["STUDY differences IRODS vs. SEQSCAPE: " + diff for diff in irods_vs_seqsc_diffs])
+        problems = irods_checks.compare_entity_sets_in_seqsc(irods_studies, 'study')
+        issues.extend(problems)
+        # irods_vs_seqsc_diffs = study_tests.compare_study_sets_obtained_by_seqscape_ids_lookup(irods_studies)
+        # issues.extend(["STUDY differences IRODS vs. SEQSCAPE: " + diff for diff in irods_vs_seqsc_diffs])
 
 
     # OTHER TESTS:

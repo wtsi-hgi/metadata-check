@@ -95,8 +95,10 @@ def run_irods_seq_specific_tests(irods_path, irods_metadata, header_metadata, de
     issues = []
     try:
         check_md5_metadata(irods_path, irods_metadata)
-    except (error_types.WrongMD5Error, error_types.IrodsMetadataAttributeFrequencyError) as e:
+    except error_types.WrongMD5Error as e:
         issues.append(str(e))
+    except error_types.IrodsMetadataAttributeFrequencyError as e:
+        issues.append(error_types.TestImpossibleToRunError(fpath=e.fpath, test_name='Compare MD5 ichksum vs. iRODS metadata md5', reason=str(e)))
 
     try:
         check_run_id(irods_path, irods_metadata)
