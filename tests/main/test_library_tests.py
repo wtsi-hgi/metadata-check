@@ -34,8 +34,4 @@ class TestLibraryMetadata(unittest.TestCase):
     #     result = bam_checks.check_library_metadata(header_metadata, irods_metadata)
     #     self.assertEqual(len(result), 1)
 
-    def test_get_all_possible_libraries_from_seqsc(self):
-        ids_list = ['12219508']
-        id_type = 'internal_id'
-        result = library_tests.search_library_ids_in_different_tables_from_seqsc(ids_list, id_type)
-        self.assertEqual(len(result), 1)
+    pass
