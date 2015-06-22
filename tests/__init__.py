@@ -18,3 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 This file has been created on Dec 05, 2014.
 """
+
+# from tests.main import *
+# from tests.irods import *
+# from tests.header_parser import *

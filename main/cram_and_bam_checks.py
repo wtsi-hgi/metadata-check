@@ -20,18 +20,9 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import argparse
-# from collections import namedtuple
-# from header_parser import bam_h_analyser as h_analyser
-# from identifiers import EntityIdentifier as Identif
-# from irods import api as irods
-# from irods import icommands_wrapper as irods_wrapper
-# from seqscape import queries as seqsc
-
 import metadata_utils
-import library_tests, study_tests, sample_tests
 from main import irods_seq_data_tests as seq_tests
 from main import error_types
-from com import utils
 import complete_irods_metadata_checks
 import irods_metadata_consistency_checks as irods_checks
 
@@ -94,7 +85,6 @@ def run_metadata_tests(irods_fpath, irods_metadata, header_metadata=None,
                 issues.append(str(e))
 
         if samples_irods_vs_seqscape:
-            #problems = sample_tests.compare_sample_sets_in_seqsc(irods_samples)
             problems = irods_checks.compare_entity_sets_in_seqsc(irods_samples, 'sample')
             issues.extend(problems)
 
@@ -112,7 +102,6 @@ def run_metadata_tests(irods_fpath, irods_metadata, header_metadata=None,
                 issues.append(str(e))
 
         if libraries_irods_vs_seqscape:
-            #problems = library_tests.compare_library_sets_in_seqsc(irods_libraries)
             problems = irods_checks.compare_entity_sets_in_seqsc(irods_libraries, 'library')
             issues.extend(problems)
 
@@ -124,8 +113,6 @@ def run_metadata_tests(irods_fpath, irods_metadata, header_metadata=None,
         # Compare IRODS vs. SEQSCAPE:
         problems = irods_checks.compare_entity_sets_in_seqsc(irods_studies, 'study')
         issues.extend(problems)
-        # irods_vs_seqsc_diffs = study_tests.compare_study_sets_obtained_by_seqscape_ids_lookup(irods_studies)
-        # issues.extend(["STUDY differences IRODS vs. SEQSCAPE: " + diff for diff in irods_vs_seqsc_diffs])
 
 
     # OTHER TESTS:
