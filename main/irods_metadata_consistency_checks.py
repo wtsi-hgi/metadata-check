@@ -47,16 +47,6 @@ def get_entities_by_id(id, id_type, entities):
     return result
 
 
-
-# def search_library_ids_in_different_tables_from_seqsc(ids_list, id_type):
-#     libs = seqsc.query_all_libraries_as_batch(ids_list, id_type)
-#     if not libs:
-#         libs = seqsc.query_all_wells_as_batch(ids_list, id_type)
-#     if not libs:
-#         libs = seqsc.query_all_multiplexed_libraries_as_batch(ids_list, id_type)
-#     return libs
-
-
 def get_entities_from_seqscape(entity_type, ids_list, id_type):
     if entity_type == 'library':
         libs = seqsc.query_all_libraries_as_batch(ids_list, id_type)
@@ -70,7 +60,6 @@ def get_entities_from_seqscape(entity_type, ids_list, id_type):
     elif entity_type == 'study':
         return seqsc.query_all_studies_as_batch(ids_list, id_type)
     raise ValueError("Entity type = " + str(entity_type) + " unknown")
-
 
 
 def compare_entity_sets_in_seqsc(entities_dict, entity_type):
@@ -101,4 +90,3 @@ def compare_entity_sets_in_seqsc(entities_dict, entity_type):
                                                                                      entities_set2=seqsc_entities[id_types[i]])))
     return problems
 
-#
