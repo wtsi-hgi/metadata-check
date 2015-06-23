@@ -79,15 +79,22 @@ class iRODSUtils:
     def retrieve_list_of_bams_by_study_from_irods(cls, study_name):
         avus = {'study': study_name, 'type': 'bam'}
         bams = icommands_wrapper.iRODSMetaQueryOperations.query_by_metadata(avus)
-        filtered_bams = icommands_wrapper.iRODSMetaQueryOperations.filter_out_bam_phix_files(bams)
-        return filtered_bams
+        filtered_files = icommands_wrapper.iRODSMetaQueryOperations.filter_out_bam_phix_files(bams)
+        return filtered_files
 
     @classmethod
     def retrieve_list_of_crams_by_study_from_irods(cls, study_name):
         avus = {'study': study_name, 'type': 'cram'}
         crams = icommands_wrapper.iRODSMetaQueryOperations.query_by_metadata(avus)
-        filtered_bams = icommands_wrapper.iRODSMetaQueryOperations.filter_out_cram_phix_files(crams)
-        return filtered_bams
+        filtered_files = icommands_wrapper.iRODSMetaQueryOperations.filter_out_cram_phix_files(crams)
+        return filtered_files
+
+    @classmethod
+    def retrieve_list_of_files_by_study(cls, study_name):
+        avus = {'study' : study_name}
+        files = icommands_wrapper.iRODSMetaQueryOperations.query_by_metadata(avus)
+        filtered_files = icommands_wrapper.iRODSMetaQueryOperations.filter_out_phix(files)
+        return filtered_files
 
     @classmethod
     def extract_lanelet_name(cls, lanelet_path):
@@ -197,10 +204,8 @@ class iRODSUtils:
     @classmethod
     def extract_libraries_from_irods_metadata(cls, irods_metadata):
         irods_lib_internal_id_list = cls.extract_values_for_key_from_irods_metadata(irods_metadata, 'library_id')
-        if irods_lib_internal_id_list:
-            irods_libraries = {'internal_id': irods_lib_internal_id_list}
-        else:
-            irods_lib_names_list = cls.extract_values_for_key_from_irods_metadata(irods_metadata, 'library')
-            irods_libraries = {'name': irods_lib_names_list}
-        return irods_libraries
+        irods_lib_names_list = cls.extract_values_for_key_from_irods_metadata(irods_metadata, 'library')
+        return {'internal_id' : irods_lib_internal_id_list,
+                'name' : irods_lib_names_list
+        }
 
