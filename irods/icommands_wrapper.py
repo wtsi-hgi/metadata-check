@@ -543,6 +543,13 @@ class iRODSMetaQueryOperations(iRODSOperations):
         """
         return [fpath for fpath in file_paths if fpath.find("#0.cram") == -1 and fpath.find("phix.cram") == -1]
 
+    @classmethod
+    def filter_out_phix(cls, file_paths):
+        """
+            This method is filtering the list of file paths by eliminating the phix data and #0 files.
+        """
+        return [fpath for fpath in file_paths if fpath.find("#0.cram") == -1 and fpath.find("phix.") == -1]
+
 
     @classmethod
     def query_by_metadata(cls, avu_dict, zone=IRODS_SEQ_ZONE, operator='='):
