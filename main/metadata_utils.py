@@ -25,7 +25,7 @@ from header_parser import sam_header_analyser as header_analyser
 import os
 from identifiers import EntityIdentifier as Identif
 from com import  utils as common_utils
-
+import error_types
 
 
 class HeaderUtils:
@@ -97,8 +97,20 @@ class iRODSUtils:
         return filtered_files
 
     @classmethod
-    def extract_lanelet_name(cls, lanelet_path):
-        lanelet_file = os.path.basename(lanelet_path)
+    def retrieve_irods_metadata(cls, irods_path):
+        return irods_api.iRODSAPI.retrieve_metadata_for_file(irods_path)
+
+    @classmethod
+    def extract_values_for_key_from_irods_metadata(cls, avus_list, key):
+        results = []
+        for avu in avus_list:
+            if avu.attribute == key:
+                results.append(avu.value)
+        return results
+
+    @classmethod
+    def extract_lanelet_name(cls, irods_path):
+        lanelet_file = os.path.basename(irods_path)
         return lanelet_file
 
 
@@ -114,68 +126,6 @@ class iRODSUtils:
         irods_fpath = "/seq/" + run_id[0] + "/" + fname
         return irods_fpath
 
-
-    @classmethod
-    def retrieve_irods_metadata(cls, irods_path):
-        return irods_api.iRODSAPI.retrieve_metadata_for_file(irods_path)
-
-
-    @classmethod
-    def extract_values_for_key_from_irods_metadata(cls, avus_list, key):
-        results = []
-        for avu in avus_list:
-            if avu.attribute == key:
-                results.append(avu.value)
-        return results
-
-
-    @classmethod
-    def get_run_from_irods_path(cls, irods_fpath):
-        tokens = irods_fpath.split("/")
-        if len(tokens) >= 2 and tokens[1] == 'seq':
-            return tokens[-2]
-        return ''
-
-
-    @classmethod
-    def get_lane_from_irods_path(cls, irods_fpath):
-        #fname = os.path.basename(irods_fpath)
-        fname = common_utils.extract_basename(irods_fpath)
-        if fname.find("_") != -1:
-            lane_id = ''
-            lane_token = fname.split("_")[1]
-            if lane_token.find("#") != -1:
-                lane_id = lane_token.split("#")[0]
-            else:
-                if lane_token.isdigit():
-                    lane_id = lane_token
-                else:
-                    raise NameError("Donno how to parse "+str(irods_fpath)+" in order to extract the lane id. You might to implement this for your case.")
-            # elif lane_token.find(".bam") != -1:
-            #     lane_id = lane_token.split(".bam")[0]
-            return lane_id
-        return ''
-
-    @classmethod
-    def extract_reference_name_from_path(cls, ref_path):
-        ref_file_name = os.path.basename(ref_path)
-        if ref_file_name.find(".fa") != -1:
-            ref_name = ref_file_name.split(".fa")[0]
-            return ref_name
-        return ''
-
-
-    @classmethod
-    def extract_lanelet_name_from_irods_fpath(cls, irods_fpath):
-        fname = os.path.basename(irods_fpath)
-        if fname.find("_") == -1:
-            return ''
-        #file_extention = common_utils.extract_file_extension(fname)
-        fname_no_ext = common_utils.extract_basename(fname)
-        # if fname.find("."+str(file_type)) != -1:
-        #     return fname.split("."+str(file_type))[0]
-
-        return fname_no_ext
 
 
     @classmethod
@@ -208,4 +158,3 @@ class iRODSUtils:
         return {'internal_id' : irods_lib_internal_id_list,
                 'name' : irods_lib_names_list
         }
-
