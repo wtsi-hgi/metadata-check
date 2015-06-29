@@ -128,7 +128,7 @@ def extract_fname(fpath):
     _, fname = os.path.split(fpath)
     return fname
 
-def extract_basename(fpath):
+def extract_fname_without_ext(fpath):
     ''' Extracts the file name (and removes the extensions), given a file path.'''
     #_, fname = os.path.split(fpath)
     fname = extract_fname(fpath)
