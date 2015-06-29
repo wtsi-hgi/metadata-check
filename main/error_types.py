@@ -83,7 +83,7 @@ class IrodsMetadataAttributeVsFileNameError(Exception):
         self.filename_value = filename_value
 
     def __str__(self):
-        return "File: " + str(fpath) + " has in iRODS " + str(self.attribute) + " = " + str(self.irods_value) + \
+        return "File: " + str(self.fpath) + " has in iRODS " + str(self.attribute) + " = " + str(self.irods_value) + \
                " while in the file name it is " +str(self.filename_value)
 
     def __repr__(self):
@@ -190,6 +190,20 @@ class DifferentEntitiesFoundInSeqscapeQueryingByDiffIdTypesError(Exception):
                "s in Seqscape when querying by " + \
                str(self.id_type1) +": " + str(self.entities_set1) + " compared to querying by " + \
                str(self.id_type2) + ": " + str(self.entities_set2)
+
+
+class WrongMetadataValue(Exception):
+
+    def __init__(self, attribute, value, correct_range=None):
+        self.attribute = attribute
+        self.value = value
+        self.correct_range = correct_range
+
+    def __str__(self):
+        if self.correct_range:
+            return "ERROR - The attribute: " + str(self.attribute) + " has a value outside of its range: " + \
+                   str(self.value) + " (correct range = " + str(self.correct_range) + ")"
+        return "ERROR - The attribute: " + str(self.attribute) + " has a value outside of its range: " + str(self.value)
 
 
 class TestImpossibleToRunError(Exception):
