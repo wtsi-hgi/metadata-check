@@ -194,16 +194,18 @@ class DifferentEntitiesFoundInSeqscapeQueryingByDiffIdTypesError(Exception):
 
 class WrongMetadataValue(Exception):
 
-    def __init__(self, attribute, value, correct_range=None):
+    def __init__(self, fpath, attribute, value):    # , correct_range=None
+        self.fpath = fpath
         self.attribute = attribute
         self.value = value
-        self.correct_range = correct_range
+#        self.correct_range = correct_range
 
     def __str__(self):
-        if self.correct_range:
-            return "ERROR - The attribute: " + str(self.attribute) + " has a value outside of its range: " + \
-                   str(self.value) + " (correct range = " + str(self.correct_range) + ")"
-        return "ERROR - The attribute: " + str(self.attribute) + " has a value outside of its range: " + str(self.value)
+        # if self.correct_range:
+        #     return "ERROR - The attribute: " + str(self.attribute) + " has a value outside of its range: " + \
+        #            str(self.value) + " (correct range = " + str(self.correct_range) + ")"
+
+        return "ERROR - for file: " + self.fpath + " the attribute: " + str(self.attribute) + " has a value outside of its range: " + str(self.value)
 
 
 class TestImpossibleToRunError(Exception):
