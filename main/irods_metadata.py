@@ -42,7 +42,6 @@ class IrodsSeqFileMetadata(object):
         self.lane_id = lane_id
         self.npg_qc = npg_qc
 
-
     @classmethod
     def from_avus_to_irods_metadata(cls, avus, fpath):
         '''
@@ -55,33 +54,34 @@ class IrodsSeqFileMetadata(object):
         '''
         fname = common_utils.extract_fname(fpath)
         samples = metadata_utils.iRODSUtils.extract_samples_from_irods_metadata(avus)
-        libraries = metadata_utils.iRODSUtil.extract_libraries_from_irods_metadata(avus)
-        studies = metadata_utils.iRODSUtil.extract_studies_from_irods_metadata(avus)
+        libraries = metadata_utils.iRODSUtils.extract_libraries_from_irods_metadata(avus)
+        studies = metadata_utils.iRODSUtils.extract_studies_from_irods_metadata(avus)
 
-        md5_list = metadata_utils.iRODSUtil.extract_values_for_key_from_irods_metadata(avus, 'md5')
+        md5_list = metadata_utils.iRODSUtils.extract_values_for_key_from_irods_metadata(avus, 'md5')
         md5 = md5_list[0] if len(md5_list) == 1 else None
 
         ichksum_md5 = icommands_wrapper.iRODSChecksumOperations.get_checksum(fpath)
 
-        ref_list = metadata_utils.iRODSUtil.extract_values_for_key_from_irods_metadata(avus, 'reference')
+        ref_list = metadata_utils.iRODSUtils.extract_values_for_key_from_irods_metadata(avus, 'reference')
         ref = ref_list[0] if len(ref_list[0]) == 1 else None
 
-        ref = metadata_utils.iRODSUtil.extract_reference_name_from_ref_path(ref)
+        if ref:
+            ref = cls.extract_reference_name_from_ref_path(ref)
 
-        run_id_list = metadata_utils.iRODSUtil.extract_values_for_key_from_irods_metadata(avus, 'id_run')
+        run_id_list = metadata_utils.iRODSUtils.extract_values_for_key_from_irods_metadata(avus, 'id_run')
         run_id = run_id_list[0] if len(run_id_list) == 1 else None
 
-        lane_id_list = metadata_utils.iRODSUtil.get_lane_from_irods_path(fpath)
+        lane_id_list = metadata_utils.iRODSUtils.extract_values_for_key_from_irods_metadata(avus, 'lane')
         lane_id = lane_id_list[0] if len(lane_id_list) == 1 else None
 
-        npg_qc_list = metadata_utils.iRODSUtil.extract_values_for_key_from_irods_metadata(avus, 'manual_qc')
+        npg_qc_list = metadata_utils.iRODSUtils.extract_values_for_key_from_irods_metadata(avus, 'manual_qc')
         npg_qc = npg_qc_list[0] if len(npg_qc_list) == 1 else None
 
         return IrodsSeqFileMetadata(fpath, fname, samples, libraries, studies, md5, ichksum_md5, ref, run_id, lane_id, npg_qc)
 
 
-    @staticmethod
-    def run_avu_count_checks(fpath, avus):
+    @classmethod
+    def run_avu_count_checks(cls, fpath, avus):
         problems = []
         md5_list = metadata_utils.iRODSUtils.extract_values_for_key_from_irods_metadata(avus, 'md5')
         if len(md5_list) != 1:
@@ -95,7 +95,7 @@ class IrodsSeqFileMetadata(object):
         if len(run_id_list) != 1:
             problems.append(error_types.IrodsMetadataAttributeFrequencyError(fpath, 'id_run', '1', str(len(run_id_list))))
 
-        lane_id_list = metadata_utils.iRODSUtils.get_lane_from_irods_path(fpath)
+        lane_id_list = metadata_utils.iRODSUtils.extract_values_for_key_from_irods_metadata(avus, 'lane')
         if len(lane_id_list) != 1:
             problems.append(error_types.IrodsMetadataAttributeFrequencyError(fpath, 'lane', '1', str(len(lane_id_list))))
 
@@ -291,3 +291,11 @@ class IrodsSeqFileMetadata(object):
         else:
             if str(lane_from_fname) != str(self.lane_id):
                 raise error_types.IrodsMetadataAttributeVsFileNameError(fpath=self.fpath, attribute='lane', irods_value=self.lane_id, filename_value=lane_from_fname)
+
+
+    def __str__(self):
+        return "Fpath = " + str(self.fpath) + ", fname = " + str(self.fname) + ", samples = " + str(self.samples) + \
+               ", libraries = " + str(self.libraries) + ", studies = " + str(self.studies)
+
+    def __repr__(self):
+        return self.__str__()
