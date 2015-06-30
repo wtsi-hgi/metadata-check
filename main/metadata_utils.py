@@ -51,7 +51,7 @@ class HeaderUtils:
 
 
     @classmethod
-    def _get_file_header_metadata(cls, path, location):
+    def _get_parsed_header(cls, path, location):
         if location == 'irods':
             full_header = header_analyser.BAMHeaderAnalyser.extract_header_from_irods_file(path)
         elif location == 'lustre':
@@ -60,16 +60,16 @@ class HeaderUtils:
             raise ValueError("This function accepts as file location only irods or lustre.")
         parsed_header = header_analyser.BAMHeaderAnalyser.parse_header(full_header)
         header_metadata = header_analyser.BAMHeaderAnalyser.extract_metadata_from_header(parsed_header)
-        return header_metadata.rg
+        return header_metadata
 
     @classmethod
-    def get_header_metadata_from_irods_file(cls, irods_path):
-        return cls._get_file_header_metadata(irods_path, 'irods')
+    def get_parsed_header_from_irods_file(cls, irods_path):
+        return cls._get_parsed_header(irods_path, 'irods')
 
 
     @classmethod
-    def get_header_metadata_from_lustre_file(cls, lustre_path):
-        return cls._get_file_header_metadata(lustre_path, 'lustre')
+    def get_parsed_header_from_lustre_file(cls, lustre_path):
+        return cls._get_parsed_header(lustre_path, 'lustre')
 
 
 
