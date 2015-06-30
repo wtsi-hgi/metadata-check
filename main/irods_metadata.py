@@ -43,31 +43,6 @@ class IrodsSeqFileMetadata(object):
         self.npg_qc = npg_qc
 
 
-    @staticmethod
-    def run_minimalistic_checks_on_avu_frequency(fpath, avus):
-        problems = []
-        md5_list = metadata_utils.iRODSUtils.extract_values_for_key_from_irods_metadata(avus, 'md5')
-        if len(md5_list) != 1:
-            problems.append(error_types.IrodsMetadataAttributeFrequencyError(fpath, 'md5', '1', str(len(md5_list))))
-
-        ref_list = metadata_utils.iRODSUtils.extract_values_for_key_from_irods_metadata(avus, 'reference')
-        if len(ref_list) != 1:
-            problems.append(error_types.IrodsMetadataAttributeFrequencyError(fpath, 'reference', '1', str(len(ref_list))))
-
-        run_id_list = metadata_utils.iRODSUtils.extract_values_for_key_from_irods_metadata(avus, 'id_run')
-        if len(run_id_list) != 1:
-            problems.append(error_types.IrodsMetadataAttributeFrequencyError(fpath, 'id_run', '1', str(len(run_id_list))))
-
-        lane_id_list = metadata_utils.iRODSUtils.get_lane_from_irods_path(fpath)
-        if len(lane_id_list) != 1:
-            problems.append(error_types.IrodsMetadataAttributeFrequencyError(fpath, 'lane', '1', str(len(lane_id_list))))
-
-        npg_qc_list = metadata_utils.iRODSUtils.extract_values_for_key_from_irods_metadata(avus, 'manual_qc')
-        if len(npg_qc_list) != 1:
-            problems.append(error_types.IrodsMetadataAttributeFrequencyError(fpath, 'manual_qc', '1', str(len(npg_qc_list))))
-        return problems
-
-
     @classmethod
     def from_avus_to_irods_metadata(cls, avus, fpath):
         '''
@@ -104,6 +79,45 @@ class IrodsSeqFileMetadata(object):
 
         return IrodsSeqFileMetadata(fpath, fname, samples, libraries, studies, md5, ichksum_md5, ref, run_id, lane_id, npg_qc)
 
+
+    @staticmethod
+    def run_avu_count_checks(fpath, avus):
+        problems = []
+        md5_list = metadata_utils.iRODSUtils.extract_values_for_key_from_irods_metadata(avus, 'md5')
+        if len(md5_list) != 1:
+            problems.append(error_types.IrodsMetadataAttributeFrequencyError(fpath, 'md5', '1', str(len(md5_list))))
+
+        ref_list = metadata_utils.iRODSUtils.extract_values_for_key_from_irods_metadata(avus, 'reference')
+        if len(ref_list) != 1:
+            problems.append(error_types.IrodsMetadataAttributeFrequencyError(fpath, 'reference', '1', str(len(ref_list))))
+
+        run_id_list = metadata_utils.iRODSUtils.extract_values_for_key_from_irods_metadata(avus, 'id_run')
+        if len(run_id_list) != 1:
+            problems.append(error_types.IrodsMetadataAttributeFrequencyError(fpath, 'id_run', '1', str(len(run_id_list))))
+
+        lane_id_list = metadata_utils.iRODSUtils.get_lane_from_irods_path(fpath)
+        if len(lane_id_list) != 1:
+            problems.append(error_types.IrodsMetadataAttributeFrequencyError(fpath, 'lane', '1', str(len(lane_id_list))))
+
+        npg_qc_list = metadata_utils.iRODSUtils.extract_values_for_key_from_irods_metadata(avus, 'manual_qc')
+        if len(npg_qc_list) != 1:
+            problems.append(error_types.IrodsMetadataAttributeFrequencyError(fpath, 'manual_qc', '1', str(len(npg_qc_list))))
+        return problems
+
+
+    def run_field_sanity_checks(self):
+        problems = []
+        if self.md5 and not self.is_md5(self.md5):
+            problems.append(error_types.WrongMetadataValue(attribute='md5', value=self.md5))
+        if self.run_id and not self.is_run_id(self.run_id):
+            problems.append(error_types.WrongMetadataValue(attribute='run_id', value=self.run_id))
+        if self.lane_id and not self.is_lane_id(self.lane_id):
+            problems.append(error_types.WrongMetadataValue(attribute='lane_id', value=self.lane_id))
+        if self.npg_qc and not self.is_npg_qc(self.npg_qc):
+            problems.append(error_types.WrongMetadataValue(attribute='npg_qc', value=self.npg_qc))
+        return problems
+
+
     @classmethod
     def is_md5(cls, md5):
         if not type(md5) is str:
@@ -132,65 +146,6 @@ class IrodsSeqFileMetadata(object):
         r = re.compile(irods_consts.NPG_QC_REGEX)
         return True if r.match(str(npg_qc)) else False
 
-    def sanity_checks_on_fields(self):
-        problems = []
-        if self.md5 and not self.is_md5(self.md5):
-            problems.append(error_types.WrongMetadataValue(attribute='md5', value=self.md5))
-        if self.run_id and not self.is_run_id(self.run_id):
-            problems.append(error_types.WrongMetadataValue(attribute='run_id', value=self.run_id))
-        if self.lane_id and not self.is_lane_id(self.lane_id):
-            problems.append(error_types.WrongMetadataValue(attribute='lane_id', value=self.lane_id))
-        if self.npg_qc and not self.is_npg_qc(self.npg_qc):
-            problems.append(error_types.WrongMetadataValue(attribute='npg_qc', value=self.npg_qc))
-        return problems
-
-
-    def check_run_id_from_fname_vs_metadata(self):
-        """
-        This test assumes that all the files in iRODS have exactly 1 run (=LANELETS)
-        """
-        if not self.run_id:
-            raise error_types.TestImpossibleToRunError(fpath=self.fpath,
-                                                       reason='The run_id in iRODS metadata is either missing or more than 1.',
-                                                       test_name='Check run_id from filename vs. iRODS metadata.')
-        try:
-            run_id_from_fname = self.get_run_from_irods_fname(self.fname)
-        except ValueError as e:
-            raise error_types.TestImpossibleToRunError(fpath=self.fpath, reason=str(e), test_name='Check run_id from filename vs. run_id from iRODS metadata') # 'Cant extract the run id from file name. Not a sequencing file?'
-        else:
-            if str(self.run_id) != str(run_id_from_fname):
-                raise error_types.IrodsMetadataAttributeVsFileNameError(fpath=self.fpath, attribute='run_id', irods_value=self.run_id, filename_value=run_id_from_fname)
-
-
-    # TODO: actually the user can't know exactly the name of the files - this needs refactoring, in order to associate the name of the ref file with the name of the ref
-    def check_reference(self, desired_ref):
-        if not self.reference:
-            raise error_types.TestImpossibleToRunError(test_name='Check reference',reason='The reference from iRODS metadata is either missing or more than 1.')
-        if not desired_ref:
-            raise error_types.TestImpossibleToRunError(test_name='Check_reference', reason='Missing desired reference parameter.')
-        if self.reference != desired_ref:
-            raise error_types.WrongReferenceError(fpath=None, desired_ref=desired_ref, header_ref='not implemented', irods_ref=self.reference)
-
-
-    def check_md5s(self):
-        if self.ichksum_md5 and self.md5:
-            if self.ichksum_md5 != self.md5:
-                raise error_types.WrongMD5Error(fpath=None, imeta_value=self.md5, ichksum_value=self.ichksum_md5)
-        else:
-            if not self.ichksum_md5:
-                raise error_types.TestImpossibleToRunError(fpath=None, test_name='Test md5', reason='The md5 returned by ichksum is missing')
-            if not self.md5:
-                raise error_types.TestImpossibleToRunError(fpath=None, test_name='Test md5', reason='The md5 in iRODS metadata is either missing or more than 1.')
-
-
-    def check_lane_from_fname_vs_metadata(self):
-        if not self.lane_id:
-            raise error_types.TestImpossibleToRunError(fpath=self.fpath,
-                                                       reason='The lane id in the iRODS metadata is either missing or more than 1 ',
-                                                       test_name='Check lane id from filename vs iRODS metadata')
-        lane_from_fname = self.get_lane_from_irods_fname(self.fname)
-        if str(lane_from_fname) != str(self.lane_id):
-            raise error_types.IrodsMetadataAttributeVsFileNameError(fpath=self.fpath, attribute='lane', irods_value=self.lane_id, filename_value=lane_from_fname)
 
 
     @classmethod
@@ -283,3 +238,50 @@ class IrodsSeqFileMetadata(object):
             raise ValueError("Not a reference file: " + str(ref_path))
 
 
+
+    def test_run_id_from_fname_vs_metadata(self):
+        """
+        This test assumes that all the files in iRODS have exactly 1 run (=LANELETS)
+        """
+        if not self.run_id:
+            raise error_types.TestImpossibleToRunError(fpath=self.fpath,
+                                                       reason='The run_id in iRODS metadata is either missing or more than 1.',
+                                                       test_name='Check run_id from filename vs. iRODS metadata.')
+        try:
+            run_id_from_fname = self.get_run_from_irods_fname(self.fname)
+        except ValueError as e:
+            raise error_types.TestImpossibleToRunError(fpath=self.fpath, reason=str(e), test_name='Check run_id from filename vs. run_id from iRODS metadata') # 'Cant extract the run id from file name. Not a sequencing file?'
+        else:
+            if str(self.run_id) != str(run_id_from_fname):
+                raise error_types.IrodsMetadataAttributeVsFileNameError(fpath=self.fpath, attribute='run_id', irods_value=self.run_id, filename_value=run_id_from_fname)
+
+
+    # TODO: actually the user can't know exactly the name of the files - this needs refactoring, in order to associate the name of the ref file with the name of the ref
+    def test_reference(self, desired_ref):
+        if not self.reference:
+            raise error_types.TestImpossibleToRunError(test_name='Check reference',reason='The reference from iRODS metadata is either missing or more than 1.')
+        if not desired_ref:
+            raise error_types.TestImpossibleToRunError(test_name='Check_reference', reason='Missing desired reference parameter.')
+        if self.reference != desired_ref:
+            raise error_types.WrongReferenceError(fpath=None, desired_ref=desired_ref, header_ref='not implemented', irods_ref=self.reference)
+
+
+    def test_md5_calculated_vs_metadata(self):
+        if self.ichksum_md5 and self.md5:
+            if self.ichksum_md5 != self.md5:
+                raise error_types.WrongMD5Error(fpath=None, imeta_value=self.md5, ichksum_value=self.ichksum_md5)
+        else:
+            if not self.ichksum_md5:
+                raise error_types.TestImpossibleToRunError(fpath=None, test_name='Test md5', reason='The md5 returned by ichksum is missing')
+            if not self.md5:
+                raise error_types.TestImpossibleToRunError(fpath=None, test_name='Test md5', reason='The md5 in iRODS metadata is either missing or more than 1.')
+
+
+    def test_lane_from_fname_vs_metadata(self):
+        if not self.lane_id:
+            raise error_types.TestImpossibleToRunError(fpath=self.fpath,
+                                                       reason='The lane id in the iRODS metadata is either missing or more than 1 ',
+                                                       test_name='Check lane id from filename vs iRODS metadata')
+        lane_from_fname = self.get_lane_from_irods_fname(self.fname)
+        if str(lane_from_fname) != str(self.lane_id):
+            raise error_types.IrodsMetadataAttributeVsFileNameError(fpath=self.fpath, attribute='lane', irods_value=self.lane_id, filename_value=lane_from_fname)

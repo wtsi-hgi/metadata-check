@@ -376,26 +376,26 @@ class TestIrodsSeqFileMetadata(unittest.TestCase):
     #     r = re.compile(irods_consts.LANE_ID_REGEX)
     #     return True if r.match(lane_id) else False
     #
-    def test_lane_id1(self):
+    def test_is_lane_id1(self):
         lane_id = 1
         result = IrodsSeqFileMetadata.is_lane_id(lane_id)
         self.assertTrue(result)
 
-    def test_lane_id2(self):
+    def test_is_lane_id2(self):
         lane_id = '1'
         result = IrodsSeqFileMetadata.is_lane_id(lane_id)
         self.assertTrue(result)
 
-    def test_lane_id3(self):
+    def test_is_lane_id3(self):
         lane_id = False
         self.assertRaises(TypeError, IrodsSeqFileMetadata.is_lane_id, lane_id)
 
-    def test_lane_id4(self):
+    def test_is_lane_id4(self):
         lane_id = '123'
         result = IrodsSeqFileMetadata.is_lane_id(lane_id)
         self.assertFalse(result)
 
-    def test_lane_id5(self):
+    def test_is_lane_id5(self):
         lane_id = '123aaaa'
         result = IrodsSeqFileMetadata.is_lane_id(lane_id)
         self.assertFalse(result)
@@ -449,23 +449,23 @@ class TestIrodsSeqFileMetadata(unittest.TestCase):
     #         raise error_types.IrodsMetadataAttributeVsFileNameError(fpath=self.fpath, attribute='lane', irods_value=self.lane_id, filename_value=lane_from_fname)
 
 
-    def test_check_lane_from_fname_vs_metadata1(self):
+    def test_test_lane_from_fname_vs_metadata1(self):
         irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam', fname='1234_5#6.bam', lane_id='5') # fname, fpath, samples, libraries, studies, md5, ichksum_md5, reference, run_id, lane_id, npg_qc):
-        result = irods_metadata.check_lane_from_fname_vs_metadata()
+        result = irods_metadata.test_lane_from_fname_vs_metadata()
         self.assertIsNone(result)
 
-    def test_check_lane_from_fname_vs_metadata2(self):
+    def test_test_lane_from_fname_vs_metadata2(self):
         irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5.bam',fname='1234_5.bam', lane_id='5') # fname, fpath, samples, libraries, studies, md5, ichksum_md5, reference, run_id, lane_id, npg_qc):
-        result = irods_metadata.check_lane_from_fname_vs_metadata()
+        result = irods_metadata.test_lane_from_fname_vs_metadata()
         self.assertIsNone(result)
 
-    def test_check_lane_from_fname_vs_metadata3(self):
+    def test_test_lane_from_fname_vs_metadata3(self):
         irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam', fname='1234_5#6.bam') # fname, fpath, samples, libraries, studies, md5, ichksum_md5, reference, run_id, lane_id, npg_qc):
-        self.assertRaises(error_types.TestImpossibleToRunError, irods_metadata.check_lane_from_fname_vs_metadata)
+        self.assertRaises(error_types.TestImpossibleToRunError, irods_metadata.test_lane_from_fname_vs_metadata)
 
-    def test_check_lane_from_fname_vs_metadata4(self):
+    def test_test_lane_from_fname_vs_metadata4(self):
         irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam',fname='1234_5#6.bam', lane_id='1') # fname, fpath, samples, libraries, studies, md5, ichksum_md5, reference, run_id, lane_id, npg_qc):
-        self.assertRaises(error_types.IrodsMetadataAttributeVsFileNameError, irods_metadata.check_lane_from_fname_vs_metadata)
+        self.assertRaises(error_types.IrodsMetadataAttributeVsFileNameError, irods_metadata.test_lane_from_fname_vs_metadata)
 
 
     # def check_md5s(self):
@@ -478,22 +478,22 @@ class TestIrodsSeqFileMetadata(unittest.TestCase):
     #         if not self.md5:
     #             raise error_types.TestImpossibleToRunError(fpath=None, test_name='Test md5', reason='The md5 in iRODS metadata is either missing or more than 1.')
 
-    def test_check_md5s1(self):
+    def test_test_md5_calculated_vs_metadata1(self):
         irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam', fname='1234_5#6.bam', md5='123abc', ichksum_md5='123abc') # fname, fpath, samples, libraries, studies, md5, ichksum_md5, reference, run_id, lane_id, npg_qc):
-        result = irods_metadata.check_md5s()
+        result = irods_metadata.test_md5_calculated_vs_metadata()
         self.assertIsNone(result)
 
-    def test_check_md5s2(self):
+    def test_test_md5_calculated_vs_metadata2(self):
         irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam',fname='1234_5#6.bam', md5='123abc123', ichksum_md5='123abc') # fname, fpath, samples, libraries, studies, md5, ichksum_md5, reference, run_id, lane_id, npg_qc):
-        self.assertRaises(error_types.WrongMD5Error, irods_metadata.check_md5s)
+        self.assertRaises(error_types.WrongMD5Error, irods_metadata.test_md5_calculated_vs_metadata)
 
-    def test_check_md5s3(self):
+    def test_test_md5_calculated_vs_metadata3(self):
         irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam', fname='1234_5#6.bam', md5='123abc') # fname, fpath, samples, libraries, studies, md5, ichksum_md5, reference, run_id, lane_id, npg_qc):
-        self.assertRaises(error_types.TestImpossibleToRunError, irods_metadata.check_md5s)
+        self.assertRaises(error_types.TestImpossibleToRunError, irods_metadata.test_md5_calculated_vs_metadata)
 
-    def test_check_md5s4(self):
+    def test_test_md5_calculated_vs_metadata4(self):
         irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam', fname='1234_5#6.bam', ichksum_md5='123abc') # fname, fpath, samples, libraries, studies, md5, ichksum_md5, reference, run_id, lane_id, npg_qc):
-        self.assertRaises(error_types.TestImpossibleToRunError, irods_metadata.check_md5s)
+        self.assertRaises(error_types.TestImpossibleToRunError, irods_metadata.test_md5_calculated_vs_metadata)
 
 
 
@@ -510,22 +510,22 @@ class TestIrodsSeqFileMetadata(unittest.TestCase):
     #             raise error_types.IrodsMetadataAttributeVsFileNameError(fpath=self.fpath, attribute='run_id', irods_value=self.run_id, filename_value=run_id_from_fname)
 
 
-    def test_check_run_id_from_fname_vs_metadata1(self):
+    def test_test_run_id_from_fname_vs_metadata1(self):
         irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam', fname='1234_5#6.bam', run_id='1234')
-        result = irods_metadata.check_run_id_from_fname_vs_metadata()
+        result = irods_metadata.test_run_id_from_fname_vs_metadata()
         self.assertIsNone(result)
 
-    def test_check_run_id_from_fname_vs_metadata2(self):
+    def test_test_run_id_from_fname_vs_metadata2(self):
         irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam', fname='1234_5#6.bam', run_id='5')
-        self.assertRaises(error_types.IrodsMetadataAttributeVsFileNameError, irods_metadata.check_run_id_from_fname_vs_metadata)
+        self.assertRaises(error_types.IrodsMetadataAttributeVsFileNameError, irods_metadata.test_run_id_from_fname_vs_metadata)
 
-    def test_check_run_id_from_fname_vs_metadata3(self):
+    def test_test_run_id_from_fname_vs_metadata3(self):
         irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam', fname='1234_5#6.bam')
-        self.assertRaises(error_types.TestImpossibleToRunError, irods_metadata.check_run_id_from_fname_vs_metadata)
+        self.assertRaises(error_types.TestImpossibleToRunError, irods_metadata.test_run_id_from_fname_vs_metadata)
 
-    def test_check_run_id_from_fname_vs_metadata4(self):
+    def test_test_run_id_from_fname_vs_metadata4(self):
         irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam', fname='1234_5#6.bam')
-        self.assertRaises(error_types.TestImpossibleToRunError, irods_metadata.check_run_id_from_fname_vs_metadata)
+        self.assertRaises(error_types.TestImpossibleToRunError, irods_metadata.test_run_id_from_fname_vs_metadata)
 
 
 
@@ -542,27 +542,27 @@ class TestIrodsSeqFileMetadata(unittest.TestCase):
     #     return problems
 
 
-    def test_sanity_checks_on_fields1(self):
+    def test_run_field_sanity_checks1(self):
         irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam', fname='1234_5#6.bam', md5='aaAAA')
-        result = irods_metadata.sanity_checks_on_fields()
+        result = irods_metadata.run_field_sanity_checks()
         self.assertEqual(len(result) , 1)
         self.assertEqual(type(result[0]), error_types.WrongMetadataValue)
 
-    def test_sanity_checks_on_fields2(self):
+    def test_run_field_sanity_checks2(self):
         irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam', fname='1234_5#6.bam', run_id='aaAAA')
-        result = irods_metadata.sanity_checks_on_fields()
+        result = irods_metadata.run_field_sanity_checks()
         self.assertEqual(len(result) , 1)
         self.assertEqual(type(result[0]), error_types.WrongMetadataValue)
 
-    def test_sanity_checks_on_fields3(self):
+    def test_run_field_sanity_checks3(self):
         irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam', fname='1234_5#6.bam', lane_id='aaAAA')
-        result = irods_metadata.sanity_checks_on_fields()
+        result = irods_metadata.run_field_sanity_checks()
         self.assertEqual(len(result) , 1)
         self.assertEqual(type(result[0]), error_types.WrongMetadataValue)
 
-    def test_sanity_checks_on_fields4(self):
+    def test_run_field_sanity_checks4(self):
         irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam', fname='1234_5#6.bam', npg_qc='aaAAA')
-        result = irods_metadata.sanity_checks_on_fields()
+        result = irods_metadata.run_field_sanity_checks()
         self.assertEqual(len(result) , 1)
         self.assertEqual(type(result[0]), error_types.WrongMetadataValue)
 
