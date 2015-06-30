@@ -124,10 +124,12 @@ def extract_fname_and_ext(fpath):
     ext = ext[1:]
     return (fname, ext)
 
+@wrappers.check_args_not_none
 def extract_fname(fpath):
     _, fname = os.path.split(fpath)
     return fname
 
+@wrappers.check_args_not_none
 def extract_fname_without_ext(fpath):
     ''' Extracts the file name (and removes the extensions), given a file path.'''
     #_, fname = os.path.split(fpath)
@@ -135,6 +137,7 @@ def extract_fname_without_ext(fpath):
     basename, _ = os.path.splitext(fname)
     return basename
 
+@wrappers.check_args_not_none
 def extract_dir_path(fpath):
     ''' Extracts the root directory from a filepath.'''
     if os.path.isdir(fpath):
@@ -162,14 +165,14 @@ def list_and_filter_files_from_dir(dir_path, accepted_extensions):
     print files_list
     return files_list
 
-
+@wrappers.check_args_not_none
 def get_filename_from_path(fpath):
     if fpath in ["\n", " ","","\t"]:
         raise ValueError("File path empty")
     f_path = fpath.lstrip().strip()
     return os.path.basename(f_path)
 
-
+@wrappers.check_args_not_none
 def get_filepaths_from_fofn(fofn):
     files_list = [f for f in open(fofn, 'r')]
     return filter(None, files_list)
@@ -194,6 +197,7 @@ def filter_list_of_files_by_type(list_of_files, filters):
             print "SMTH else in this dir:",f
     return files_filtered
 
+@wrappers.check_args_not_none
 def extract_file_extension(fpath):
     if not fpath:
         return None
