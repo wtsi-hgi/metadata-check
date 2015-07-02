@@ -68,14 +68,15 @@ def compare_entity_sets_in_seqsc(entities_dict, entity_type):
     seqsc_entities = {}
     # SEARCH FOR ENTITIES in SEQSCAPE BY ID_TYPE:
     for id_type, ids_list in entities_dict.items():
-        entities = get_entities_from_seqscape(entity_type, ids_list, id_type)
-        for id in ids_list:
-            if is_id_missing(id, id_type, entities):
-                problems.append(str(error_types.NotFoundInSeqscapeError(id_type, id, entity_type)))
-            if is_id_duplicated(id, id_type,entities):
-                duplicates = get_entities_by_id(id, id_type, entities)
-                problems.append(str(error_types.TooManyEntitiesSameIdSeqscapeError(id_type, id, duplicates, entity_type)))
-        seqsc_entities[id_type] = entities
+        if ids_list:
+            entities = get_entities_from_seqscape(entity_type, ids_list, id_type)
+            for id in ids_list:
+                if is_id_missing(id, id_type, entities):
+                    problems.append(str(error_types.NotFoundInSeqscapeError(id_type, id, entity_type)))
+                if is_id_duplicated(id, id_type,entities):
+                    duplicates = get_entities_by_id(id, id_type, entities)
+                    problems.append(str(error_types.TooManyEntitiesSameIdSeqscapeError(id_type, id, duplicates, entity_type)))
+            seqsc_entities[id_type] = entities
 
 
     # HERE I assume I know what the id_types are (internal_id, etc..):
