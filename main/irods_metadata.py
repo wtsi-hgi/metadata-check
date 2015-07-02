@@ -109,6 +109,8 @@ class IrodsSeqFileMetadata(object):
         problems = []
         if self.md5 and not self.is_md5(self.md5):
             problems.append(error_types.WrongMetadataValue(fpath=self.fpath, attribute='md5', value=self.md5))
+        if self.ichksum_md5 and not self.is_md5(self.ichksum_md5):
+            problems.append(error_types.WrongMetadataValue(fpath=self.fpath, attribute='ichcksum_md5', value=self.ichksum_md5))
         if self.run_id and not self.is_run_id(self.run_id):
             problems.append(error_types.WrongMetadataValue(fpath=self.fpath, attribute='run_id', value=self.run_id))
         if self.lane_id and not self.is_lane_id(self.lane_id):
