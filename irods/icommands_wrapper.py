@@ -403,7 +403,8 @@ class iRODSChecksumOperations(iRODSOperations):
         if len(tokens) <= 1:
             raise exceptions.UnexpectedIRODSiCommandOutputException(output)
         md5 = tokens[1]
-        return irods_types.ChecksumResult(md5=md5)
+#        return irods_types.ChecksumResult(md5=md5)
+        return md5
     
 # #     @staticmethod
 # #     def retrieve_checksum(fpath_irods):
