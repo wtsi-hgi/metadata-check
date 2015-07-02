@@ -58,7 +58,7 @@ def get_dict_differences(dict1, dict2):
 
 def check_irods_meta_complete(irods_fpath, config_fpath):
     config_attrs_freq = parse_config_file(config_fpath)
-    file_metadata = metadata_utils.iRODSUtils.retrieve_irods_metadata(irods_fpath)
+    file_metadata = metadata_utils.iRODSUtils.retrieve_irods_avus(irods_fpath)
     metadata_freq_dict = build_freq_dict_from_avus_list(file_metadata)
     return get_dict_differences(config_attrs_freq, metadata_freq_dict)
 
