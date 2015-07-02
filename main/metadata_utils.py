@@ -97,7 +97,7 @@ class iRODSUtils:
         return filtered_files
 
     @classmethod
-    def retrieve_irods_metadata(cls, irods_path):
+    def retrieve_irods_avus(cls, irods_path):
         return irods_api.iRODSAPI.retrieve_metadata_for_file(irods_path)
 
     @classmethod
@@ -155,6 +155,11 @@ class iRODSUtils:
     def extract_libraries_from_irods_metadata(cls, irods_metadata):
         irods_lib_internal_id_list = cls.extract_values_for_key_from_irods_metadata(irods_metadata, 'library_id')
         irods_lib_names_list = cls.extract_values_for_key_from_irods_metadata(irods_metadata, 'library')
-        return {'internal_id' : irods_lib_internal_id_list,
-                'name' : irods_lib_names_list
-        }
+
+        # HACKS for the inconsistencies in iRODS, in which NPG submits under library name the actual library id
+        lib_ids = list(set(irods_lib_internal_id_list + irods_lib_names_list))
+        ids_dict = {'name': [], 'accession_number': [], 'internal_id': []}
+        for id in lib_ids:
+            id_type = Identif.guess_identifier_type(id)
+            ids_dict[id_type].append(id)
+        return ids_dict
