@@ -89,7 +89,7 @@ class TestiRODSChecksumOperations(unittest.TestCase):
     def test_process_icmd_output(self):
         ichksum_output = '    Y:1-59373566.vcf.gz               30cd89134232c910664cc771bc42e7fd\nTotal checksum performed = 1, Failed checksum = 0'
         res = irods_api.iRODSChecksumOperations._process_icmd_output(ichksum_output)
-        expected = irods_types.ChecksumResult(md5='30cd89134232c910664cc771bc42e7fd')
+        expected = '30cd89134232c910664cc771bc42e7fd'
         self.assertEqual(res, expected)
     
         ichksum_output = 'ERROR'
