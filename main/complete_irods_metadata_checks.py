@@ -21,8 +21,10 @@ This file has been created on Jun 09, 2015.
 
 from collections import defaultdict
 import metadata_utils
+import error_types
+from com import wrappers
 
-
+@wrappers.check_args_not_none
 def parse_config_file(path):
     attributes_frequency = {}
     config_file = open(path)
@@ -44,11 +46,11 @@ def build_freq_dict_from_avus_list(avus_list):
         freq_dict[avu.attribute] += 1
     return freq_dict
 
+@wrappers.check_args_not_none
 def get_dict_differences(dict1, dict2):
 #    return set(dict1.items()) - set(dict2.items())
     diffs = []
     for k,v, in dict1.items():
-        #print k,v,dict2[k]
         if not dict2.get(k):
             diffs.append((k, v, 0))
         elif v != dict2[k]:
@@ -56,11 +58,21 @@ def get_dict_differences(dict1, dict2):
     return diffs
 
 
-def check_irods_meta_complete(irods_fpath, config_fpath):
+def compare_avus_vs_config_frequencies(irods_fpath, config_fpath, irods_avus=None):
+    if not irods_avus:
+        irods_avus = metadata_utils.iRODSUtils.retrieve_irods_avus(irods_fpath)
     config_attrs_freq = parse_config_file(config_fpath)
-    file_metadata = metadata_utils.iRODSUtils.retrieve_irods_avus(irods_fpath)
-    metadata_freq_dict = build_freq_dict_from_avus_list(file_metadata)
+    metadata_freq_dict = build_freq_dict_from_avus_list(irods_avus)
     return get_dict_differences(config_attrs_freq, metadata_freq_dict)
 
-# diffs = compare_irods_meta_with_configured_attributes('/seq/15254/15254_4.cram', '/nfs/users/nfs_i/ic4/Projects/metadata-check/irods_meta.conf')
-# print str(diffs)
+def from_tuples_to_exceptions(tuples_list):
+    excs = []
+    for attr_name, desired_freq, actual_freq in tuples_list:
+        excs.append(error_types.IrodsMetadataAttributeFrequencyError(fpath=None, attribute=attr_name, desired_occurances=desired_freq, actual_occurances=actual_freq))
+    return excs
+
+if __name__ == '__main__':
+    diffs = compare_avus_vs_config_frequencies('/seq/15254/15254_4.cram', '/nfs/users/nfs_i/ic4/Projects/metadata-check/irods_meta.conf')
+    print str(diffs)
+    excs = from_tuples_to_exceptions(diffs)
+    print "AS EXCEPTIONS : "+ str(excs)
