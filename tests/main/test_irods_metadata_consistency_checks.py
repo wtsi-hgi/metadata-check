@@ -72,14 +72,14 @@ class TestUtilFunctionsForEntities(unittest.TestCase):
 
 class TestIRODSvsSeqscMetadata(unittest.TestCase):
 
-    def test_compare_sample_sets_in_seqsc(self):
+    def test_compare_entity_sets_in_seqsc(self):
         irods_samples = {'name': ['491STDY5478742'], 'accession_number': ['EGAN00001096108'], 'internal_id': [1571544]}
-        result = checks.compare_sample_sets_in_seqsc(irods_samples)
+        result = checks.compare_entity_sets_in_seqsc(irods_samples, 'sample')
         print str(result)
         self.assertEqual(len(result), 0)
 
         irods_samples = {'name': ['491STDY5478742'], 'accession_number': ['EGAN0000'], 'internal_id': [1571544]}
-        result = checks.compare_sample_sets_in_seqsc(irods_samples)
+        result = checks.compare_entity_sets_in_seqsc(irods_samples, 'sample')
         self.assertEqual(len(result), 1)
 
 
@@ -101,7 +101,7 @@ class TestGetEntitiesFromSeqscape(unittest.TestCase):
         self.assertEqual(results[0].internal_id, 2040105)
 
 
-   def test_get_libraries_from_seqsc(self):
+    def test_get_libraries_from_seqsc(self):
         ids_list = ['12219508']
         id_type = 'internal_id'
         result = checks.get_entities_from_seqscape('library', ids_list, id_type)
