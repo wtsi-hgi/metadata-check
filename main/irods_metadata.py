@@ -63,7 +63,7 @@ class IrodsSeqFileMetadata(object):
         ichksum_md5 = icommands_wrapper.iRODSChecksumOperations.get_checksum(fpath)
 
         ref_list = metadata_utils.iRODSUtils.extract_values_for_key_from_irods_metadata(avus, 'reference')
-        ref = ref_list[0] if len(ref_list[0]) == 1 else None
+        ref = ref_list[0] if len(ref_list) == 1 else None
 
         if ref:
             ref = cls.extract_reference_name_from_ref_path(ref)
