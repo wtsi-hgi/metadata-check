@@ -99,7 +99,7 @@ class IrodsMetadataAttributeFrequencyError(Exception):
         self.actual_occurances = actual_occurances
 
     def __str__(self):
-        return "In file: " + str(self.fpath) + "'s metadata attribute: " + str(self.attribute) + " appears" + \
+        return "In file: " + str(self.fpath) + " metadata attribute: " + str(self.attribute) + " appears " + \
                str(self.actual_occurances) + " times, while it should appear " + str(self.desired_occurances) + \
                " according to the config you've given."
 
