@@ -34,7 +34,7 @@ def parse_args():
                            required=False,
                            nargs='*',
                            dest='files',
-                           action='append',
+                           #action='append',
                            help='List of file paths in iRODS')
     input_grp.add_argument('--fofn',
                            required=False,
@@ -58,7 +58,7 @@ def parse_args():
                             nargs='*',
                             required=False,
                             dest='file_types',
-                            action='append',
+                            #action='append',
                             help='Options are: bam | cram, you can choose more than 1 param.')
 
 
@@ -70,35 +70,36 @@ def parse_args():
     )
 
     tests_grp.add_argument('--test-sample',
-                           dest='sample_tests',
                            choices=['irods_vs_seqsc', 'irods_vs_header', 'all'],
                            nargs='*',
-                           action='append',
-                           default=['all'],
+                           #action='append',
+                           #default='all',
+                           default=[],
                            help='Run tests on samples - the options are: irods_vs_seqsc - '
                                 'which checks the consistency of iRODS metadata against Sequencescape and '
                                 'irods_vs_header - which checks the consistency of the header against the iRODS metadata'
     )
 
     tests_grp.add_argument('--test-library',
-                            dest='lib_tests',
                             choices=['irods_vs_seqsc', 'irods_vs_header', 'all'],
+                            #default='all',
                             nargs='*',
-                            action='append',
+                            #action='append',
+                            default=[],
                             help='Run tests on libraries - the options are: irods_vs_seqsc - '
                                  'which checks the consistency of iRODS metadata against Sequencescape and '
                                  'irods_vs_header - which checks the consistency of the header against the iRODS metadata'
     )
 
     tests_grp.add_argument('--test-study',
-                           dest='study_tests',
+                           #dest='study_tests',
                            action='store_true',
                            help='Flag set if one wants to run the tests on study/studies metadata. '
                                 'Only one test possible: irods_vs_seqsc, so nothing to choose, just set this flag or not'
     )
 
     tests_grp.add_argument('--test-reference',
-                            dest='reference',
+                            #dest='reference',
                             choices=['hs37d5', 'GRCh37', 'human_g1k_v37'],
                             help='Check if the reference in iRODS metadata is the same as this one'
     )
@@ -196,4 +197,8 @@ def parse_args():
 
     return parser.parse_args()
 
-print parse_args()
+#print parse_args()
+
+if __name__ == '__main__':
+    print parse_args()
+
