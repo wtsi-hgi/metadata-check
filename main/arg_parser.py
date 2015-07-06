@@ -100,9 +100,15 @@ def parse_args():
     )
 
     tests_grp.add_argument('--test-reference',
+                            dest='test_reference',
+                            help='Check if the reference in iRODS metadata is the same as this one'
+    )
+
+    tests_grp.add_argument('--ref',
                             dest='desired_reference',
                             choices=[constants.HS37D5, constants.GRCH38, constants.G1K, constants.GRCH37],
-                            help='Check if the reference in iRODS metadata is the same as this one'
+                            help='The desired reference, given by name'
+
     )
 
     tests_grp.add_argument('--test-filename',
@@ -120,9 +126,15 @@ def parse_args():
     )
 
     tests_grp.add_argument('--test-complete-meta',
-                           dest='config_file',
+                           action='store_true',
                            help='Chose this test if you want the iRODS metadata to be checked that '
                                 'it is complete against a config file you give in'
+    )
+
+    tests_grp.add_argument('--config_file',
+                           dest='config_file',
+                           help='The config file for the test regarding iRODS metadata being complete '
+                                '(to be given with --all-tests and --test-complete-meta option)'
     )
 
     # OUTPUT: how to output the results?
