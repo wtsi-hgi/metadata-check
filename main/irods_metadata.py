@@ -264,7 +264,8 @@ class IrodsSeqFileMetadata(object):
             raise error_types.TestImpossibleToRunError(fpath=self.fpath, test_name='Check reference',reason='The reference from iRODS metadata is either missing or more than 1.')
         if not desired_ref:
             raise error_types.TestImpossibleToRunError(fpath=self.fpath, test_name='Check_reference', reason='Missing desired reference parameter.')
-        if self.reference != desired_ref:
+        #if self.reference != desired_ref:
+        if self.reference.find(desired_ref) == -1:
             raise error_types.WrongReferenceError(fpath=self.fpath, desired_ref=desired_ref, header_ref='not implemented', irods_ref=self.reference)
 
 

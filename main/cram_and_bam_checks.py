@@ -22,8 +22,8 @@ import os
 import arg_parser
 import metadata_utils
 #from main import irods_seq_data_tests as seq_tests
-from main import irods_metadata_consistency_checks as seq_consistency_checks
-from main import error_types
+import irods_metadata_consistency_checks as seq_consistency_checks
+import error_types
 import complete_irods_metadata_checks
 import irods_metadata_consistency_checks as irods_checks
 import irods_metadata as irods_meta_module
@@ -223,7 +223,7 @@ def parse_args2():
 
 def read_fofn_into_list(fofn_path):
     fofn_fd = open(fofn_path)
-    files_list = [f for f in fofn_fd]
+    files_list = [f.strip() for f in fofn_fd]
     fofn_fd.close()
     return files_list
 
@@ -286,10 +286,12 @@ def main():
     #         fpaths_per_type[CRAM_FILE_TYPE] = metadata_utils.iRODSUtils.retrieve_list_of_crams_by_study_from_irods(args.study)
     # fpaths = fpaths_per_type.get(BAM_FILE_TYPE) + fpaths_per_type.get(CRAM_FILE_TYPE)
 
-        fpaths = metadata_utils.retrieve_list_of_files_by_study(args.study)
+        #fpaths = metadata_utils.retrieve_list_of_files_by_study(args.study)
+        fpaths = collect_fpaths_for_study(args.study)
 
     if args.fofn:
-        fpaths.extend(read_fofn_into_list(args.fofn))
+        files_from_fofn = read_fofn_into_list(args.fofn)
+        fpaths = files_from_fofn
 
     if args.files:
         fpaths = args.files
@@ -310,9 +312,9 @@ def main():
     # FILTER FILES:
     filtered_fpaths = []
     for file_type in args.file_types:
-        print "FILE types: " + str(fpaths)
         filtered_fpaths.extend(filter_by_file_type(fpaths, file_type))
 
+    print "ARGS = " + str(args)
 
     # PREPARING FOR THE TESTS
     for f in fpaths:
@@ -323,18 +325,31 @@ def main():
 
         # Deciding what tests to run
         header_tests = False
-        if 'irods_vs_header' in args.test_sample or 'irods_vs_header' in args.test_library or 'all' in args.test_sample or 'all' in args.test_library:
-            header_tests = True
-
         irods_tests = False
-        if any([args.test_sample, args.test_library, args.test_study, args.test_reference, args.test_md5, args.test_filename, args.all_tests]):
+        if args.all_tests:
+            header_tests = True
             irods_tests = True
+        else:
+            if args.test_sample:
+                if 'all' in args.test_sample or 'irods_vs_header' in args.test_sample:
+                    header_tests = True
+            if args.test_library:
+                if 'irods_vs_header' in args.test_library or 'all' in args.test_library:
+                    header_tests = True
+            if any([args.test_sample, args.test_library, args.test_study, args.desired_reference, args.test_md5, args.test_filename, args.all_tests, args.config_file]):
+                irods_tests = True
+
 
         # Retrieve the resources as needed in preparation for the tests:
         h_meta = None
         if header_tests:
-            header = metadata_utils.HeaderUtils.get_parsed_header_from_irods_file(f)
-            h_meta = header_meta_module.HeaderSAMFileMetadata.from_header_to_metadata(header, f)
+            try:
+                header = metadata_utils.HeaderUtils.get_parsed_header_from_irods_file(f)
+            except IOError as e:
+                problems.append(str(e))
+                continue
+            else:
+                h_meta = header_meta_module.HeaderSAMFileMetadata.from_header_to_metadata(header, f)
 
 
         if irods_tests:
@@ -348,20 +363,20 @@ def main():
 
             ####### RUN THE TESTS: #########
             # MD5 tests:
-            if args.test_md5:
+            if args.test_md5 or args.all_tests:
                 try:
                     i_meta.test_md5_calculated_vs_metadata()
                 except (error_types.WrongMD5Error, error_types.TestImpossibleToRunError) as e:
                     problems.append(str(e))
 
             # TODO - not working properly
-            if args.test_reference:
+            if args.desired_reference or args.all_tests:
                 try:
-                    i_meta.test_reference(args.test_reference)
+                    i_meta.test_reference(args.desired_reference)
                 except (error_types.WrongReferenceError, error_types.TestImpossibleToRunError) as e:
                     problems.append(str(e))
 
-            if args.test_filename:
+            if args.test_filename or args.all_tests:
                 try:
                     i_meta.test_lane_from_fname_vs_metadata()
                 except (error_types.IrodsMetadataAttributeVsFileNameError, error_types.TestImpossibleToRunError) as e:
@@ -374,9 +389,8 @@ def main():
 
                 # TODO : test also the tag
 
-            if args.test_sample:
-                if 'all' in args.test_sample:
-                    print "samples in h_meta: " + str(h_meta.samples) + " and i meta: " + str(i_meta.samples)
+            if args.test_sample or args.all_tests:
+                if 'all' in args.test_sample or args.all_tests:
                     issues = check_irods_vs_header_metadata(f, h_meta.samples, i_meta.samples, 'sample')
                     problems.extend(issues)
 
@@ -391,8 +405,8 @@ def main():
                         issues = seq_consistency_checks.compare_entity_sets_in_seqsc(i_meta.samples, 'sample')    #def compare_entity_sets_in_seqsc(entities_dict, entity_type):
                         problems.extend(issues)
 
-            if args.test_library:
-                if 'all' in args.test_library:
+            if args.test_library or args.all_tests:
+                if args.all_tests or 'all' in args.test_library:
                     issues = check_irods_vs_header_metadata(f, h_meta.libraries, i_meta.libraries, 'library')
                     problems.extend(issues)
 
@@ -408,14 +422,24 @@ def main():
                         problems.extend(issues)
 
 
-            if args.test_study:
+            if args.test_study or args.all_tests:
                 issues = seq_consistency_checks.compare_entity_sets_in_seqsc(i_meta.studies, 'study')
                 problems.extend(issues)
 
-        print "Problems found: " + str(problems)
+            if args.config_file:
+                diffs = complete_irods_metadata_checks.compare_avus_vs_config_frequencies(f, args.config_file, irods_avus)
+                problems.extend(complete_irods_metadata_checks.from_tuples_to_exceptions(diffs))
+
+        print "FILE: " + str(f) + " -- PROBLEMS found: " + str(problems)
+
 
 
     # OUTPUTS
+
+    ## FILTER OUTPUT depending on what params were given (what was asked as output)
+
+    ## PUT THE OUTPUT IN REQUESTED FORMAT
+
 
 
 def start_tests(study=None, file_type='both', fpaths=None, fofn_path=None, samples_irods_vs_header=True, samples_irods_vs_seqscape=True,
@@ -441,7 +465,7 @@ def start_tests(study=None, file_type='both', fpaths=None, fofn_path=None, sampl
                    libraries_irods_vs_header, libraries_irods_vs_seqscape,
                    study_irods_vs_seqscape, collateral_tests, desired_ref)
         if irods_meta_conf:
-            diffs = complete_irods_metadata_checks.check_irods_meta_complete(fpath, irods_meta_conf)
+            diffs = complete_irods_metadata_checks.compare_avus_vs_config_frequencies(fpath, irods_meta_conf)
             print "IRODS METADATA CHECKS: "+ str(diffs)
     #print "FILES PER TYPE: CRAMs = " + str(nr_crams) + " and BAMs = " + str(nr_bams)
 
