@@ -382,7 +382,7 @@ def query_all_studies_associated_with_samples(sample_internal_ids):
     Returns
     -------
     studies : list
-        A list of models.Study found for the samples given as parameter by internal_id
+        A list of models.Study found for the samples given as parameter by sample_internal_ids
     """
     studies_samples = _query_for_study_ids_by_sample_ids(sample_internal_ids)
     if studies_samples:
