@@ -220,3 +220,17 @@ class TestImpossibleToRunError(Exception):
 
     def __repr__(self):
         return self.__str__()
+
+class SamplesDontBelongToGivenStudy(Exception):
+
+    def __init__(self, sample_ids,  actual_study, desired_study):
+        self.sample_ids = sample_ids
+        self.actual_study = actual_study
+        self.desired_study = desired_study
+
+    def __str__(self):
+        return "The sample " + str(self.sample_ids) + " belongs to study: " + str(self.actual_study) + \
+               " while it should belong to: " + str(self.desired_study)
+
+    def __repr__(self):
+        return self.__str__()
