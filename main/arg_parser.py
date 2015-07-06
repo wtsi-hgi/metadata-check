@@ -20,6 +20,7 @@ This file has been created on Jun 23, 2015.
 """
 
 import argparse
+import constants
 
 
 def parse_args():
@@ -99,8 +100,8 @@ def parse_args():
     )
 
     tests_grp.add_argument('--test-reference',
-                            #dest='reference',
-                            choices=['hs37d5', 'GRCh37', 'human_g1k_v37'],
+                            dest='desired_reference',
+                            choices=[constants.HS37D5, constants.GRCH38, constants.G1K, constants.GRCH37],
                             help='Check if the reference in iRODS metadata is the same as this one'
     )
 
