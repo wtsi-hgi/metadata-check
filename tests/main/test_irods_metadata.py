@@ -22,6 +22,8 @@ This file has been created on Jun 26, 2015.
 import unittest
 from main.irods_metadata import IrodsSeqFileMetadata
 from main import error_types
+from main import metadata_utils
+from irods import data_types
 
 class TestIrodsSeqFileMetadata(unittest.TestCase):
 
@@ -566,3 +568,75 @@ class TestIrodsSeqFileMetadata(unittest.TestCase):
         self.assertEqual(len(result) , 1)
         self.assertEqual(type(result[0]), error_types.WrongMetadataValue)
 
+
+   # @classmethod
+   #  def run_avu_count_checks(cls, fpath, avus):
+   #      problems = []
+   #      md5_list = metadata_utils.iRODSUtils.extract_values_for_key_from_irods_metadata(avus, 'md5')
+   #      if len(md5_list) != 1:
+   #          problems.append(error_types.IrodsMetadataAttributeFrequencyError(fpath, 'md5', '1', str(len(md5_list))))
+   #
+   #      ref_list = metadata_utils.iRODSUtils.extract_values_for_key_from_irods_metadata(avus, 'reference')
+   #      if len(ref_list) != 1:
+   #          problems.append(error_types.IrodsMetadataAttributeFrequencyError(fpath, 'reference', '1', str(len(ref_list))))
+   #
+   #      run_id_list = metadata_utils.iRODSUtils.extract_values_for_key_from_irods_metadata(avus, 'id_run')
+   #      if len(run_id_list) != 1:
+   #          problems.append(error_types.IrodsMetadataAttributeFrequencyError(fpath, 'id_run', '1', str(len(run_id_list))))
+   #
+   #      lane_id_list = metadata_utils.iRODSUtils.extract_values_for_key_from_irods_metadata(avus, 'lane')
+   #      if len(lane_id_list) != 1:
+   #          problems.append(error_types.IrodsMetadataAttributeFrequencyError(fpath, 'lane', '1', str(len(lane_id_list))))
+   #
+   #      npg_qc_list = metadata_utils.iRODSUtils.extract_values_for_key_from_irods_metadata(avus, 'manual_qc')
+   #      if len(npg_qc_list) != 1:
+   #          problems.append(error_types.IrodsMetadataAttributeFrequencyError(fpath, 'manual_qc', '1', str(len(npg_qc_list))))
+   #      return problems
+   #
+   #
+
+    def test_run_avu_count_checks1(self):
+        fpath = '/seq/6661/6661_2#12.bam'
+        avus = metadata_utils.iRODSUtils.retrieve_irods_avus(fpath)
+        print str(avus)
+        result = IrodsSeqFileMetadata.run_avu_count_checks(fpath, avus)
+        self.assertEqual([], result)
+
+
+    def test_run_avu_count_checks2(self):
+        fpath = 'balh - not used'
+        avus = [data_types.MetaAVU(attribute='reference', value='/Homo_sapiens/1000Genomes_hs37d5/all/bwa/hs37d5.fa'),
+         data_types.MetaAVU(attribute='lane', value='2'),
+         data_types.MetaAVU(attribute='id_run', value='6661'),
+         data_types.MetaAVU(attribute='manual_qc', value='1'),
+         data_types.MetaAVU(attribute='md5', value='57a5a38aa987c78457dedee14c00e95c')]
+        result = IrodsSeqFileMetadata.run_avu_count_checks(fpath, avus)
+        self.assertEqual(result, [])
+
+    def test_run_avu_count_checks3(self):
+        fpath = 'balh - not used'
+        avus = [data_types.MetaAVU(attribute='reference', value='/Homo_sapiens/1000Genomes_hs37d5/all/bwa/hs37d5.fa'),
+         data_types.MetaAVU(attribute='lane', value='2'),
+         data_types.MetaAVU(attribute='id_run', value='6661'),
+         #data_types.MetaAVU(attribute='manual_qc', value='1'),
+         data_types.MetaAVU(attribute='md5', value='57a5a38aa987c78457dedee14c00e95c')]
+        result = IrodsSeqFileMetadata.run_avu_count_checks(fpath, avus)
+        self.assertEqual(len(result), 1)
+
+
+
+ #  @classmethod
+ #    def get_lane_from_irods_path(cls, irods_fpath):
+ #        cls.check_is_irods_seq_fpath(irods_fpath)
+ #        fname = common_utils.extract_fname_without_ext(irods_fpath)
+ #        return cls.get_lane_from_irods_fname(fname)
+ #
+
+    def test_get_lane_from_irods_path1(self):
+        fpath = '/seq/1234/1234_1.bam'
+        result = IrodsSeqFileMetadata.get_lane_from_irods_path(fpath)
+        self.assertEqual(result, '1')
+
+    def test_get_lane_from_irods_path2(self):
+        fpath = '/seq/1234/12348.bam'
+        self.assertRaises(ValueError, IrodsSeqFileMetadata.get_lane_from_irods_path, fpath)
