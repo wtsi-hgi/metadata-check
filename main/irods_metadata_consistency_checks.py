@@ -21,6 +21,7 @@ This file has been created on Jun 18, 2015.
 
 from main import error_types
 import seqscape.queries as seqsc
+import metadata_utils
 
 
 def is_id_missing(id, id_type, entities):
@@ -80,14 +81,21 @@ def compare_entity_sets_in_seqsc(entities_dict, entity_type):
 
 
     # HERE I assume I know what the id_types are (internal_id, etc..):
-    id_types = seqsc_entities.keys()
-    for i in xrange(1, len(id_types)-1):
-        if seqsc_entities.get(id_types[i-1]) and seqsc_entities.get(id_types[i]):
-            if not set(seqsc_entities.get(id_types[i-1])) == set(seqsc_entities.get(id_types[i])):
-                problems.append(str(error_types.DifferentEntitiesFoundInSeqscapeQueryingByDiffIdTypesError(entity_type=entity_type,
-                                                                                     id_type1=id_types[i-1],
-                                                                                     id_type2=id_types[i],
-                                                                                     entities_set1=seqsc_entities[id_types[i-1]],
-                                                                                     entities_set2=seqsc_entities[id_types[i]])))
+    problems.extend(metadata_utils.GeneralUtils.check_same_entities(seqsc_entities, entity_type))
     return problems
+
+
+
+def check_sample_is_in_desired_study(sample_ids, study_name):
+    """
+
+    :param sample_ids: a list of sample internal_id
+    :param study_name: the name of the study that all the samples should be part of
+    :return: Nothing if everything is ok, error_types.SampleDoesntBelongToGivenStudy if there are inconsistencies
+    """
+    actual_studies_from_seqsc = seqsc.query_all_studies_associated_with_samples(sample_ids)
+    studies_by_name = [s.name for s in actual_studies_from_seqsc]
+    if not study_name in studies_by_name:
+        return error_types.SamplesDontBelongToGivenStudy(sample_ids=sample_ids, actual_study=str(studies_by_name), desired_study=study_name)
+
 

@@ -28,6 +28,23 @@ from com import  utils as common_utils
 import error_types
 
 
+class GeneralUtils:
+
+    @classmethod
+    def check_same_entities(cls, seqsc_entities, entity_type):
+        problems = []
+        id_types = seqsc_entities.keys()
+        for i in xrange(1, len(id_types)-1):
+            if seqsc_entities.get(id_types[i-1]) and seqsc_entities.get(id_types[i]):
+                if not set(seqsc_entities.get(id_types[i-1])) == set(seqsc_entities.get(id_types[i])):
+                    problems.append(str(error_types.DifferentEntitiesFoundInSeqscapeQueryingByDiffIdTypesError(entity_type=entity_type,
+                                                                                         id_type1=id_types[i-1],
+                                                                                         id_type2=id_types[i],
+                                                                                         entities_set1=seqsc_entities[id_types[i-1]],
+                                                                                         entities_set2=seqsc_entities[id_types[i]])))
+        return problems
+
+
 class HeaderUtils:
 
     @classmethod
@@ -75,26 +92,41 @@ class HeaderUtils:
 
 class iRODSUtils:
 
-    @classmethod
-    def retrieve_list_of_bams_by_study_from_irods(cls, study_name):
-        avus = {'study': study_name, 'type': 'bam'}
-        bams = icommands_wrapper.iRODSMetaQueryOperations.query_by_metadata(avus)
-        filtered_files = icommands_wrapper.iRODSMetaQueryOperations.filter_out_bam_phix_files(bams)
-        return filtered_files
+    # @classmethod
+    # def retrieve_list_of_bams_by_study_from_irods(cls, study_name):
+    #     avus = {'study': study_name, 'type': 'bam'}
+    #     bams = icommands_wrapper.iRODSMetaQueryOperations.query_by_metadata(avus)
+    #     filtered_files = icommands_wrapper.iRODSMetaQueryOperations.filter_out_bam_phix_files(bams)
+    #     return filtered_files
+    #
+    # @classmethod
+    # def retrieve_list_of_crams_by_study_from_irods(cls, study_name):
+    #     avus = {'study': study_name, 'type': 'cram'}
+    #     crams = icommands_wrapper.iRODSMetaQueryOperations.query_by_metadata(avus)
+    #     filtered_files = icommands_wrapper.iRODSMetaQueryOperations.filter_out_cram_phix_files(crams)
+    #     return filtered_files
+    #
+    # @classmethod
+    # def retrieve_list_of_files_by_study_name(cls, study_name):
+    #     avus = {'study' : study_name}
+    #     files = icommands_wrapper.iRODSMetaQueryOperations.query_by_metadata(avus)
+    #     filtered_files = icommands_wrapper.iRODSMetaQueryOperations.filter_out_phix(files)
+    #     return filtered_files
 
     @classmethod
-    def retrieve_list_of_crams_by_study_from_irods(cls, study_name):
-        avus = {'study': study_name, 'type': 'cram'}
-        crams = icommands_wrapper.iRODSMetaQueryOperations.query_by_metadata(avus)
-        filtered_files = icommands_wrapper.iRODSMetaQueryOperations.filter_out_cram_phix_files(crams)
-        return filtered_files
-
-    @classmethod
-    def retrieve_list_of_files_by_study(cls, study_name):
-        avus = {'study' : study_name}
+    def retrieve_list_of_target_files_by_metadata(cls, attribute, value):
+        avus = {attribute : value, 'target' : '1'}
         files = icommands_wrapper.iRODSMetaQueryOperations.query_by_metadata(avus)
         filtered_files = icommands_wrapper.iRODSMetaQueryOperations.filter_out_phix(files)
         return filtered_files
+
+    @classmethod
+    def retrieve_list_of_files_by_metadata(cls, attribute, value):
+        avus = {attribute : value}
+        files = icommands_wrapper.iRODSMetaQueryOperations.query_by_metadata(avus)
+        filtered_files = icommands_wrapper.iRODSMetaQueryOperations.filter_out_phix(files)
+        return filtered_files
+
 
     @classmethod
     def retrieve_irods_avus(cls, irods_path):
@@ -163,3 +195,4 @@ class iRODSUtils:
             id_type = Identif.guess_identifier_type(id)
             ids_dict[id_type].append(id)
         return ids_dict
+
