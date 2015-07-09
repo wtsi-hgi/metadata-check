@@ -62,6 +62,12 @@ def parse_args():
                             #action='append',
                             help='Options are: bam | cram, you can choose more than 1 param.')
 
+    filter_grp.add_argument('--filter_npg_qc',
+                            choices=["1", "0"],
+                            required=False,
+                            help='Filter based on npg qc field'
+                            )
+
 
     # Tests
     tests_grp = parser.add_argument_group('TESTS', 'Choose which tests to run on your data')
@@ -136,6 +142,20 @@ def parse_args():
                            help='The config file for the test regarding iRODS metadata being complete '
                                 '(to be given with --all-tests and --test-complete-meta option)'
     )
+
+    tests_grp.add_argument('--test_same_files_by_diff_study_ids',
+                            help='This tests that the same set of files is obtained when querying by different '
+                                 'study identifiers -- to be given by --study_internal_id and --study_acc_nr'
+    )
+
+    tests_grp.add_argument('--study_internal_id',
+                           help='The internal_id of the study that you query by for getting a list of files'
+                           )
+
+    tests_grp.add_argument('--study_acc_nr',
+                           help='The accession number of the study that you query by for getting a list of files'
+                           )
+
 
     # OUTPUT: how to output the results?
     out = parser.add_argument_group('OUTPUT FORMAT', 'What output to return and how', )

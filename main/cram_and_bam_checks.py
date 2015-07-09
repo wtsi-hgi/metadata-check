@@ -28,7 +28,8 @@ import complete_irods_metadata_checks
 import irods_metadata_consistency_checks as irods_checks
 import irods_metadata as irods_meta_module
 import header_metadata as header_meta_module
-
+#from ... import config
+import config
 
 CRAM_FILE_TYPE = 'cram'
 BAM_FILE_TYPE = 'bam'
@@ -235,30 +236,73 @@ def write_list_to_file(input_list, output_file):
     out_fd.close()
 
 
-def collect_fpaths_for_study(study, file_type=BOTH_FILE_TYPES):
-    fpaths_irods = []
-    if file_type == CRAM_FILE_TYPE:
-        fpaths_irods = metadata_utils.iRODSUtils.retrieve_list_of_crams_by_study_from_irods(study)
-        #print "NUMBER of CRAMs found: " + str(len(fpaths_irods))
-        #write_list_to_file(fpaths_irods, 'hiv-crams.out')
-    elif file_type == BAM_FILE_TYPE:
-        fpaths_irods = metadata_utils.iRODSUtils.retrieve_list_of_bams_by_study_from_irods(study)
-        #print "NUMBER of BAMs found: " + str(len(fpaths_irods))
-        #write_list_to_file(fpaths_irods, 'hiv-bams.out')
-    elif file_type == BOTH_FILE_TYPES:
-        bams_fpaths_irods = metadata_utils.iRODSUtils.retrieve_list_of_bams_by_study_from_irods(study)
-        crams_fpaths_irods = metadata_utils.iRODSUtils.retrieve_list_of_crams_by_study_from_irods(study)
-        fpaths_irods = bams_fpaths_irods + crams_fpaths_irods
-        print "NUMBER of BAMs found: " + str(len(bams_fpaths_irods))
-        print "NUMBER of CRAMs found: " + str(len(crams_fpaths_irods))
-        print "BAMS: " + str(bams_fpaths_irods)
-        print "CRAMs: " + str(crams_fpaths_irods)
-    return fpaths_irods
+# def collect_fpaths_for_study(study, file_type=BOTH_FILE_TYPES):
+#     fpaths_irods = []
+#     if file_type == CRAM_FILE_TYPE:
+#         fpaths_irods = metadata_utils.iRODSUtils.retrieve_list_of_crams_by_study_from_irods(study)
+#         #print "NUMBER of CRAMs found: " + str(len(fpaths_irods))
+#         #write_list_to_file(fpaths_irods, 'hiv-crams.out')
+#     elif file_type == BAM_FILE_TYPE:
+#         fpaths_irods = metadata_utils.iRODSUtils.retrieve_list_of_bams_by_study_from_irods(study)
+#         #print "NUMBER of BAMs found: " + str(len(fpaths_irods))
+#         #write_list_to_file(fpaths_irods, 'hiv-bams.out')
+#     elif file_type == BOTH_FILE_TYPES:
+#         bams_fpaths_irods = metadata_utils.iRODSUtils.retrieve_list_of_bams_by_study_from_irods(study)
+#         crams_fpaths_irods = metadata_utils.iRODSUtils.retrieve_list_of_crams_by_study_from_irods(study)
+#         fpaths_irods = bams_fpaths_irods + crams_fpaths_irods
+#         print "NUMBER of BAMs found: " + str(len(bams_fpaths_irods))
+#         print "NUMBER of CRAMs found: " + str(len(crams_fpaths_irods))
+#         print "BAMS: " + str(bams_fpaths_irods)
+#         print "CRAMs: " + str(crams_fpaths_irods)
+#     return fpaths_irods
+
+def collect_fpaths_by_study_name(study_name):
+    return metadata_utils.iRODSUtils.retrieve_list_of_target_files_by_metadata('study', study_name)
+
+def collect_fpaths_by_study_accession_nr(study_acc_nr):
+    return metadata_utils.iRODSUtils.retrieve_list_of_target_files_by_metadata('study_accession_number', study_acc_nr)
+
+def collect_fpaths_by_study_internal_id(study_id):
+    return metadata_utils.iRODSUtils.retrieve_list_of_target_files_by_metadata('study_id', study_id)
+
+def check_same_files_by_diff_study_ids(name, internal_id, acc_nr):
+    files_by_name = set(collect_fpaths_by_study_name(name))
+    files_by_acc_nr = set(collect_fpaths_by_study_accession_nr(acc_nr))
+    files_by_id = set(collect_fpaths_by_study_internal_id(internal_id))
+
+    problems = []
+    if files_by_name != files_by_acc_nr:
+        diffs = files_by_name.difference(files_by_acc_nr)
+        if diffs:
+            problems.append(error_types.DifferentFilesRetrievedByDiffStudyIdsOfSameStudy(diffs, 'name', 'accession_number'))
+
+        diffs = files_by_acc_nr.difference(files_by_name)
+        if diffs:
+            problems.append(error_types.DifferentFilesRetrievedByDiffStudyIdsOfSameStudy(diffs, 'accession_number', 'name'))
+
+    if files_by_name != files_by_id:
+        diffs = files_by_name.difference(files_by_id)
+        if diffs:
+            problems.append(error_types.DifferentFilesRetrievedByDiffStudyIdsOfSameStudy(diffs, 'name', 'internal_id'))
+
+        diffs = files_by_id.difference(files_by_name)
+        if diffs:
+            problems.append(error_types.DifferentFilesRetrievedByDiffStudyIdsOfSameStudy(diffs, 'internal_id', 'name'))
+
+    if files_by_acc_nr != files_by_id:
+        diffs = files_by_id.difference(files_by_acc_nr)
+        if diffs:
+            problems.append(error_types.DifferentFilesRetrievedByDiffStudyIdsOfSameStudy(diffs, 'internal_id', 'accession_number'))
+
+        diffs = files_by_acc_nr.difference(files_by_id)
+        if diffs:
+            problems.append(error_types.DifferentFilesRetrievedByDiffStudyIdsOfSameStudy(diffs, 'accession_number', 'internal_id'))
+    return problems
 
 
 def collect_fpaths_from_args(study=None, file_type=BOTH_FILE_TYPES, files_list=None, fofn_path=None):
     if study:
-        fpaths_irods = collect_fpaths_for_study(study, file_type)
+        fpaths_irods = collect_fpaths_by_study_name(study, file_type)
     elif fofn_path:
         fpaths_irods = read_fofn_into_list(fofn_path)
     elif files_list:
@@ -287,7 +331,9 @@ def main():
     # fpaths = fpaths_per_type.get(BAM_FILE_TYPE) + fpaths_per_type.get(CRAM_FILE_TYPE)
 
         #fpaths = metadata_utils.retrieve_list_of_files_by_study(args.study)
-        fpaths = collect_fpaths_for_study(args.study)
+        fpaths = collect_fpaths_by_study_name(args.study)
+
+
 
     if args.fofn:
         files_from_fofn = read_fofn_into_list(args.fofn)
@@ -310,14 +356,16 @@ def main():
     # TODO
 
     # FILTER FILES:
+    ## Filter by file type ###
     filtered_fpaths = []
     for file_type in args.file_types:
         filtered_fpaths.extend(filter_by_file_type(fpaths, file_type))
 
+
     print "ARGS = " + str(args)
 
     # PREPARING FOR THE TESTS
-    for f in fpaths:
+    for f in filtered_fpaths:
         problems = []
         if args.config_file:
             pass
@@ -336,7 +384,7 @@ def main():
             if args.test_library:
                 if 'irods_vs_header' in args.test_library or 'all' in args.test_library:
                     header_tests = True
-            if any([args.test_sample, args.test_library, args.test_study, args.desired_reference, args.test_md5, args.test_filename, args.all_tests, args.config_file]):
+            if any([args.test_sample, args.test_library, args.test_study, args.test_reference, args.test_md5, args.test_filename, args.all_tests, args.config_file]):
                 irods_tests = True
 
 
@@ -361,6 +409,12 @@ def main():
             sanity_issues = i_meta.run_field_sanity_checks()
             problems.extend(sanity_issues)
 
+            ## Filter by manual_qc:
+            if not args.filter_npg_qc is None:
+                if args.filter_npg_qc != i_meta.npg_qc:
+                    continue
+
+
             ####### RUN THE TESTS: #########
             # MD5 tests:
             if args.test_md5 or args.all_tests:
@@ -370,7 +424,7 @@ def main():
                     problems.append(str(e))
 
             # TODO - not working properly
-            if args.desired_reference or args.all_tests:
+            if args.test_reference or args.all_tests:
                 try:
                     i_meta.test_reference(args.desired_reference)
                 except (error_types.WrongReferenceError, error_types.TestImpossibleToRunError) as e:
@@ -396,6 +450,9 @@ def main():
 
                     issues = seq_consistency_checks.compare_entity_sets_in_seqsc(i_meta.samples, 'sample')    #def compare_entity_sets_in_seqsc(entities_dict, entity_type):
                     problems.extend(issues)
+
+                    issues = seq_consistency_checks.check_sample_is_in_desired_study(i_meta.samples['internal_id'], i_meta.studies['name'])
+                    problems.extend(issues)
                 else:
                     if 'irods_vs_header' in args.test_sample:
                         issues = check_irods_vs_header_metadata(f, h_meta.samples, i_meta.samples, 'sample')
@@ -403,6 +460,9 @@ def main():
 
                     if 'irods_vs_seqsc' in args.test_sample:
                         issues = seq_consistency_checks.compare_entity_sets_in_seqsc(i_meta.samples, 'sample')    #def compare_entity_sets_in_seqsc(entities_dict, entity_type):
+                        problems.extend(issues)
+
+                        issues = seq_consistency_checks.check_sample_is_in_desired_study(i_meta.samples['internal_id'], i_meta.studies['name'])
                         problems.extend(issues)
 
             if args.test_library or args.all_tests:
@@ -426,9 +486,27 @@ def main():
                 issues = seq_consistency_checks.compare_entity_sets_in_seqsc(i_meta.studies, 'study')
                 problems.extend(issues)
 
-            if args.config_file:
-                diffs = complete_irods_metadata_checks.compare_avus_vs_config_frequencies(f, args.config_file, irods_avus)
-                problems.extend(complete_irods_metadata_checks.from_tuples_to_exceptions(diffs))
+            if args.test_same_files_by_diff_study_ids or args.all_tests:
+                if args.study_internal_id and args.study_acc_nr and args.study:
+                    problems.extend(check_same_files_by_diff_study_ids(args.study, args.study_internal_id, args.study_acc_nr))
+
+
+            if args.all_tests or args.test_complete_meta:
+                # TODO: Add a warning that by default there is a default config file used
+                if not args.config_file:
+                    config_file = config.IRODS_ATTRIBUTE_FREQUENCY_CONFIG_FILE
+                else:
+                    config_file = args.config_file
+                try:
+                    diffs = complete_irods_metadata_checks.compare_avus_vs_config_frequencies(f, config_file, irods_avus)
+                except IOError:
+                    problems.append(error_types.TestImpossibleToRunError(f, "Test iRODS metadata is complete",
+                                                                         "Config file missing: "+str(config_file)))
+                else:
+                    diffs_as_exc = complete_irods_metadata_checks.from_tuples_to_exceptions(diffs)
+                    for d in diffs_as_exc:
+                        d.fpath = f
+                    problems.extend(diffs_as_exc)
 
         print "FILE: " + str(f) + " -- PROBLEMS found: " + str(problems)
 
