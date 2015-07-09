@@ -234,3 +234,16 @@ class SamplesDontBelongToGivenStudy(Exception):
 
     def __repr__(self):
         return self.__str__()
+
+class DifferentFilesRetrievedByDiffStudyIdsOfSameStudy(Exception):
+
+    def __init__(self, diffs, id1, id2):
+        self.diffs = diffs
+        self.id1 = id1
+        self.id2 = id2
+
+    def __str__(self):
+        return "ERROR - these files were retrieved when querying by " + str(self.id1) + " but not when querying by " + str(self.id2)
+
+    def __repr__(self):
+        return self.__str__()
