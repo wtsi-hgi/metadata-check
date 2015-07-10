@@ -257,18 +257,18 @@ def write_list_to_file(input_list, output_file):
 #     return fpaths_irods
 
 def collect_fpaths_by_study_name(study_name):
-    return metadata_utils.iRODSUtils.retrieve_list_of_target_files_by_metadata('study', study_name)
+    return metadata_utils.iRODSUtils.retrieve_list_of_files_by_metadata('study', study_name)
 
 def collect_fpaths_by_study_accession_nr(study_acc_nr):
-    return metadata_utils.iRODSUtils.retrieve_list_of_target_files_by_metadata('study_accession_number', study_acc_nr)
+    return metadata_utils.iRODSUtils.retrieve_list_of_files_by_metadata('study_accession_number', study_acc_nr)
 
 def collect_fpaths_by_study_internal_id(study_id):
-    return metadata_utils.iRODSUtils.retrieve_list_of_target_files_by_metadata('study_id', study_id)
+    return metadata_utils.iRODSUtils.retrieve_list_of_files_by_metadata('study_id', study_id)
 
 def check_same_files_by_diff_study_ids(name, internal_id, acc_nr):
-    files_by_name = set(collect_fpaths_by_study_name(name))
-    files_by_acc_nr = set(collect_fpaths_by_study_accession_nr(acc_nr))
-    files_by_id = set(collect_fpaths_by_study_internal_id(internal_id))
+    files_by_name = set(collect_fpaths_by_study_name(str(name)))
+    files_by_acc_nr = set(collect_fpaths_by_study_accession_nr(str(acc_nr)))
+    files_by_id = set(collect_fpaths_by_study_internal_id(str(internal_id)))
 
     problems = []
     if files_by_name != files_by_acc_nr:
@@ -355,7 +355,7 @@ def main():
     # Check for conflicts in the params?
     # TODO
 
-    # FILTER FILES:
+    ##################### FILTER FILES ################################
     ## Filter by file type ###
     filtered_fpaths = []
     for file_type in args.file_types:
@@ -364,7 +364,15 @@ def main():
 
     print "ARGS = " + str(args)
 
+    ########################## TESTS #####################
     # PREPARING FOR THE TESTS
+    general_problems = []
+    if args.test_same_files_by_diff_study_ids or args.all_tests:
+        if args.study_internal_id and args.study_acc_nr and args.study:
+            issues = check_same_files_by_diff_study_ids(args.study, args.study_internal_id, args.study_acc_nr)
+            general_problems.extend(issues)
+    print "Ran check on the list of files retrieved by each study identifier -- result is: " + str(general_problems)
+
     for f in filtered_fpaths:
         problems = []
         if args.config_file:
@@ -486,9 +494,7 @@ def main():
                 issues = seq_consistency_checks.compare_entity_sets_in_seqsc(i_meta.studies, 'study')
                 problems.extend(issues)
 
-            if args.test_same_files_by_diff_study_ids or args.all_tests:
-                if args.study_internal_id and args.study_acc_nr and args.study:
-                    problems.extend(check_same_files_by_diff_study_ids(args.study, args.study_internal_id, args.study_acc_nr))
+
 
 
             if args.all_tests or args.test_complete_meta:
@@ -498,7 +504,7 @@ def main():
                 else:
                     config_file = args.config_file
                 try:
-                    diffs = complete_irods_metadata_checks.compare_avus_vs_config_frequencies(f, config_file, irods_avus)
+                    diffs = complete_irods_metadata_checks.check_avus_freq_vs_config_freq(irods_avus, config_file)
                 except IOError:
                     problems.append(error_types.TestImpossibleToRunError(f, "Test iRODS metadata is complete",
                                                                          "Config file missing: "+str(config_file)))

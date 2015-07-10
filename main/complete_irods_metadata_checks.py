@@ -25,7 +25,7 @@ import error_types
 from com import wrappers
 
 @wrappers.check_args_not_none
-def parse_config_file(path):
+def read_and_parse_config_file(path):
     attributes_frequency = {}
     config_file = open(path)
     for line in config_file:
@@ -54,16 +54,13 @@ def get_dict_differences(dict1, dict2):
         if not dict2.get(k):
             diffs.append((k, v, 0))
         elif v != dict2[k]:
-            diffs.append((k,v,dict1[k]))
+            diffs.append((k,v,dict2[k]))
     return diffs
 
 
-def compare_avus_vs_config_frequencies(irods_fpath, config_fpath, irods_avus=None):
-    if not irods_avus:
-        irods_avus = metadata_utils.iRODSUtils.retrieve_irods_avus(irods_fpath)
-    config_attrs_freq = parse_config_file(config_fpath)
-    metadata_freq_dict = build_freq_dict_from_avus_list(irods_avus)
-    return get_dict_differences(config_attrs_freq, metadata_freq_dict)
+# def compare_avus_vs_config_frequencies(irods_avus, config_fpath):
+#     #config_attrs_freq = read_and_parse_config_file(config_fpath)
+#     pass
 
 def from_tuples_to_exceptions(tuples_list):
     excs = []
@@ -71,8 +68,24 @@ def from_tuples_to_exceptions(tuples_list):
         excs.append(error_types.IrodsMetadataAttributeFrequencyError(fpath=None, attribute=attr_name, desired_occurances=desired_freq, actual_occurances=actual_freq))
     return excs
 
+def check_irods_metadata_is_complete_for_file(fpath, config_path):
+    irods_avus = metadata_utils.iRODSUtils.retrieve_irods_avus(fpath)
+    return check_avus_freq_vs_config_freq(irods_avus, config_path)
+
+
+def check_avus_freq_vs_config_freq(avus, config_path):
+    irods_attr_freq_dict = build_freq_dict_from_avus_list(avus)
+    config_attr_freq_dict = read_and_parse_config_file(config_path)
+    return get_dict_differences(config_attr_freq_dict, irods_attr_freq_dict)
+
+
+
 if __name__ == '__main__':
-    diffs = compare_avus_vs_config_frequencies('/seq/15254/15254_4.cram', '/nfs/users/nfs_i/ic4/Projects/metadata-check/irods_meta.conf')
-    print str(diffs)
-    excs = from_tuples_to_exceptions(diffs)
-    print "AS EXCEPTIONS : "+ str(excs)
+    #irods_fpath = '/seq/15254/15254_4.cram'
+    irods_fpath = '/seq/8284/8284_5#55_xahuman.bam'
+    print str(check_irods_metadata_is_complete_for_file(irods_fpath, '/nfs/users/nfs_i/ic4/Projects/metadata-check/irods_meta.conf'))
+    # irods_avus = metadata_utils.iRODSUtils.retrieve_irods_avus(irods_fpath)
+    # diffs = compare_avus_vs_config_frequencies(irods_fpath, '/nfs/users/nfs_i/ic4/Projects/metadata-check/irods_meta.conf')
+    # print str(diffs)
+    # excs = from_tuples_to_exceptions(diffs)
+    # print "AS EXCEPTIONS : "+ str(excs)
