@@ -243,7 +243,7 @@ class DifferentFilesRetrievedByDiffStudyIdsOfSameStudy(Exception):
         self.id2 = id2
 
     def __str__(self):
-        return "ERROR - these files were retrieved when querying by " + str(self.id1) + " but not when querying by " + str(self.id2)
+        return "ERROR - these files "+ str(self.diffs) + " were retrieved when querying by " + str(self.id1) + " but not when querying by " + str(self.id2)
 
     def __repr__(self):
         return self.__str__()
