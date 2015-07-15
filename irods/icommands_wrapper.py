@@ -497,9 +497,9 @@ class iRODSMetaQueryOperations(iRODSOperations):
         # cmd_args.append("1")
         # cmd_args.append('and')
         for attribute, value in avu_dict.iteritems():
-            cmd_args.append(attribute)
-            cmd_args.append(operator)
-            cmd_args.append(value)
+            cmd_args.append(str(attribute))
+            cmd_args.append(str(operator))
+            cmd_args.append(str(value))
             cmd_args.append('and')
         cmd_args = cmd_args[:len(cmd_args)-1]
 #        cmd_args = ["imeta", "qu", "-z", zone,"-d", attribute, operator, value]
