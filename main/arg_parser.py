@@ -68,6 +68,11 @@ def parse_args():
                             help='Filter based on npg qc field'
                             )
 
+    filter_grp.add_argument('--filter_target',
+                            choices=["1", "0"],
+                            required=False,
+                            help='This flag stopps the default filter on the target=1 irods metadata attribute'
+    )
 
     # Tests
     tests_grp = parser.add_argument_group('TESTS', 'Choose which tests to run on your data')
@@ -221,6 +226,12 @@ def parse_args():
                                              'found in the tests ran'
     )
 
+    additional_outputs_grp.add_argument('--output_files_filtered_out',
+                                        nargs='?',
+                                        dest='filtered_out',
+                                        required=False,
+                                        help='Include all the files filtered out as a result of applying some fiters when querying for data'
+                                        )
 
     additional_outputs_grp.add_argument('--include_tests_not_exec',
                                         action='store_true',
