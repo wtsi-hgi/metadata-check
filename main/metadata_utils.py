@@ -114,18 +114,34 @@ class iRODSUtils:
     #     return filtered_files
 
     @classmethod
+    def retrieve_list_of_target_qc_pass_files_by_metadata(cls, attribute, value):
+        avus = {attribute : value, 'target' : '1', 'manual_qc' : '1'}
+        files = icommands_wrapper.iRODSMetaQueryOperations.query_by_metadata(avus)
+        #filtered_files = icommands_wrapper.iRODSMetaQueryOperations.filter_out_phix(files)
+        return filtered_files
+
+    @classmethod
     def retrieve_list_of_target_files_by_metadata(cls, attribute, value):
         avus = {attribute : value, 'target' : '1'}
         files = icommands_wrapper.iRODSMetaQueryOperations.query_by_metadata(avus)
-        filtered_files = icommands_wrapper.iRODSMetaQueryOperations.filter_out_phix(files)
+        #filtered_files = icommands_wrapper.iRODSMetaQueryOperations.filter_out_phix(files)
         return filtered_files
+
+    @classmethod
+    def retrieve_list_of_files_by_avus(cls, avus_dict):
+        #avus = {attribute : value, 'target' : '1', 'manual_qc' : '1'}
+        files = icommands_wrapper.iRODSMetaQueryOperations.query_by_metadata(avus_dict)
+        #filtered_files = icommands_wrapper.iRODSMetaQueryOperations.filter_out_phix(files)
+        #return filtered_files
+        return files
 
     @classmethod
     def retrieve_list_of_files_by_metadata(cls, attribute, value):
         avus = {attribute : value}
         files = icommands_wrapper.iRODSMetaQueryOperations.query_by_metadata(avus)
-        filtered_files = icommands_wrapper.iRODSMetaQueryOperations.filter_out_phix(files)
-        return filtered_files
+        #filtered_files = icommands_wrapper.iRODSMetaQueryOperations.filter_out_phix(files)
+        #return filtered_files
+        return files
 
 
     @classmethod
