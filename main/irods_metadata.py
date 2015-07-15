@@ -29,7 +29,7 @@ from irods import icommands_wrapper, constants as irods_consts
 class IrodsSeqFileMetadata(object):
 
     def __init__(self, fpath, fname, samples=[], libraries=[], studies=[], md5=None,
-                 ichksum_md5=None, reference=None, run_id=None, lane_id=None, npg_qc=None):
+                 ichksum_md5=None, reference=None, run_id=None, lane_id=None, npg_qc=None, target=None):
         self.fname = fname
         self.fpath = fpath
         self.samples = samples
@@ -41,6 +41,7 @@ class IrodsSeqFileMetadata(object):
         self.run_id = run_id
         self.lane_id = lane_id
         self.npg_qc = npg_qc
+        self.target = target
 
     @classmethod
     def from_avus_to_irods_metadata(cls, avus, fpath):
@@ -77,7 +78,10 @@ class IrodsSeqFileMetadata(object):
         npg_qc_list = metadata_utils.iRODSUtils.extract_values_for_key_from_irods_metadata(avus, 'manual_qc')
         npg_qc = npg_qc_list[0] if len(npg_qc_list) == 1 else None
 
-        return IrodsSeqFileMetadata(fpath, fname, samples, libraries, studies, md5, ichksum_md5, ref, run_id, lane_id, npg_qc)
+        target_list = metadata_utils.iRODSUtils.extract_values_for_key_from_irods_metadata(avus, 'target')
+        target = target_list[0] if len(target_list) == 1 else None
+
+        return IrodsSeqFileMetadata(fpath, fname, samples, libraries, studies, md5, ichksum_md5, ref, run_id, lane_id, npg_qc, target)
 
 
     @classmethod
@@ -117,6 +121,8 @@ class IrodsSeqFileMetadata(object):
             problems.append(error_types.WrongMetadataValue(fpath=self.fpath, attribute='lane_id', value=self.lane_id))
         if self.npg_qc and not self.is_npg_qc(self.npg_qc):
             problems.append(error_types.WrongMetadataValue(fpath=self.fpath, attribute='npg_qc', value=self.npg_qc))
+        if self.target and not self.is_target(self.target):
+            problems.append(error_types.WrongMetadataValue(fpath=self.fpath, attribute='target', value=self.target))
         return problems
 
 
@@ -148,6 +154,13 @@ class IrodsSeqFileMetadata(object):
         r = re.compile(irods_consts.NPG_QC_REGEX)
         return True if r.match(str(npg_qc)) else False
 
+
+    @classmethod
+    def is_target(cls, target):
+        if not type(target) in [str, int]:
+            raise TypeError("WRONG TYPE: the target must be either string or int and is: " + str(target))
+        r = re.compile(irods_consts.TARGET_REGEX)
+        return True if r.match(str(target)) else False
 
 
     @classmethod
