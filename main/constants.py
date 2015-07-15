@@ -24,3 +24,6 @@ HS37D5 = 'hs37d5'
 GRCH38 = 'GRCh38'
 GRCH37 = 'GRCh37'
 G1K = 'human_g1k_v37'
+
+CRAM_FILE_TYPE = 'cram'
+BAM_FILE_TYPE = 'bam'
