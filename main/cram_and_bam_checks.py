@@ -30,10 +30,10 @@ import irods_metadata as irods_meta_module
 import header_metadata as header_meta_module
 #from ... import config
 import config
+import constants
+from collections import defaultdict
 
-CRAM_FILE_TYPE = 'cram'
-BAM_FILE_TYPE = 'bam'
-BOTH_FILE_TYPES = 'both'
+#BOTH_FILE_TYPES = 'both'
 
 
 def check_irods_vs_header_metadata(irods_path, header_dict, irods_dict, entity_type):
@@ -256,19 +256,72 @@ def write_list_to_file(input_list, output_file):
 #         print "CRAMs: " + str(crams_fpaths_irods)
 #     return fpaths_irods
 
-def collect_fpaths_by_study_name(study_name):
-    return metadata_utils.iRODSUtils.retrieve_list_of_files_by_metadata('study', study_name)
 
-def collect_fpaths_by_study_accession_nr(study_acc_nr):
-    return metadata_utils.iRODSUtils.retrieve_list_of_files_by_metadata('study_accession_number', study_acc_nr)
 
-def collect_fpaths_by_study_internal_id(study_id):
-    return metadata_utils.iRODSUtils.retrieve_list_of_files_by_metadata('study_id', study_id)
 
-def check_same_files_by_diff_study_ids(name, internal_id, acc_nr):
-    files_by_name = set(collect_fpaths_by_study_name(str(name)))
-    files_by_acc_nr = set(collect_fpaths_by_study_accession_nr(str(acc_nr)))
-    files_by_id = set(collect_fpaths_by_study_internal_id(str(internal_id)))
+
+# def collect_fpaths_by_study_name(study_name):
+#     return metadata_utils.iRODSUtils.retrieve_list_of_files_by_metadata('study', study_name)
+#
+# def collect_fpaths_by_study_accession_nr(study_acc_nr):
+#     return metadata_utils.iRODSUtils.retrieve_list_of_files_by_metadata('study_accession_number', study_acc_nr)
+#
+# def collect_fpaths_by_study_internal_id(study_id):
+#     return metadata_utils.iRODSUtils.retrieve_list_of_files_by_metadata('study_id', study_id)
+#
+# def collect_fpaths_by_study_identif(id_type, id_value):
+#     return metadata_utils.iRODSUtils.retrieve_list_of_files_by_metadata(id_type, id_value)
+
+
+# def collect_fpaths_by_study_name(study_name):
+#     return metadata_utils.iRODSUtils.retrieve_list_of_files_by_avus({'study': study_name})
+#
+# def collect_fpaths_by_study_accession_nr(study_acc_nr):
+#     return metadata_utils.iRODSUtils.retrieve_list_of_files_by_avus({'study_accession_number': study_acc_nr})
+#
+# def collect_fpaths_by_study_internal_id(study_id):
+#     return metadata_utils.iRODSUtils.retrieve_list_of_files_by_avus({'study_id': study_id})
+#
+# def collect_fpaths_by_study_identif(id_type, id_value):
+#     return metadata_utils.iRODSUtils.retrieve_list_of_files_by_avus({id_type: id_value})
+
+def collect_fpaths_by_study_name_and_filter(study_name, filter_dict):
+    avus_dict = {'study': study_name}
+    avus_dict.update(filter_dict)
+    return metadata_utils.iRODSUtils.retrieve_list_of_files_by_avus(avus_dict)
+
+def collect_fpaths_by_study_accession_nr_and_filter(study_acc_nr, filter_dict):
+    avus_dict = {'study_accession_number': study_acc_nr}
+    avus_dict.update(filter_dict)
+    return metadata_utils.iRODSUtils.retrieve_list_of_files_by_avus(avus_dict)
+
+def collect_fpaths_by_study_internal_id_and_filter(study_id, filter_dict):
+    avus_dict = {'study_id': study_id}
+    avus_dict.update(filter_dict)
+    return metadata_utils.iRODSUtils.retrieve_list_of_files_by_avus(avus_dict)
+
+# def collect_fpaths_by_study_identif_and_filter(id_type, id_value, filter_dict):
+#     return metadata_utils.iRODSUtils.retrieve_list_of_files_by_avus({id_type: id_value}.update(filter_dict))
+
+
+
+# def collect_target_qc_pass_fpaths_by_study_name(id_value):
+#     return metadata_utils.iRODSUtils.retrieve_list_of_target_qc_pass_files_by_metadata('name', id_value)
+#
+# def collect_target_qc_pass_fpaths_by_study_internal_id(id_value):
+#     return metadata_utils.iRODSUtils.retrieve_list_of_target_qc_pass_files_by_metadata('internal_id', id_value)
+#
+# def collect_target_qc_pass_fpaths_by_study_accession_nr(id_value):
+#     return metadata_utils.iRODSUtils.retrieve_list_of_target_qc_pass_files_by_metadata('study_accession_number', id_value)
+#
+# def collect_target_qc_pass_fpaths_by_study_identif(id_type, id_value):
+#     return metadata_utils.iRODSUtils.retrieve_list_of_target_qc_pass_files_by_metadata(id_type, id_value)
+
+
+def check_same_files_by_diff_study_ids(name, internal_id, acc_nr, filters_dict):  # filters can be: None => get any value for this tag, 1, or 0
+    files_by_name = set(collect_fpaths_by_study_name_and_filter(str(name), filters_dict))
+    files_by_acc_nr = set(collect_fpaths_by_study_accession_nr_and_filter(str(acc_nr), filters_dict))
+    files_by_id = set(collect_fpaths_by_study_internal_id_and_filter(str(internal_id), filters_dict))
 
     problems = []
     if files_by_name != files_by_acc_nr:
@@ -300,7 +353,7 @@ def check_same_files_by_diff_study_ids(name, internal_id, acc_nr):
     return problems
 
 
-def collect_fpaths_from_args(study=None, file_type=BOTH_FILE_TYPES, files_list=None, fofn_path=None):
+def collect_fpaths_from_args(study=None, file_type=constants.CRAM_FILE_TYPE, files_list=None, fofn_path=None):
     if study:
         fpaths_irods = collect_fpaths_by_study_name(study, file_type)
     elif fofn_path:
@@ -318,8 +371,16 @@ def filter_by_file_type(fpaths, file_type):
 def filter_by_avu(fpath, avu_attribute, avu_value):
     pass# manual_qc,...
 
+
 def main():
     args = arg_parser.parse_args()
+
+    filters = {}
+    if args.filter_target is not None:
+        filters['target'] = args.filter_target
+    if args.filter_npg_qc is not None:
+        filters['manual_qc'] = args.filter_npg_qc
+
 
     # COLLECT FILE PATHS:
     fpaths_per_type = {} # type : [ fpath ]
@@ -331,7 +392,7 @@ def main():
     # fpaths = fpaths_per_type.get(BAM_FILE_TYPE) + fpaths_per_type.get(CRAM_FILE_TYPE)
 
         #fpaths = metadata_utils.retrieve_list_of_files_by_study(args.study)
-        fpaths = collect_fpaths_by_study_name(args.study)
+        fpaths = collect_fpaths_by_study_name_and_filter(args.study, filters)
 
 
 
@@ -356,28 +417,32 @@ def main():
     # TODO
 
     ##################### FILTER FILES ################################
+    files_excluded = defaultdict(list) # key = reason, value = list of file paths
+
     ## Filter by file type ###
     filtered_fpaths = []
     for file_type in args.file_types:
         filtered_fpaths.extend(filter_by_file_type(fpaths, file_type))
+    files_excluded['BY_FILE_TYPE'] = set(fpaths).difference(set(filtered_fpaths))
 
-
+    if not filtered_fpaths:
+        filtered_fpaths = fpaths
     print "ARGS = " + str(args)
 
     ########################## TESTS #####################
     # PREPARING FOR THE TESTS
-    general_problems = []
+    all_problems = []
     if args.test_same_files_by_diff_study_ids or args.all_tests:
         if args.study_internal_id and args.study_acc_nr and args.study:
-            issues = check_same_files_by_diff_study_ids(args.study, args.study_internal_id, args.study_acc_nr)
-            general_problems.extend(issues)
-    print "Ran check on the list of files retrieved by each study identifier -- result is: " + str(general_problems)
+            issues = check_same_files_by_diff_study_ids(args.study, args.study_internal_id, args.study_acc_nr, filters)
+            all_problems.extend(issues)
+    print "Ran check on the list of files retrieved by each study identifier -- result is: " + str(all_problems)
+    print "AND FILES selected: " + str(fpaths)
 
     for f in filtered_fpaths:
         problems = []
         if args.config_file:
             pass
-
 
         # Deciding what tests to run
         header_tests = False
@@ -414,6 +479,21 @@ def main():
             problems.extend(avu_issues)
 
             i_meta = irods_meta_module.IrodsSeqFileMetadata.from_avus_to_irods_metadata(irods_avus, f)
+
+            # Apply filters at the file metadata level:
+            # if args.filter_no_target == False:  # Filter target = 1 in this case:
+            #     if i_meta.target != 1:
+            #         # TODO: gather the files filtered out in smth
+            #         files_excluded['not_the_target'].append(f)
+            #         continue
+            #
+            # if not args.filter_npg_qc is None:
+            #     if args.filter_npg_qc != i_meta.npg_qc:
+            #         # TODO: gather the files filtered out in smth for adding them to the report
+            #         files_excluded['npg_qc'].append(f)
+            #         continue
+
+            # Check for sanity before starting the tests:
             sanity_issues = i_meta.run_field_sanity_checks()
             problems.extend(sanity_issues)
 
@@ -515,7 +595,21 @@ def main():
                     problems.extend(diffs_as_exc)
 
         print "FILE: " + str(f) + " -- PROBLEMS found: " + str(problems)
+        all_problems.extend(problems)
 
+    # PRINT OUTPUT:
+    # FILES EXCLUDED:
+    # TODO: add an option in which you see also the files that were filtered out
+    print "FILES EXCLUDED: "
+    for reason,files in files_excluded.iteritems():
+        print "REASON: " + str(reason)
+        for f_excl in files:
+            str(f_excl)
+
+    print "DIFFERENT FILES RETRIEVED BY QUERYING BY DIFF STUDY IDS: "
+    for err in all_problems:
+        if type(err) is error_types.DifferentFilesRetrievedByDiffStudyIdsOfSameStudy:
+            print "Number of files retrieved when querying by: " + err.id1 + " and " + err.id2 + " = " + str(len(err.diffs))
 
 
     # OUTPUTS
