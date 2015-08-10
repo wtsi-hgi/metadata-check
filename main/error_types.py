@@ -207,6 +207,28 @@ class WrongMetadataValue(Exception):
 
         return "ERROR - for file: " + self.fpath + " the attribute: " + str(self.attribute) + " has a value outside of its range: " + str(self.value)
 
+    def __repr__(self):
+        return self.__str__()
+
+class WrongIRODSMetadataValue(WrongMetadataValue):
+
+    def __str__(self):
+        return "ERROR - for file: " + self.fpath + " in iRODS METADATA, the attribute: " + str(self.attribute) + \
+               " has a value outside of its range: " + str(self.value)
+
+    def __repr__(self):
+        return self.__str__()
+
+
+class WrongHeaderMetadataValue(WrongMetadataValue):
+
+    def __str__(self):
+        return "ERROR - for file: " + self.fpath + " in HEADER METADATA, the attribute: " + str(self.attribute) + \
+               " has a value outside of its range: " + str(self.value)
+
+    def __repr__(self):
+        return self.__str__()
+
 
 class TestImpossibleToRunError(Exception):
 
@@ -247,3 +269,4 @@ class DifferentFilesRetrievedByDiffStudyIdsOfSameStudy(Exception):
 
     def __repr__(self):
         return self.__str__()
+
