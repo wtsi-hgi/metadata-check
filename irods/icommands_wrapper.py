@@ -33,17 +33,7 @@ from multimethods import multimethod
 from com import wrappers, utils
 from irods import data_types as irods_types
 
-
-######################## CONSTANTS ###############################
-
-IRODS_HUMGEN_ZONE = 'humgen'
-IRODS_SEQ_ZONE = 'seq'
-
-iRODS_READ_PERMISSION = "read"
-iRODS_MODIFY_PERMISSION = "write"
-iRODS_OWN_PERMISSION = "own"
-iRODS_NULL_PERMISSION = "null"
-
+import constants
 ######################## UTILS ##########################################
 
 def assemble_new_irods_fpath(fpath, irods_coll):
@@ -348,9 +338,6 @@ class iRODSiPutOperations(iRODSOperations):
 #         return True
 #     
 
-     
-    
-        
 
 
 ################# ICHKSUM ICOMMAND #########################################
@@ -482,7 +469,7 @@ class iRODSChecksumOperations(iRODSOperations):
 class iRODSMetaQueryOperations(iRODSOperations):
     
     @classmethod
-    def _run_imeta_qu(cls, avu_dict, zone=IRODS_SEQ_ZONE, operator='='):
+    def _run_imeta_qu(cls, avu_dict, zone=constants.IRODS_SEQ_ZONE, operator='='):
         """
             Queries iRODS for all the data objects matching the avus given as parameter.
             WARNING! The default operator for all avus is "=". TO be changed, if not sufficient.
@@ -553,7 +540,7 @@ class iRODSMetaQueryOperations(iRODSOperations):
 
 
     @classmethod
-    def query_by_metadata(cls, avu_dict, zone=IRODS_SEQ_ZONE, operator='='):
+    def query_by_metadata(cls, avu_dict, zone=constants.IRODS_SEQ_ZONE, operator='='):
         """
             Queries iRODS by metadata and returns a list of full paths of the files
             matching the metadata querying criteria.
@@ -983,7 +970,7 @@ class DataObjectPermissionChangeUtilityFunctions:
             This function is used for changing the current permissions
             that a user has over a data object to READ permissions.
         '''
-        return iRODSiChmodOperations.run_ichmod(path_irods, user_or_grp, iRODS_NULL_PERMISSION, recursive)
+        return iRODSiChmodOperations.run_ichmod(path_irods, user_or_grp, constants.iRODS_NULL_PERMISSION, recursive)
         
     @staticmethod
     def change_permisssions_to_read_access(path_irods, user_or_grp, recursive=False):
@@ -991,7 +978,7 @@ class DataObjectPermissionChangeUtilityFunctions:
             This function is used for changing the current permissions
             that a user has over a data object to READ permissions.
         '''
-        return iRODSiChmodOperations.run_ichmod(path_irods, user_or_grp, iRODS_READ_PERMISSION, recursive)
+        return iRODSiChmodOperations.run_ichmod(path_irods, user_or_grp, constants.iRODS_READ_PERMISSION, recursive)
     
     @staticmethod
     def change_permisssions_to_modify_access(path_irods, user_or_grp, recursive=False):
@@ -999,7 +986,7 @@ class DataObjectPermissionChangeUtilityFunctions:
             This function is used for changing the current permissions
             that a user has over a data object to READ permissions.
         '''
-        return iRODSiChmodOperations.run_ichmod(path_irods, user_or_grp, iRODS_MODIFY_PERMISSION, recursive)
+        return iRODSiChmodOperations.run_ichmod(path_irods, user_or_grp, constants.iRODS_MODIFY_PERMISSION, recursive)
     
     @staticmethod
     def change_permisssions_to_own_access(path_irods, user_or_grp, recursive=False):
@@ -1007,7 +994,7 @@ class DataObjectPermissionChangeUtilityFunctions:
             This function is used for changing the current permissions
             that a user has over a data object to READ permissions.
         '''
-        return iRODSiChmodOperations.run_ichmod(path_irods, user_or_grp, iRODS_OWN_PERMISSION, recursive)
+        return iRODSiChmodOperations.run_ichmod(path_irods, user_or_grp, constants.iRODS_OWN_PERMISSION, recursive)
     
     @staticmethod
     def change_permission(path_irods, user_or_grp, permission, recursive=False):
