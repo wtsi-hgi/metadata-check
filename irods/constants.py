@@ -26,3 +26,14 @@ RUN_ID_REGEX = '^[0-9]{4,5}$'
 LANE_ID_REGEX = '^[0-9]{1}$'
 NPG_QC_REGEX = '^0|1$'
 TARGET_REGEX = '^0|1$'
+
+######################## CONSTANTS ###############################
+
+IRODS_HUMGEN_ZONE = 'humgen'
+IRODS_SEQ_ZONE = 'seq'
+
+iRODS_READ_PERMISSION = "read"
+iRODS_MODIFY_PERMISSION = "write"
+iRODS_OWN_PERMISSION = "own"
+iRODS_NULL_PERMISSION = "null"
+
