@@ -21,6 +21,7 @@ This file has been created on Jun 30, 2015.
 
 import metadata_utils
 from com import utils as common_utils
+import error_types
 
 
 class HeaderSAMFileMetadata(object):
@@ -35,8 +36,8 @@ class HeaderSAMFileMetadata(object):
         self.lanelets = lanelets
 
 
-    @staticmethod
-    def from_header_to_metadata(header, fpath):
+    @classmethod
+    def from_header_to_metadata(cls, header, fpath):
         """
 
         :param header: of type BAMHeader = namedtuple('BAMHeader', ['rg', 'pg', 'hd', 'sq'])
@@ -63,6 +64,26 @@ class HeaderSAMFileMetadata(object):
     #     'libraries',
     #     'samples',
     # ])
+
+
+    def run_field_sanity_checks_and_filter(self):
+        problems = []
+        if self.samples:
+            #self.samples, pbs = self._filter_out_non_entities(self.samples)
+            self.samples, pbs = metadata_utils.GeneralUtils.filter_out_non_entities(self.fpath, self.samples, 'sample')
+            pbs = [error_types.WrongHeaderMetadataValue(err.fpath, err.attribute, err.value) for err in pbs]
+            problems.extend(pbs)
+
+        if self.libraries:
+            self.libraries, pbs = metadata_utils.GeneralUtils.filter_out_non_entities(self.fpath, self.libraries, 'library')
+            pbs = [error_types.WrongHeaderMetadataValue(err.fpath, err.attribute, err.value) for err in pbs]
+            problems.extend(pbs)
+
+        if self.studies:
+            self.studies, pbs = metadata_utils.GeneralUtils.filter_out_non_entities(self.fpath, self.studies, 'study')
+            pbs = [error_types.WrongHeaderMetadataValue(err.fpath, err.attribute, err.value) for err in pbs]
+            problems.extend(pbs)
+        return problems
 
 
     def __str__(self):
