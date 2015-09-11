@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 *.idea
 *.out
+*.txt
 config.py
 
 # C extensions
