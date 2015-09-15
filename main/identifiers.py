@@ -78,3 +78,23 @@ class EntityIdentifier(object):
             identifier_type = 'name'
         return identifier_type
 
+
+class IdentifierMapper:
+
+    @classmethod
+    def seqsc2irods(cls, id_type_in_seqsc, entity_type):
+        if id_type_in_seqsc is 'name':
+            return entity_type
+        elif id_type_in_seqsc is 'accession_number':
+            return str(entity_type) + "_" + id_type_in_seqsc
+        elif id_type_in_seqsc is 'internal_id':
+            return str(entity_type) + "_id"
+        else:
+            raise ValueError("Identifier not recongnized: " + str(id_type_in_seqsc))
+
+
+
+
+
+
+
