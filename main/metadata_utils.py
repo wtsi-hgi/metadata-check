@@ -19,13 +19,16 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 This file has been created on Feb 10, 2015.
 """
 
+import irods_metadata
 from irods import api as irods_api
 from irods import icommands_wrapper
+from irods import data_types
 from header_parser import sam_header_analyser as header_analyser
 import os
 from identifiers import EntityIdentifier as Identif
 from com import  utils as common_utils
 import error_types
+from collections import defaultdict
 
 
 class GeneralUtils:
@@ -43,6 +46,25 @@ class GeneralUtils:
                                                                                          entities_set1=seqsc_entities[id_types[i-1]],
                                                                                          entities_set2=seqsc_entities[id_types[i]])))
         return problems
+
+
+    @classmethod
+    def filter_out_non_ids(cls, ids_list):
+        return [id for id in ids_list if id not in ['N/A', 'undefined', 'unspecified']]
+
+    # ugly method - these things should be separated (filtering out, reporting errors, and putting together the right error to be returned directly to the user)
+    # plus I silently access the fpath field from this object, dirty!!!
+    @classmethod
+    def filter_out_non_entities(cls, fpath, entity_dict, entity_type):
+        filtered_entities = {}
+        problems = []
+        for id_type, ids_list in entity_dict.items():
+            filtered_ids = cls.filter_out_non_ids(ids_list)
+            non_ids = set(ids_list).difference(set(filtered_ids))
+            problems.extend([error_types.WrongMetadataValue(fpath=fpath, attribute=str(entity_type)+'_'+str(id_type), value=id) for id in non_ids])
+            filtered_entities[id_type] = filtered_ids
+        return filtered_entities, problems
+
 
 
 class HeaderUtils:
@@ -89,8 +111,182 @@ class HeaderUtils:
         return cls._get_parsed_header(lustre_path, 'lustre')
 
 
+class iRODSUtils(object):
 
-class iRODSUtils:
+    @classmethod
+    def extract_lanelet_name(cls, irods_path):
+        lanelet_file = os.path.basename(irods_path)
+        return lanelet_file
+
+
+    # TODO: test - what if the lanelet is a whole lane (x10 data)? TO add unittest for this!
+    @classmethod
+    def guess_seq_irods_path_from_lustre_path(cls, lustre_path):
+        """
+            Applies only for the data delivered by NPG.
+
+        """
+        fname = common_utils.extract_fname_from_path(lustre_path)
+        run_id = fname.split("_")
+        irods_fpath = "/seq/" + run_id[0] + "/" + fname
+        return irods_fpath
+
+
+
+import json
+import ijson
+
+class iRODSBatonUtils(iRODSUtils):
+
+    def reader(self):
+        f = open('main/dddx10_avu_acls_checksum.txt', 'r')
+        objs = ijson.items(f, "")
+        #objs = [o['collection'] for o in objs]
+        for o in objs:
+            for subitem in o:
+                found = False
+                checksum = None
+                for attr, val in subitem.items():
+                    #print "ATTR: " + str(attr) + " VAL = " + str(val) + "\n"
+                    if attr == 'data_object' and val == '14633_3.cram':
+                        found = True
+                        print "FOUNDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD"
+                        #print str(subitem)
+                    if attr == 'checksum':
+                        checksum = val
+                        #exit(0)
+                if checksum and found:
+                    print "CHECKSUM: " + str(checksum)
+
+                    if attr == 'avus':
+                        #avus = json.loads(val)
+                        print "AFTER json load: " + str(val)
+                        for avu in val:
+                            print "A = " + str(avu['attribute']) + " V = " + str(avu['value']) + "\n"
+                        for a, v in attr.items():
+                            print "A = " + str(a) + " V = " + str(v) + "\n"
+
+            #print "COLL: " + str(o['collection']) + " \n"
+
+
+    @classmethod
+    def from_metaquery_results_to_fpaths_and_avus(self, search_results_json, filters=[]):
+        """
+            This method takes as parameter the json result of a metaquery containing avus and checksum,
+            and turns the json into a dict having as key a fpath, and as value: dict of
+            {'avus' : [MetaAVU(), MetaAVU()], 'checksum' : 'the_result_of_ichksum'}
+        :param search_results_json:
+        :param filters: optional (not implemented yet)
+        :return: dict key = fpath, value = {'avus' : [MetaAVU(), MetaAVU()], 'checksum' : 'the_result_of_ichksum'}
+        """
+        files_with_chksum_and_avus = defaultdict(dict)
+        #print "BEFORE EXITTING WITH ERROR: " + str(type(search_results_json))
+        #print "BEFORE EXITTING WITH ERROR: " + str(search_results_json)
+        for data_obj in json.loads(search_results_json):
+            coll = None
+            fname = None
+            do_avus = []
+            do_checksum = None
+            for do_item, do_item_val in data_obj.items():
+#                print "DATA obj item: " + str(do_item)
+                if do_item == 'collection':
+                    coll = do_item_val
+                elif do_item == 'data_object':
+                    fname = do_item_val
+                elif do_item == 'avus':
+                    for avu in do_item_val:
+                        avu_obj = data_types.MetaAVU(attribute=str(avu['attribute']), value=str(avu['value']))  # MetaAVU = namedtuple('MetaAVU', ['attribute', 'value'])    # list of attribute-value tuples
+                        do_avus.append(avu_obj)
+                elif do_item == 'checksum':
+                    do_checksum = str(do_item_val)
+
+                # sometimes there is an error here!!!!!
+
+                # TODO: can add also: 1) data access checks, 2) replicate checksum checks, plus verify there are actually 2 replicas of each DO
+            fpath = os.path.join(coll, fname)
+            files_with_chksum_and_avus[fpath] = {'avus' : do_avus, 'checksum' : do_checksum}
+        return files_with_chksum_and_avus
+
+
+
+
+#            file_meta = irods_metadata.IrodsSeqFileMetadata()
+            # sample_names = []
+            # sample_ids = []
+            # sample_acc_nr = []
+            #
+            # library_names = []
+            # library_ids = []
+            #
+            # study_names = []
+            # study_ids = []
+            # study_acc_nr = []
+
+                    #
+                    # for avu in do_item_val:
+                    #     if avu['attribute'] == 'sample':
+                    #         sample_names.append(avu['value'])
+                    #     elif avu['attribute'] == 'sample_id':
+                    #         sample_ids.append(avu['value'])
+                    #     elif avu['attribute'] == 'sample_accession_number':
+                    #         sample_acc_nr.append(avu['value'])
+                    #
+                    #     elif avu['attribute'] == 'library':
+                    #         library_names.append(avu['value'])
+                    #     elif avu['attribute'] == 'library_id':
+                    #         library_ids.append(avu['value'])
+                    #
+                    #     elif avu['attribute'] == 'study':
+                    #         study_names.append(avu['value'])
+                    #     elif avu['attribute'] == 'study_id':
+                    #         study_ids.append(avu['value'])
+                    #     elif avu['attribute'] == 'study_accession_number':
+                    #         study_acc_nr.append(avu['value'])
+                    #
+                    #     elif avu['attribute'] == 'md5':
+                    #         file_meta.md5 = avu['value']
+                    #     elif avu['attribute'] == 'npg_qc':
+                    #         file_meta.npg_qc == avu['value']
+                    #     elif avu['attribute'] == 'target':
+                    #         file_meta.target == avu['target']
+                    #     elif avu['attribute'] == 'id_run':
+                    #         file_meta.run_id = avu['value']
+                    #     elif avu['attribute'] == 'lane':
+                    #         file_meta.lane_id == avu['value']
+                    #     elif avu['attribute'] == 'reference':
+                    #         file_meta.reference = irods_metadata.IrodsSeqFileMetadata.extract_reference_name_from_ref_path(avu['value'])
+
+        # irods_samples = {'name': irods_sample_names_list,
+        #                  'accession_number': irods_sample_acc_nr_list,
+        #                  'internal_id': irods_sample_internal_id_list
+        # }
+
+
+
+#         if item == 'avus':
+#             for avu in val:
+#                 print "Attribute = " + str(avu['attribute']) + ", value = " + str(avu['value'])
+
+
+    # def __init__(self, fpath, fname, samples=[], libraries=[], studies=[], md5=None,
+    #              ichksum_md5=None, reference=None, run_id=None, lane_id=None, npg_qc=None, target=None):
+    #
+        # self.fname = fname
+        # self.fpath = fpath
+        # self.samples = samples
+        # self.libraries = libraries
+        # self.studies = studies
+        # self.md5 = md5
+        # self.ichksum_md5 = ichksum_md5
+        # self.reference = reference
+        # self.run_id = run_id
+        # self.lane_id = lane_id
+        # self.npg_qc = npg_qc
+        # self.target = target
+
+
+
+class iRODSiCmdsUtils(iRODSUtils):
 
     # @classmethod
     # def retrieve_list_of_bams_by_study_from_irods(cls, study_name):
@@ -118,14 +314,16 @@ class iRODSUtils:
         avus = {attribute : value, 'target' : '1', 'manual_qc' : '1'}
         files = icommands_wrapper.iRODSMetaQueryOperations.query_by_metadata(avus)
         #filtered_files = icommands_wrapper.iRODSMetaQueryOperations.filter_out_phix(files)
-        return filtered_files
+        #return filtered_files
+        return files
 
     @classmethod
     def retrieve_list_of_target_files_by_metadata(cls, attribute, value):
         avus = {attribute : value, 'target' : '1'}
         files = icommands_wrapper.iRODSMetaQueryOperations.query_by_metadata(avus)
         #filtered_files = icommands_wrapper.iRODSMetaQueryOperations.filter_out_phix(files)
-        return filtered_files
+        #return filtered_files
+        return files
 
     @classmethod
     def retrieve_list_of_files_by_avus(cls, avus_dict):
@@ -155,25 +353,6 @@ class iRODSUtils:
             if avu.attribute == key:
                 results.append(avu.value)
         return results
-
-    @classmethod
-    def extract_lanelet_name(cls, irods_path):
-        lanelet_file = os.path.basename(irods_path)
-        return lanelet_file
-
-
-    # TODO: test - what if the lanelet is a whole lane (x10 data)? TO add unittest for this!
-    @classmethod
-    def guess_seq_irods_path_from_lustre_path(cls, lustre_path):
-        """
-            Applies only for the data delivered by NPG.
-
-        """
-        fname = common_utils.extract_fname_from_path(lustre_path)
-        run_id = fname.split("_")
-        irods_fpath = "/seq/" + run_id[0] + "/" + fname
-        return irods_fpath
-
 
 
     @classmethod

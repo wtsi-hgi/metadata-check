@@ -28,7 +28,7 @@ from irods import icommands_wrapper, constants as irods_consts
 
 class IrodsSeqFileMetadata(object):
 
-    def __init__(self, fpath, fname, samples=[], libraries=[], studies=[], md5=None,
+    def __init__(self, fpath=None, fname=None, samples=[], libraries=[], studies=[], md5=None,
                  ichksum_md5=None, reference=None, run_id=None, lane_id=None, npg_qc=None, target=None):
         self.fname = fname
         self.fpath = fpath
@@ -54,63 +54,115 @@ class IrodsSeqFileMetadata(object):
         => ignores avu frequency errors => this should be checked beforehands...somewhere...
         '''
         fname = common_utils.extract_fname(fpath)
-        samples = metadata_utils.iRODSUtils.extract_samples_from_irods_metadata(avus)
-        libraries = metadata_utils.iRODSUtils.extract_libraries_from_irods_metadata(avus)
-        studies = metadata_utils.iRODSUtils.extract_studies_from_irods_metadata(avus)
+        samples = metadata_utils.iRODSiCmdsUtils.extract_samples_from_irods_metadata(avus)
+        libraries = metadata_utils.iRODSiCmdsUtils.extract_libraries_from_irods_metadata(avus)
+        studies = metadata_utils.iRODSiCmdsUtils.extract_studies_from_irods_metadata(avus)
 
-        md5_list = metadata_utils.iRODSUtils.extract_values_for_key_from_irods_metadata(avus, 'md5')
+        md5_list = metadata_utils.iRODSiCmdsUtils.extract_values_for_key_from_irods_metadata(avus, 'md5')
         md5 = md5_list[0] if len(md5_list) == 1 else None
 
-        ichksum_md5 = icommands_wrapper.iRODSChecksumOperations.get_checksum(fpath)
+        # TODO: actually this is not according to the method's name, it doesn't build up metadata from avus but also queries irods independently
+        #ichksum_md5 = icommands_wrapper.iRODSChecksumOperations.get_checksum(fpath)
 
-        ref_list = metadata_utils.iRODSUtils.extract_values_for_key_from_irods_metadata(avus, 'reference')
+        ref_list = metadata_utils.iRODSiCmdsUtils.extract_values_for_key_from_irods_metadata(avus, 'reference')
         ref = ref_list[0] if len(ref_list) == 1 else None
 
+        # TODO: I don't deal with the exception thrown from extract_reference_name.. if the ref doesn't look like a ref
         if ref:
             ref = cls.extract_reference_name_from_ref_path(ref)
 
-        run_id_list = metadata_utils.iRODSUtils.extract_values_for_key_from_irods_metadata(avus, 'id_run')
+        run_id_list = metadata_utils.iRODSiCmdsUtils.extract_values_for_key_from_irods_metadata(avus, 'id_run')
         run_id = run_id_list[0] if len(run_id_list) == 1 else None
 
-        lane_id_list = metadata_utils.iRODSUtils.extract_values_for_key_from_irods_metadata(avus, 'lane')
+        lane_id_list = metadata_utils.iRODSiCmdsUtils.extract_values_for_key_from_irods_metadata(avus, 'lane')
         lane_id = lane_id_list[0] if len(lane_id_list) == 1 else None
 
-        npg_qc_list = metadata_utils.iRODSUtils.extract_values_for_key_from_irods_metadata(avus, 'manual_qc')
+        npg_qc_list = metadata_utils.iRODSiCmdsUtils.extract_values_for_key_from_irods_metadata(avus, 'manual_qc')
         npg_qc = npg_qc_list[0] if len(npg_qc_list) == 1 else None
 
-        target_list = metadata_utils.iRODSUtils.extract_values_for_key_from_irods_metadata(avus, 'target')
+        target_list = metadata_utils.iRODSiCmdsUtils.extract_values_for_key_from_irods_metadata(avus, 'target')
         target = target_list[0] if len(target_list) == 1 else None
 
-        return IrodsSeqFileMetadata(fpath, fname, samples, libraries, studies, md5, ichksum_md5, ref, run_id, lane_id, npg_qc, target)
+        return IrodsSeqFileMetadata(fpath=fpath, fname=fname, samples=samples, libraries=libraries,
+                                    studies=studies, md5=md5, reference=ref, run_id=run_id,
+                                    lane_id=lane_id, npg_qc=npg_qc, target=target)
 
 
     @classmethod
     def run_avu_count_checks(cls, fpath, avus):
         problems = []
-        md5_list = metadata_utils.iRODSUtils.extract_values_for_key_from_irods_metadata(avus, 'md5')
+        md5_list = metadata_utils.iRODSiCmdsUtils.extract_values_for_key_from_irods_metadata(avus, 'md5')
         if len(md5_list) != 1:
             problems.append(error_types.IrodsMetadataAttributeFrequencyError(fpath, 'md5', '1', str(len(md5_list))))
 
-        ref_list = metadata_utils.iRODSUtils.extract_values_for_key_from_irods_metadata(avus, 'reference')
+        ref_list = metadata_utils.iRODSiCmdsUtils.extract_values_for_key_from_irods_metadata(avus, 'reference')
         if len(ref_list) != 1:
             problems.append(error_types.IrodsMetadataAttributeFrequencyError(fpath, 'reference', '1', str(len(ref_list))))
 
-        run_id_list = metadata_utils.iRODSUtils.extract_values_for_key_from_irods_metadata(avus, 'id_run')
+        run_id_list = metadata_utils.iRODSiCmdsUtils.extract_values_for_key_from_irods_metadata(avus, 'id_run')
         if len(run_id_list) != 1:
             problems.append(error_types.IrodsMetadataAttributeFrequencyError(fpath, 'id_run', '1', str(len(run_id_list))))
 
-        lane_id_list = metadata_utils.iRODSUtils.extract_values_for_key_from_irods_metadata(avus, 'lane')
+        lane_id_list = metadata_utils.iRODSiCmdsUtils.extract_values_for_key_from_irods_metadata(avus, 'lane')
         if len(lane_id_list) != 1:
             problems.append(error_types.IrodsMetadataAttributeFrequencyError(fpath, 'lane', '1', str(len(lane_id_list))))
 
-        npg_qc_list = metadata_utils.iRODSUtils.extract_values_for_key_from_irods_metadata(avus, 'manual_qc')
+        npg_qc_list = metadata_utils.iRODSiCmdsUtils.extract_values_for_key_from_irods_metadata(avus, 'manual_qc')
         if len(npg_qc_list) != 1:
             problems.append(error_types.IrodsMetadataAttributeFrequencyError(fpath, 'manual_qc', '1', str(len(npg_qc_list))))
         return problems
 
 
-    def run_field_sanity_checks(self):
+#         samples = metadata_utils.iRODSiCmdsUtils.extract_samples_from_irods_metadata(avus)
+#         libraries = metadata_utils.iRODSiCmdsUtils.extract_libraries_from_irods_metadata(avus)
+#         studies = metadata_utils.iRODSiCmdsUtils.extract_studies_from_irods_metadata(avus)
+
+
+            # # Filter out non-ids
+            # filtered_ids = filter_ids(ids_list)
+            # non_ids = set(ids_list).difference(set(filtered_ids))
+            # problems.extend([error_types.NotFoundInSeqscapeError(id_type, id, entity_type) for id in non_ids]) # id_type, id_missing, entity_type, fpath=None):
+
+        # irods_samples = {'name': irods_sample_names_list,
+        #                  'accession_number': irods_sample_acc_nr_list,
+        #                  'internal_id': irods_sample_internal_id_list
+        # }
+
+    # @classmethod
+    # def _filter_out_non_ids(cls, ids_list):
+    #     return [id for id in ids_list if id not in ['N/A', 'undefined', 'unspecified']]
+    #
+    # # ugly method - these things should be separated (filtering out, reporting errors, and putting together the right error to be returned directly to the user)
+    # # plus I silently access the fpath field from this object, dirty!!!
+    # def _filter_out_non_entities(self, entity_dict, entity_type):
+    #     filtered_entities = {}
+    #     problems = []
+    #     for id_type, ids_list in entity_dict.items():
+    #         filtered_ids = cls._filter_out_non_ids(ids_list)
+    #         non_ids = set(ids_list).difference(set(filtered_ids))
+    #         problems.extend([error_types.WrongIrodsMetadataValue(fpath=self.fpath, attribute=str(entity_type)+'_'+str(id_type), value=id) for id in non_ids])
+    #         filtered_entities[id_type] = filtered_ids
+    #     return filtered_entities, problems
+    #
+
+    def run_field_sanity_checks_and_filter(self):
         problems = []
+        if self.samples:
+            #self.samples, pbs = self._filter_out_non_entities(self.samples)
+            self.samples, pbs = metadata_utils.GeneralUtils.filter_out_non_entities(self.fpath, self.samples, 'sample')
+            pbs = [error_types.WrongIRODSMetadataValue(err.fpath, err.attribute, err.value) for err in pbs]
+            problems.extend(pbs)
+
+        if self.libraries:
+            self.libraries, pbs = metadata_utils.GeneralUtils.filter_out_non_entities(self.fpath, self.libraries, 'library')
+            pbs = [error_types.WrongIRODSMetadataValue(err.fpath, err.attribute, err.value) for err in pbs]
+            problems.extend(pbs)
+
+        if self.studies:
+            self.studies, pbs = metadata_utils.GeneralUtils.filter_out_non_entities(self.fpath, self.studies, 'study')
+            pbs = [error_types.WrongIRODSMetadataValue(err.fpath, err.attribute, err.value) for err in pbs]
+            problems.extend(pbs)
+
         if self.md5 and not self.is_md5(self.md5):
             problems.append(error_types.WrongMetadataValue(fpath=self.fpath, attribute='md5', value=self.md5))
         if self.ichksum_md5 and not self.is_md5(self.ichksum_md5):
