@@ -162,3 +162,14 @@ class StudySamplesLink(Base):
 
     is_current = Column(Integer)
 
+    def __eq__(self, other):
+        return self.sample_internal_id == other.sample_internal_id and self.internal_id == other.internal_id
+
+    def __hash__(self):
+        return hash(self.sample_internal_id) + hash(self.study_internal_id)
+
+    def __str__(self):
+        return "{ sample_internal_id="+ str(self.sample_internal_id)+", study_internal_id="+str(self.study_internal_id) + " }"
+
+    def __repr__(self):
+        return self.__str__()

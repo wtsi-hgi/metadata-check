@@ -28,12 +28,9 @@ import error_types
 
 
 
-
-
-
 def check_lane_metadata(irods_fpath, irods_metadata):
-    lane_id = metadata_utils.iRODSUtils.get_lane_from_irods_path(irods_fpath)
-    irods_lane_ids = metadata_utils.iRODSUtils.extract_values_for_key_from_irods_metadata(irods_metadata, 'lane')
+    lane_id = metadata_utils.iRODSiCmdsUtils.get_lane_from_irods_path(irods_fpath)
+    irods_lane_ids = metadata_utils.iRODSiCmdsUtils.extract_values_for_key_from_irods_metadata(irods_metadata, 'lane')
     if len(irods_lane_ids) < 1:
         raise error_types.TestImpossibleToRunError(fpath=irods_fpath, test_name="check lane id", reason="no lane ids found in iRODS metadata")
     elif len(irods_lane_ids) > 1:
@@ -49,7 +46,7 @@ def check_lanelet_name(irods_fpath, header_lanelets):
         raise error_types.TestImpossibleToRunError(fpath=irods_fpath, test_name="check lanelet name irods vs. header", reason="no header lanelets extracted from header")
     elif len(header_lanelets) > 1:
         raise error_types.TestImpossibleToRunError(fpath=irods_fpath, test_name="check lanelet name irods vs. header", reason="too many lanelets in header("+ str(len(header_lanelets))+ ")")
-    irods_lanelet_name = metadata_utils.iRODSUtils.extract_lanelet_name_from_irods_fpath(irods_fpath)
+    irods_lanelet_name = metadata_utils.iRODSiCmdsUtils.extract_lanelet_name_from_irods_fpath(irods_fpath)
     fname = utils.extract_fname_without_ext(irods_lanelet_name)
     if fname != header_lanelets[0]:
         raise error_types.IrodsMetadataAttributeVsFileNameError(fpath=irods_fpath, attribute='lanelet name', irods_value=irods_lanelet_name, filename_value=fname)
