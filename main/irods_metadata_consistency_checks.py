@@ -64,7 +64,6 @@ def get_entities_from_seqscape(entity_type, ids_list, id_type):
 
 
 def compare_entity_sets_in_seqsc(entities_dict, entity_type):
-
     problems = []
     seqsc_entities = {}
     # SEARCH FOR ENTITIES in SEQSCAPE BY ID_TYPE:
@@ -78,7 +77,6 @@ def compare_entity_sets_in_seqsc(entities_dict, entity_type):
                     duplicates = get_entities_by_id(id, id_type, entities)
                     problems.append(str(error_types.TooManyEntitiesSameIdSeqscapeError(id_type, id, duplicates, entity_type)))
             seqsc_entities[id_type] = entities
-
 
     # HERE I assume I know what the id_types are (internal_id, etc..):
     problems.extend(metadata_utils.GeneralUtils.check_same_entities(seqsc_entities, entity_type))
@@ -95,7 +93,7 @@ def check_sample_is_in_desired_study(sample_ids, study_name):
     """
     actual_studies_from_seqsc = seqsc.query_all_studies_associated_with_samples(sample_ids)
     studies_by_name = [s.name for s in actual_studies_from_seqsc]
-    if not study_name in studies_by_name:
+    if study_name not in studies_by_name:
         return error_types.SamplesDontBelongToGivenStudy(sample_ids=sample_ids, actual_study=str(studies_by_name), desired_study=study_name)
 
 

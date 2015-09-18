@@ -69,7 +69,7 @@ def from_tuples_to_exceptions(tuples_list):
     return excs
 
 def check_irods_metadata_is_complete_for_file(fpath, config_path):
-    irods_avus = metadata_utils.iRODSUtils.retrieve_irods_avus(fpath)
+    irods_avus = metadata_utils.iRODSiCmdsUtils.retrieve_irods_avus(fpath)
     return check_avus_freq_vs_config_freq(irods_avus, config_path)
 
 
