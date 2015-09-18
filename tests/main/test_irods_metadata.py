@@ -546,25 +546,25 @@ class TestIrodsSeqFileMetadata(unittest.TestCase):
 
     def test_run_field_sanity_checks1(self):
         irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam', fname='1234_5#6.bam', md5='aaAAA')
-        result = irods_metadata.run_field_sanity_checks()
+        result = irods_metadata.run_field_sanity_checks_and_filter()
         self.assertEqual(len(result) , 1)
         self.assertEqual(type(result[0]), error_types.WrongMetadataValue)
 
     def test_run_field_sanity_checks2(self):
         irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam', fname='1234_5#6.bam', run_id='aaAAA')
-        result = irods_metadata.run_field_sanity_checks()
+        result = irods_metadata.run_field_sanity_checks_and_filter()
         self.assertEqual(len(result) , 1)
         self.assertEqual(type(result[0]), error_types.WrongMetadataValue)
 
     def test_run_field_sanity_checks3(self):
         irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam', fname='1234_5#6.bam', lane_id='aaAAA')
-        result = irods_metadata.run_field_sanity_checks()
+        result = irods_metadata.run_field_sanity_checks_and_filter()
         self.assertEqual(len(result) , 1)
         self.assertEqual(type(result[0]), error_types.WrongMetadataValue)
 
     def test_run_field_sanity_checks4(self):
         irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam', fname='1234_5#6.bam', npg_qc='aaAAA')
-        result = irods_metadata.run_field_sanity_checks()
+        result = irods_metadata.run_field_sanity_checks_and_filter()
         self.assertEqual(len(result) , 1)
         self.assertEqual(type(result[0]), error_types.WrongMetadataValue)
 
@@ -597,7 +597,7 @@ class TestIrodsSeqFileMetadata(unittest.TestCase):
 
     def test_run_avu_count_checks1(self):
         fpath = '/seq/6661/6661_2#12.bam'
-        avus = metadata_utils.iRODSUtils.retrieve_irods_avus(fpath)
+        avus = metadata_utils.iRODSiCmdsUtils.retrieve_irods_avus(fpath)
         print str(avus)
         result = IrodsSeqFileMetadata.run_avu_count_checks(fpath, avus)
         self.assertEqual([], result)
@@ -637,6 +637,34 @@ class TestIrodsSeqFileMetadata(unittest.TestCase):
         result = IrodsSeqFileMetadata.get_lane_from_irods_path(fpath)
         self.assertEqual(result, '1')
 
+
     def test_get_lane_from_irods_path2(self):
         fpath = '/seq/1234/12348.bam'
         self.assertRaises(ValueError, IrodsSeqFileMetadata.get_lane_from_irods_path, fpath)
+
+
+    def test__filter_out_non_entities1(self):
+        entity_dict = {'name' : ['aba']}
+        result, _ = IrodsSeqFileMetadata._filter_out_non_entities(entity_dict)
+        self.assertEqual(entity_dict, result)
+
+
+    def test__filter_out_non_entities2(self):
+        entity_dict = {'name' : ['aba', 'N/A']}
+        result, pbs = IrodsSeqFileMetadata._filter_out_non_entities(entity_dict)
+        desired = {'name' : ['aba']}
+        self.assertEqual(desired, result)
+        self.assertEqual(len(pbs), 1)   # 1 problem detected
+
+
+    #         @classmethod
+    # def _filter_out_non_entities(cls, entity_list):
+    #     filtered_entities = {}
+    #     problems = []
+    #     for id_type, ids_list in entity_list.items():
+    #         filtered_ids = cls._filter_out_non_ids(ids_list)
+    #         non_ids = set(ids_list).difference(set(filtered_ids))
+    #         problems.extend([ValueError("This id doesn't look like an id: " + str(id)) for id in non_ids])
+    #         filtered_entities[id_type] = filtered_ids
+    #     return filtered_entities, problems
+    #
