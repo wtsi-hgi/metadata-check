@@ -270,3 +270,18 @@ class DifferentFilesRetrievedByDiffStudyIdsOfSameStudy(Exception):
     def __repr__(self):
         return self.__str__()
 
+
+class MissingFileFormatsFromIRODSError(Exception):
+
+    def __init__(self, fname, missing_formats):
+        self.fname = fname
+        self.missing_formats = missing_formats   # a list of formats which should be in irods but aren't
+
+    def __str__(self):
+        return "ERROR/WARNING - file: " + str(self.fname) + " doesn't appear in iRODS in " + str(self.missing_formats) + " format(s)."
+
+    def __repr__(self):
+        return self.__str__()
+
+
+
