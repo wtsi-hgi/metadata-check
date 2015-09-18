@@ -21,7 +21,10 @@ This file has been created on Jun 22, 2015.
 
 import unittest
 from main import irods_metadata_consistency_checks as checks
+from main import error_types
 from seqscape import  models
+
+
 
 
 class TestUtilFunctionsForEntities(unittest.TestCase):
@@ -106,3 +109,27 @@ class TestGetEntitiesFromSeqscape(unittest.TestCase):
         id_type = 'internal_id'
         result = checks.get_entities_from_seqscape('library', ids_list, id_type)
         self.assertEqual(len(result), 1)
+
+
+######## I think the classes above don't really belong here. So here's the class for the functions in the
+class TestIrodsMetadataConsistencyChecks(unittest.TestCase):
+
+    def test_check_sample_is_in_desired_study(self):
+        study_name = 'IHTP_MWGS_Papuan_Genomes'
+        sample_ids = [1164020]
+        result = checks.check_sample_is_in_desired_study(sample_ids, study_name)
+        self.assertEqual(type(result), error_types.SamplesDontBelongToGivenStudy)
+        #self.assertRaises(error_types.SamplesDontBelongToGivenStudy, checks.check_sample_is_in_desired_study, sample_ids, study_name)
+
+
+# def check_sample_is_in_desired_study(sample_ids, study_name):
+#     """
+#
+#     :param sample_ids: a list of sample internal_id
+#     :param study_name: the name of the study that all the samples should be part of
+#     :return: Nothing if everything is ok, error_types.SampleDoesntBelongToGivenStudy if there are inconsistencies
+#     """
+#     actual_studies_from_seqsc = seqsc.query_all_studies_associated_with_samples(sample_ids)
+#     studies_by_name = [s.name for s in actual_studies_from_seqsc]
+#     if not study_name in studies_by_name:
+#         return error_types.SamplesDontBelongToGivenStudy(sample_ids=sample_ids, actual_study=str(studies_by_name), desired_study=study_name)
