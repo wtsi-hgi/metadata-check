@@ -150,11 +150,8 @@ class iRODSBatonUtils(iRODSUtils):
                     #print "ATTR: " + str(attr) + " VAL = " + str(val) + "\n"
                     if attr == 'data_object' and val == '14633_3.cram':
                         found = True
-                        print "FOUNDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD"
-                        #print str(subitem)
                     if attr == 'checksum':
                         checksum = val
-                        #exit(0)
                 if checksum and found:
                     print "CHECKSUM: " + str(checksum)
 
@@ -168,9 +165,30 @@ class iRODSBatonUtils(iRODSUtils):
 
             #print "COLL: " + str(o['collection']) + " \n"
 
+    @classmethod
+    def from_metalist_results_to_avus(cls, search_results_json):
+        """
+            This method takes as parameter the json result of a metaquery containing avus and checksum,
+            and turns the json into a dict having as key a fpath, and as value: dict of
+            [MetaAVU(), MetaAVU()]
+        :param search_results_json:
+        :param filters: optional (not implemented yet)
+        :return: dict key = fpath, value = {'avus' : [MetaAVU(), MetaAVU()], 'checksum' : 'the_result_of_ichksum'}
+        """
+        do_avus = []
+        data_dict = json.loads(search_results_json)
+        for do_item, do_item_val in data_dict.items():
+            if do_item == 'avus':
+                for avu in do_item_val:
+                    avu_obj = data_types.MetaAVU(attribute=str(avu['attribute']), value=str(avu['value']))  # MetaAVU = namedtuple('MetaAVU', ['attribute', 'value'])    # list of attribute-value tuples
+                    do_avus.append(avu_obj)
+            # TODO: sometimes there is an error here instead of a list of avus !!!!
+        return do_avus
+
+
 
     @classmethod
-    def from_metaquery_results_to_fpaths_and_avus(self, search_results_json, filters=[]):
+    def from_metaquery_results_to_fpaths_and_avus(cls, search_results_json, filters=[]):
         """
             This method takes as parameter the json result of a metaquery containing avus and checksum,
             and turns the json into a dict having as key a fpath, and as value: dict of
@@ -180,8 +198,6 @@ class iRODSBatonUtils(iRODSUtils):
         :return: dict key = fpath, value = {'avus' : [MetaAVU(), MetaAVU()], 'checksum' : 'the_result_of_ichksum'}
         """
         files_with_chksum_and_avus = defaultdict(dict)
-        #print "BEFORE EXITTING WITH ERROR: " + str(type(search_results_json))
-        #print "BEFORE EXITTING WITH ERROR: " + str(search_results_json)
         for data_obj in json.loads(search_results_json):
             coll = None
             fname = None
