@@ -15,6 +15,7 @@ Technical details
 Input: 
 - a list of file paths in iRODS or 
 - a study name (so that all the files associated with it are being checked)
+
 Output:
 - a report containing the problems found with each file
 - (optional) a list of metadata attributes gathered from different sources
