@@ -41,6 +41,7 @@ import sys
 import os
 from com import utils
 from irods import icommands_wrapper
+from seqscape.queries import query_study
 
 #BOTH_FILE_TYPES = 'both'
 
@@ -177,7 +178,7 @@ def infer_file_type(fpath):
 def filter_by_avu(fpath, avu_attribute, avu_value):
     pass# manual_qc,...
 
-def decide_which_tests(all_tests=None, test_sample=None, test_library=None, test_study=None, test_reference=None, test_md5=None, test_filename=None, test_complete_meta=None):
+def decide_which_tests(all_tests=None, test_sample=None, test_library=None, test_study=None, desired_reference=None, test_md5=None, test_filename=None, test_complete_meta=None):
     run_header_tests = False
     run_irods_tests = False
     if all_tests:
@@ -190,7 +191,7 @@ def decide_which_tests(all_tests=None, test_sample=None, test_library=None, test
         if test_library:
             if 'irods_vs_header' in test_library or 'all' in test_library:
                 run_header_tests = True
-        if any([test_sample, test_library, test_study, test_reference, test_md5, test_filename, all_tests, test_complete_meta]):
+        if any([test_sample, test_library, test_study, desired_reference, test_md5, test_filename, all_tests, test_complete_meta]):
             run_irods_tests = True
     return {'header_tests' : run_header_tests, 'irods_tests' : run_irods_tests}
 
@@ -201,7 +202,7 @@ def main():
 
     # Decide on which categories of tests to run:
     # tests_dict = decide_which_tests(args.all_tests, args.test_sample, args.test_library, args.test_study,
-    #                                 args.test_reference, args.test_md5, args.test_filename, args.test_complete_meta)
+    #                                 args.desired_reference, args.test_md5, args.test_filename, args.test_complete_meta)
     # run_irods_tests = tests_dict['irods_tests']
     # run_header_tests = tests_dict['header_tests']
 
@@ -221,6 +222,11 @@ def main():
 
     all_i_studies_by_egaids = set()
     all_i_studies_by_names = set()
+
+    # TODO: implement here also the option of getting a list of files as input
+    # in which case use:metadata_utils.BatonStuff.from_metalist_results_to_avus
+
+
 
 
     # for f in filtered_fpaths:
@@ -255,16 +261,20 @@ def main():
         #search_criteria = put_together_search_criteria(some_args)
         filters = {}
         search_criteria = []
-        if args.study:
-            search_criteria.append(('study', args.study))
+        if args.study_name:
+            search_criteria.append(('study', args.study_name))
+        elif args.study_acc_nr:
+            search_criteria.append(('study_accession_number', args.study_acc_nr))
+        elif args.study_internal_id:
+            search_criteria.append(('study_id', args.study_internal_id))
 
+        if search_criteria:
             if args.filter_npg_qc:
                 search_criteria.append(('manual_qc', args.filter_npg_qc))
                 filters['manual_qc'] = args.filter_npg_qc
             if args.filter_target:
                 search_criteria.append(('target', args.filter_target))
                 filters['target'] = args.filter_target
-            #search_criteria['avus'].append({'attribute' : 'study', 'value' : args.study, 'o' : '='})
 
             print "SEARCH CRITERIA : " + str(search_criteria)
             # run baton to get the list of files by the search criteria...hmm, or add the sample filter on the top of the study filter?!
@@ -294,10 +304,15 @@ def main():
          ########################## TESTS #####################
         # PREPARING FOR THE TESTS
         diff_files_problems = []
-        if args.test_same_files_by_diff_study_ids or args.all_tests:
-            if args.study_internal_id and args.study_acc_nr and args.study:
-                issues = check_same_files_by_diff_study_ids(args.study, args.study_internal_id, args.study_acc_nr, filters)
-                diff_files_problems.extend(issues)
+        if args.study_internal_id:
+            study_obj = query_study(internal_id=args.study_internal_id)
+        if args.study_name:
+            study_obj = query_study(name=args.study_name)
+        if args.study_acc_nr:
+            study_obj = query_study(accession_number=args.study_acc_nr)
+        if study_obj:
+            issues = check_same_files_by_diff_study_ids(study_obj.name, study_obj.internal_id, study_obj.accession_number, filters)
+            diff_files_problems.extend(issues)
         print "Ran check on the list of files retrieved by each study identifier -- result is: " + str(diff_files_problems)
 
 
@@ -350,7 +365,8 @@ def main():
                     problems.append(str(e))
 
             # TODO - not working properly
-            if args.test_reference or args.all_tests:
+            #if args.test_reference or args.all_tests:
+            if args.desired_reference or args.all_tests:
                 try:
                     i_meta.test_reference(args.desired_reference)
                 except (error_types.WrongReferenceError, error_types.TestImpossibleToRunError) as e:
@@ -437,7 +453,9 @@ def main():
             all_problems.extend(problems)
 
         print "NUMBER OF FILES WITH ISSUES: " + str(len(issues_per_file))
-        print "NUMBER OF SAMPLES (by name) FOUND: " + str(len(all_i_samples_by_names))
+        print "NUMBER OF SAMPLES (by name) - IRODS FOUND: " + str(len(all_i_samples_by_names))
+        print "NUMBER OF SAMPLES (by acc_nr) - IRODS FOUND: " + str(len(all_i_samples_by_egaids))
+        print "NUMBER OF SAMPLES (by name) - HEADER FOUND: " + str(len(all_h_samples))
 
         # PRINT OUTPUT:
         # FILES EXCLUDED:
@@ -638,243 +656,6 @@ def main():
 
 
 
-def main_baton():
-    args = arg_parser.parse_args()
-
-    # filters = {}
-    # if args.filter_target is not None:
-    #     filters['target'] = args.filter_target
-    # if args.filter_npg_qc is not None:
-    #     filters['manual_qc'] = args.filter_npg_qc
-
-
-    # COLLECT FILE PATHS:
-    if args.study:
-        fpaths = collect_fpaths_by_study_name(args.study)
-
-    if args.fofn:
-        files_from_fofn = read_file_into_list(args.fofn)
-        fpaths = files_from_fofn
-
-    if args.files:
-        fpaths = args.files
-
-    # per samples:
-    if args.fosn:
-        samples = read_file_into_list(args.fosn)
-        # query irods for samples, get a list of files
-
-    if args.samples:
-        samples = args.samples
-        # query irods per sample for files
-        pass
-
-    # Check for conflicts in the params?
-    # TODO
-
-    ##################### FILTER FILES ################################
-    # files_excluded = defaultdict(list) # key = reason, value = list of file paths
-    #
-    # ## Filter by file type ###
-    # filtered_fpaths = []
-    # for file_type in args.file_types:
-    #     filtered_fpaths.extend(filter_by_file_type(fpaths, file_type))
-    # files_excluded['BY_FILE_TYPE'] = set(fpaths).difference(set(filtered_fpaths))
-    #
-    # if not filtered_fpaths:
-    #     filtered_fpaths = fpaths
-    # print "ARGS = " + str(args)
-
-    ########################## TESTS #####################
-    # PREPARING FOR THE TESTS
-    all_problems = []
-    if args.test_same_files_by_diff_study_ids or args.all_tests:
-        if args.study_internal_id and args.study_acc_nr and args.study:
-            issues = check_same_files_by_diff_study_ids(args.study, args.study_internal_id, args.study_acc_nr, filters)
-            all_problems.extend(issues)
-    print "Ran check on the list of files retrieved by each study identifier -- result is: " + str(all_problems)
-    print "AND FILES selected: " + str(fpaths)
-
-    for f in fpaths:
-        problems = []
-        if args.config_file:
-            pass
-
-        # Deciding what tests to run
-        header_tests = False
-        irods_tests = False
-        if args.all_tests:
-            header_tests = True
-            irods_tests = True
-        else:
-            if args.test_sample:
-                if 'all' in args.test_sample or 'irods_vs_header' in args.test_sample:
-                    header_tests = True
-            if args.test_library:
-                if 'irods_vs_header' in args.test_library or 'all' in args.test_library:
-                    header_tests = True
-            if any([args.test_sample, args.test_library, args.test_study, args.test_reference, args.test_md5, args.test_filename, args.all_tests, args.config_file]):
-                irods_tests = True
-
-
-        # Retrieve the resources as needed in preparation for the tests:
-        h_meta = None
-        if header_tests:
-            try:
-                header = metadata_utils.HeaderUtils.get_parsed_header_from_irods_file(f)
-            except IOError as e:
-                problems.append(str(e))
-                continue
-            else:
-                h_meta = header_meta_module.HeaderSAMFileMetadata.from_header_to_metadata(header, f)
-
-
-        if irods_tests:
-            irods_avus = metadata_utils.iRODSiCmdsUtils.retrieve_irods_avus(f)
-            avu_issues = irods_meta_module.IrodsSeqFileMetadata.run_avu_count_checks(f, irods_avus)
-            problems.extend(avu_issues)
-
-            i_meta = irods_meta_module.IrodsSeqFileMetadata.from_avus_to_irods_metadata(irods_avus, f)
-
-            # Apply filters at the file metadata level:
-            # if args.filter_no_target == False:  # Filter target = 1 in this case:
-            #     if i_meta.target != 1:
-            #         # TODO: gather the files filtered out in smth
-            #         files_excluded['not_the_target'].append(f)
-            #         continue
-            #
-            # if not args.filter_npg_qc is None:
-            #     if args.filter_npg_qc != i_meta.npg_qc:
-            #         # TODO: gather the files filtered out in smth for adding them to the report
-            #         files_excluded['npg_qc'].append(f)
-            #         continue
-
-            # Check for sanity before starting the tests:
-            sanity_issues = i_meta.run_field_sanity_checks_and_filter()
-            problems.extend(sanity_issues)
-
-            ## Filter by manual_qc:
-            if not args.filter_npg_qc is None:
-                if args.filter_npg_qc != i_meta.npg_qc:
-                    continue
-
-
-            ####### RUN THE TESTS: #########
-            # MD5 tests:
-            if args.test_md5 or args.all_tests:
-                try:
-                    i_meta.test_md5_calculated_vs_metadata()
-                except (error_types.WrongMD5Error, error_types.TestImpossibleToRunError) as e:
-                    problems.append(str(e))
-
-            # TODO - not working properly
-            if args.test_reference or args.all_tests:
-                try:
-                    i_meta.test_reference(args.desired_reference)
-                except (error_types.WrongReferenceError, error_types.TestImpossibleToRunError) as e:
-                    problems.append(str(e))
-
-            if args.test_filename or args.all_tests:
-                try:
-                    i_meta.test_lane_from_fname_vs_metadata()
-                except (error_types.IrodsMetadataAttributeVsFileNameError, error_types.TestImpossibleToRunError) as e:
-                    problems.append(str(e))
-
-                try:
-                    i_meta.test_run_id_from_fname_vs_metadata()
-                except (error_types.IrodsMetadataAttributeVsFileNameError, error_types.TestImpossibleToRunError) as e:
-                    problems.append(str(e))
-
-                # TODO : test also the tag
-
-            if args.test_sample or args.all_tests:
-                if 'all' in args.test_sample or args.all_tests:
-                    issues = check_irods_vs_header_metadata(f, h_meta.samples, i_meta.samples, 'sample')
-                    problems.extend(issues)
-
-                    issues = seq_consistency_checks.compare_entity_sets_in_seqsc(i_meta.samples, 'sample')    #def compare_entity_sets_in_seqsc(entities_dict, entity_type):
-                    problems.extend(issues)
-
-                    issues = seq_consistency_checks.check_sample_is_in_desired_study(i_meta.samples['internal_id'], i_meta.studies['name'])
-                    problems.extend(issues)
-                else:
-                    if 'irods_vs_header' in args.test_sample:
-                        issues = check_irods_vs_header_metadata(f, h_meta.samples, i_meta.samples, 'sample')
-                        problems.extend(issues)
-
-                    if 'irods_vs_seqsc' in args.test_sample:
-                        issues = seq_consistency_checks.compare_entity_sets_in_seqsc(i_meta.samples, 'sample')    #def compare_entity_sets_in_seqsc(entities_dict, entity_type):
-                        problems.extend(issues)
-
-                        issues = seq_consistency_checks.check_sample_is_in_desired_study(i_meta.samples['internal_id'], i_meta.studies['name'])
-                        problems.extend(issues)
-
-            if args.test_library or args.all_tests:
-                if args.all_tests or 'all' in args.test_library:
-                    issues = check_irods_vs_header_metadata(f, h_meta.libraries, i_meta.libraries, 'library')
-                    problems.extend(issues)
-
-                    issues = seq_consistency_checks.compare_entity_sets_in_seqsc(i_meta.libraries, 'library')
-                    problems.extend(issues)
-                else:
-                    if 'irods_vs_header' in args.test_library:
-                        issues = check_irods_vs_header_metadata(f, h_meta.libraries, i_meta.libraries, 'library')
-                        problems.extend(issues)
-
-                    if 'irods_vs_seqsc' in args.test_library:
-                        issues = seq_consistency_checks.compare_entity_sets_in_seqsc(i_meta.libraries, 'library')
-                        problems.extend(issues)
-
-
-            if args.test_study or args.all_tests:
-                issues = seq_consistency_checks.compare_entity_sets_in_seqsc(i_meta.studies, 'study')
-                problems.extend(issues)
-
-
-
-
-            if args.all_tests or args.test_complete_meta:
-                # TODO: Add a warning that by default there is a default config file used
-                if not args.config_file:
-                    config_file = config.IRODS_ATTRIBUTE_FREQUENCY_CONFIG_FILE
-                else:
-                    config_file = args.config_file
-                try:
-                    diffs = complete_irods_metadata_checks.check_avus_freq_vs_config_freq(irods_avus, config_file)
-                except IOError:
-                    problems.append(error_types.TestImpossibleToRunError(f, "Test iRODS metadata is complete",
-                                                                         "Config file missing: "+str(config_file)))
-                else:
-                    diffs_as_exc = complete_irods_metadata_checks.from_tuples_to_exceptions(diffs)
-                    for d in diffs_as_exc:
-                        d.fpath = f
-                    problems.extend(diffs_as_exc)
-
-        print "FILE: " + str(f) + " -- PROBLEMS found: " + str(problems)
-        all_problems.extend(problems)
-
-    # PRINT OUTPUT:
-    # FILES EXCLUDED:
-    # TODO: add an option in which you see also the files that were filtered out
-    print "FILES EXCLUDED: "
-    for reason,files in files_excluded.iteritems():
-        print "REASON: " + str(reason)
-        for f_excl in files:
-            str(f_excl)
-
-    print "DIFFERENT FILES RETRIEVED BY QUERYING BY DIFF STUDY IDS: "
-    for err in all_problems:
-        if type(err) is error_types.DifferentFilesRetrievedByDiffStudyIdsOfSameStudy:
-            print "Number of files retrieved when querying by: " + err.id1 + " and " + err.id2 + " = " + str(len(err.diffs))
-
-
-    # OUTPUTS
-
-    ## FILTER OUTPUT depending on what params were given (what was asked as output)
-
-    ## PUT THE OUTPUT IN REQUESTED FORMAT
-
-
 
 def is_header_metadata_needed(args):
     # Deciding what tests to run
@@ -899,7 +680,7 @@ def is_irods_metadata_needed(args):
     if args.all_tests:
         irods_meta_needed = True
     else:
-        if any([args.test_sample, args.test_library, args.test_study, args.test_reference, args.test_md5, args.test_filename, args.all_tests, args.config_file]):
+        if any([args.test_sample, args.test_library, args.test_study, args.desired_reference, args.test_md5, args.test_filename, args.all_tests, args.config_file]):
             irods_meta_needed = True
         # check by wanted output:
         if any([args.sample_ega_out_file, args.sample_names_out_file, args.bad_sample_egaids_out_file,
@@ -971,12 +752,16 @@ def main_imeta():
     ########################## TESTS #####################
     # PREPARING FOR THE TESTS
     diff_files_problems = []
-    if args.test_same_files_by_diff_study_ids or args.all_tests:
-        if args.study_internal_id and args.study_acc_nr and args.study:
-            issues = check_same_files_by_diff_study_ids(args.study, args.study_internal_id, args.study_acc_nr, filters)
-            diff_files_problems.extend(issues)
+    if args.study_internal_id:
+        study_obj = query_study(internal_id=args.study_internal_id)
+    if args.study_name:
+        study_obj = query_study(name=args.study_name)
+    if args.study_acc_nr:
+        study_obj = query_study(accession_number=args.study_acc_nr)
+    if study_obj:
+        issues = check_same_files_by_diff_study_ids(study_obj.name, study_obj.internal_id, study_obj.accession_number, filters)
+        diff_files_problems.extend(issues)
     print "Ran check on the list of files retrieved by each study identifier -- result is: " + str(diff_files_problems)
-#    print "AND FILES selected: " + str(fpaths)
 
     header_meta_needed = is_header_metadata_needed(args)
     irods_meta_needed = is_irods_metadata_needed(args)
@@ -1058,7 +843,7 @@ def main_imeta():
                     problems.append(str(e))
 
             # TODO - not working properly
-            if args.test_reference or args.all_tests:
+            if args.desired_reference or args.all_tests:
                 try:
                     i_meta.test_reference(args.desired_reference)
                 except (error_types.WrongReferenceError, error_types.TestImpossibleToRunError) as e:
@@ -1239,6 +1024,7 @@ def main_imeta():
 
 
     ##################  OUTPUTTING ALL THE ENTITIES ########################
+
     if args.entities_out_file:
         write_list_to_file([len(all_i_samples_by_names), len(all_i_samples_by_egaids), len(all_h_samples), len(all_i_libraries_by_names), len(all_h_libraries)],
                            ALL_ENTITIES_FILE, header="Irods_sample_names\tIrods_sample_egaids\tHeader_samples\tIrods_library_names\tHeader_libraries")
