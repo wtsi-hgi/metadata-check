@@ -278,7 +278,11 @@ def main():
 
             print "SEARCH CRITERIA : " + str(search_criteria)
             # run baton to get the list of files by the search criteria...hmm, or add the sample filter on the top of the study filter?!
-            metaquery_results = baton.BatonAPI.query_by_metadata_and_get_results_as_json(search_criteria) # avu_tuple_list
+            try:
+                metaquery_results = baton.BatonAPI.query_by_metadata_and_get_results_as_json(search_criteria) # avu_tuple_list
+            except IOError as e:
+                all_problems.append(e)
+
             fpaths_checksum_and_avus = metadata_utils.iRODSBatonUtils.from_metaquery_results_to_fpaths_and_avus(metaquery_results)  # this is a dict of key = fpath, value = dict({'avus':[], 'checksum':str})
 
             print "NR OF FPATHS FOUND: " + str(len(fpaths_checksum_and_avus))
@@ -304,6 +308,7 @@ def main():
          ########################## TESTS #####################
         # PREPARING FOR THE TESTS
         diff_files_problems = []
+        study_obj = None
         if args.study_internal_id:
             study_obj = query_study(internal_id=args.study_internal_id)
         if args.study_name:

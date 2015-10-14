@@ -21,7 +21,7 @@ This file has been created on Jun 23, 2015.
 
 import argparse
 import constants
-import argcomplete
+#import argcomplete
 
 
 def parse_args():
@@ -352,7 +352,7 @@ def parse_args():
                                         help='Include in the output also a report containing '
                                              'the list of tests that havent been executed and the reasons')
 
-    argcomplete.autocomplete(parser)
+    #argcomplete.autocomplete(parser)
     return parser.parse_args()
 
 #print parse_args()
