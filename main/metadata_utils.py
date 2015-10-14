@@ -197,6 +197,7 @@ class iRODSBatonUtils(iRODSUtils):
         :param filters: optional (not implemented yet)
         :return: dict key = fpath, value = {'avus' : [MetaAVU(), MetaAVU()], 'checksum' : 'the_result_of_ichksum'}
         """
+        print "SEARCH results - for ppl without permissions: " + str(search_results_json)
         files_with_chksum_and_avus = defaultdict(dict)
         for data_obj in json.loads(search_results_json):
             coll = None

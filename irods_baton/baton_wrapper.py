@@ -50,17 +50,16 @@ class BatonAPI:
         """
         # Open/create a tempfile:
         #temp = tempfile.NamedTemporaryFile(mode='w')
-        err, out = None, None
         p = subprocess.Popen([config.BATON_METAQUERY_BIN_PATH, '--zone', zone, '--obj', '--checksum', '--avu', '--acl'],   # not necessary to add also '--checksum' if --replicate is there
-                             stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.STDOUT) # ,stdout=temp, stderr=subprocess.STDERR
-        out_report, err_report = p.communicate(input=query_as_json)
-        print "OUT: " + str(out_report) + "ERR " + str(err_report)
-        if err_report:
-            print "ERROR REPORT: " + str(err_report)
-            #raise IOError("Some irods error : " + str(err))
+                             stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE) # ,stdout=temp, stderr=subprocess.STDERR
+        out, err = p.communicate(input=query_as_json)
+        print "OUT: " + str(out) + "ERR " + str(err)
         if err:
-            print "ERROR VIA stderr " + str(err)
-            #raise IOError
+            #print "ERROR REPORT: " + str(err)
+            raise IOError("Some irods error : " + str(err))
+        # if err:
+        #     print "ERROR VIA stderr " + str(err)
+        #     #raise IOError
         return out
         #return temp
 

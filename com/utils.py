@@ -208,7 +208,8 @@ def extract_file_extension(fpath):
 
 def lists_contain_same_elements(list1, list2):
         return set(list1) == set(list2)
-    
+
+
 
 #################### PROJECT SPECIFIC UTILITY FUNCTIONS #####################
 
