@@ -196,21 +196,65 @@ def decide_which_tests(all_tests=None, test_sample=None, test_library=None, test
     return {'header_tests' : run_header_tests, 'irods_tests' : run_irods_tests}
 
 
-#def process_with_baton():
+
+def extract_filters_from_args(args):
+    filters = {}
+    if args.filter_npg_qc:
+        filters['manual_qc'] = args.filter_npg_qc
+    if args.filter_target:
+        filters['target'] = args.filter_target
+    if len(args.file_types) == 1:
+        filters['type'] = args.file_types[0]
+    return filters
+
+def extract_meta_search_criteria(args):
+    search_criteria = []
+    if args.study_name:
+        search_criteria.append(('study', args.study_name))
+    elif args.study_acc_nr:
+        search_criteria.append(('study_accession_number', args.study_acc_nr))
+    elif args.study_internal_id:
+        search_criteria.append(('study_id', args.study_internal_id))
+
+    if args.filter_npg_qc:
+        search_criteria.append(('manual_qc', args.filter_npg_qc))
+    if args.filter_target:
+        search_criteria.append(('target', args.filter_target))
+    if len(args.file_types) == 1:
+        search_criteria.append(('type', args.file_types[0]))
+    print "SEARCH CRITERIA : " + str(search_criteria)
+    return search_criteria
+
+
+def get_files_and_metadata_by_metadata(search_criteria):
+    metaquery_results = baton.BatonAPI.query_by_metadata_and_get_results_as_json(search_criteria) # avu_tuple_list
+    fpaths_checksum_and_avus = metadata_utils.iRODSBatonUtils.from_metaquery_results_to_fpaths_and_avus(metaquery_results)  # this is a dict of key = fpath, value = dict({'avus':[], 'checksum':str})
+    print "NR OF FPATHS FOUND: " + str(len(fpaths_checksum_and_avus))
+    return fpaths_checksum_and_avus
+
+def get_files_and_metadata_by_fpath(fpaths):
+    pass
+
+
+
+def is_input_given_by_path(args):
+    if args.fpaths_irods or args.fofn:
+        return True
+    return False
+
+
+def is_input_given_by_meta(args):
+    if args.study_internal_id or args.study_acc_nr or args.study_name or args.sample_names:
+        return True
+    return False
+
+
 def main():
     args = arg_parser.parse_args()
 
-    # Decide on which categories of tests to run:
-    # tests_dict = decide_which_tests(args.all_tests, args.test_sample, args.test_library, args.test_study,
-    #                                 args.desired_reference, args.test_md5, args.test_filename, args.test_complete_meta)
-    # run_irods_tests = tests_dict['irods_tests']
-    # run_header_tests = tests_dict['header_tests']
-
-    # h_meta = None
-    # i_meta = None
-
+    print str(args)
     header_meta_needed = is_header_metadata_needed(args)
-    irods_meta_needed = is_irods_metadata_needed(args)
+    irods_meta_needed = is_irods_metadata_needed(args)  # Is there any scenario in which we don't need the irods meta?
 
     all_h_samples = set()
     all_h_libraries = set()
@@ -226,66 +270,51 @@ def main():
     # TODO: implement here also the option of getting a list of files as input
     # in which case use:metadata_utils.BatonStuff.from_metalist_results_to_avus
 
-
-
-
-    # for f in filtered_fpaths:
-    #     problems = []
-    #     if args.config_file:
-    #         pass
-    #
-    #     # Retrieve the resources as needed in preparation for the tests:
-    #     h_meta = None
-    #     if header_meta_needed:
-    #         try:
-    #             header = metadata_utils.HeaderUtils.get_parsed_header_from_irods_file(f)
-    #         except IOError as e:
-    #             problems.append(str(e))
-    #             continue
-    #         else:
-    #             h_meta = header_meta_module.HeaderSAMFileMetadata.from_header_to_metadata(header, f)
-    #             sanity_issues = h_meta.run_field_sanity_checks_and_filter()
-    #             problems.extend(sanity_issues)
-    #
-    #             # populate the samples and libraries for outputting them (in case someone asked for them)
-    #             all_h_samples.update(header.rg.samples)
-    #             all_h_libraries.update(header.rg.libraries)
-
-
     all_problems = []
     issues_per_file = {}
     # GET THE FILES AND METADATA:
     if irods_meta_needed:
 
+        filters = extract_filters_from_args(args)
+
         # QUERY BY AVUS and get AVUS for all the data objects found:
         #search_criteria = put_together_search_criteria(some_args)
-        filters = {}
-        search_criteria = []
-        if args.study_name:
-            search_criteria.append(('study', args.study_name))
-        elif args.study_acc_nr:
-            search_criteria.append(('study_accession_number', args.study_acc_nr))
-        elif args.study_internal_id:
-            search_criteria.append(('study_id', args.study_internal_id))
+        if is_input_given_by_path(args):
+            if args.fpaths_irods:
+                fpaths_checksum_and_avus = get_files_and_metadata_by_fpath(args.fpaths_irods)
+                print "avus FOUND: " + str(fpaths_checksum_and_avus)
+            elif args.fofn:
+                fpaths_irods = read_file_into_list(args.fofn)
+                fpaths_checksum_and_avus = get_files_and_metadata_by_fpath(args.fpaths_irods)
+        elif is_input_given_by_meta(args):
+            search_criteria = extract_meta_search_criteria(args)
+            if args.study_name or args.study_acc_nr or args.study_internal_id:
+                try:
+                    fpaths_checksum_and_avus = get_files_and_metadata_by_metadata(search_criteria)
+                except IOError as e:
+                    #all_problems.append(e)
+                    print "iRODS error when retrieving metadata: " + str(e)
+                    sys.exit(0)
+                else:
+                    # study_obj = None
+                    # if args.study_internal_id:
+                    #     study_obj = query_study(internal_id=args.study_internal_id)
+                    # if args.study_name:
+                    #     study_obj = query_study(name=args.study_name)
+                    # if args.study_acc_nr:
+                    #     study_obj = query_study(accession_number=args.study_acc_nr)
+                    # if study_obj:
+                    issues = check_same_files_by_diff_study_ids(args.study_name, args.study_internal_id, args.study_acc_nr, filters)
+                    #diff_files_problems.extend(issues)
+                    all_problems.extend(issues)
+                    print "Ran check on the list of files retrieved by each study identifier -- result is: " + str(issues)
 
-        if search_criteria:
-            if args.filter_npg_qc:
-                search_criteria.append(('manual_qc', args.filter_npg_qc))
-                filters['manual_qc'] = args.filter_npg_qc
-            if args.filter_target:
-                search_criteria.append(('target', args.filter_target))
-                filters['target'] = args.filter_target
+            elif args.sample_names or args.fosn:
+                raise NotImplementedError
 
-            print "SEARCH CRITERIA : " + str(search_criteria)
+
+        #if search_criteria:
             # run baton to get the list of files by the search criteria...hmm, or add the sample filter on the top of the study filter?!
-            try:
-                metaquery_results = baton.BatonAPI.query_by_metadata_and_get_results_as_json(search_criteria) # avu_tuple_list
-            except IOError as e:
-                all_problems.append(e)
-
-            fpaths_checksum_and_avus = metadata_utils.iRODSBatonUtils.from_metaquery_results_to_fpaths_and_avus(metaquery_results)  # this is a dict of key = fpath, value = dict({'avus':[], 'checksum':str})
-
-            print "NR OF FPATHS FOUND: " + str(len(fpaths_checksum_and_avus))
 
         # if args.samples:
         #     samples = args.samples
@@ -307,18 +336,6 @@ def main():
 
          ########################## TESTS #####################
         # PREPARING FOR THE TESTS
-        diff_files_problems = []
-        study_obj = None
-        if args.study_internal_id:
-            study_obj = query_study(internal_id=args.study_internal_id)
-        if args.study_name:
-            study_obj = query_study(name=args.study_name)
-        if args.study_acc_nr:
-            study_obj = query_study(accession_number=args.study_acc_nr)
-        if study_obj:
-            issues = check_same_files_by_diff_study_ids(study_obj.name, study_obj.internal_id, study_obj.accession_number, filters)
-            diff_files_problems.extend(issues)
-        print "Ran check on the list of files retrieved by each study identifier -- result is: " + str(diff_files_problems)
 
 
         for fpath, meta_dict in fpaths_checksum_and_avus.items():
@@ -353,6 +370,10 @@ def main():
 
             all_i_studies_by_names.update(i_meta.studies.get('name'))
             all_i_studies_by_egaids.update(i_meta.studies.get('accession_number'))
+
+
+            all_h_samples.update(h_meta.samples['accession_number'])
+
 
 
             ## Filter by manual_qc:
@@ -460,7 +481,7 @@ def main():
         print "NUMBER OF FILES WITH ISSUES: " + str(len(issues_per_file))
         print "NUMBER OF SAMPLES (by name) - IRODS FOUND: " + str(len(all_i_samples_by_names))
         print "NUMBER OF SAMPLES (by acc_nr) - IRODS FOUND: " + str(len(all_i_samples_by_egaids))
-        print "NUMBER OF SAMPLES (by name) - HEADER FOUND: " + str(len(all_h_samples))
+        print "NUMBER OF SAMPLES (by name) - HEADER FOUND: " + str(all_h_samples)
 
         # PRINT OUTPUT:
         # FILES EXCLUDED:
@@ -643,8 +664,8 @@ def main():
             #     files_from_fofn = read_file_into_list(args.fofn)
             #     fpaths = files_from_fofn
             #
-            # if args.files:
-            #     fpaths = args.files
+            # if args.fpaths_irods:
+            #     fpaths = args.fpaths_irods
             #
             # for f in fpaths:
             #     metadata_per_file = get_irods_metadata_with_baton(f)
@@ -724,8 +745,8 @@ def main_imeta():
         files_from_fofn = read_file_into_list(args.fofn)
         fpaths = files_from_fofn
 
-    if args.files:
-        fpaths = args.files
+    if args.fpaths_irods:
+        fpaths = args.fpaths_irods
 
     # per samples:
     if args.fosn:
