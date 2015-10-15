@@ -43,17 +43,17 @@ def parse_args():
     input_grp.add_argument('--fpath_irods',
                            required=False,
                            nargs='*',
-                           dest='files',
+                           dest='fpaths_irods',
                            #action='append',
                            help='List of file paths in iRODS')
     input_grp.add_argument('--fofn',
                            required=False,
                            help='The path to a fofn containing file paths from iRODS '
                              'for the files one wants to run tests on')
-    input_grp.add_argument('--sample',
+    input_grp.add_argument('--sample_names',
                            required=False,
                            nargs='*',
-                           dest='samples',
+                           dest='sample_names',
                            help='Test all the files for this sample', action='append')
     input_grp.add_argument('--file_of_samples',
                            required=False,
