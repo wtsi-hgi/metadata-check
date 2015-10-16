@@ -53,7 +53,6 @@ class BatonAPI:
         p = subprocess.Popen([config.BATON_METAQUERY_BIN_PATH, '--zone', zone, '--obj', '--checksum', '--avu', '--acl'],   # not necessary to add also '--checksum' if --replicate is there
                              stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE) # ,stdout=temp, stderr=subprocess.STDERR
         out, err = p.communicate(input=query_as_json)
-        print "OUT: " + str(out) + "ERR " + str(err)
         if err:
             #print "ERROR REPORT: " + str(err)
             raise IOError("Some irods error : " + str(err))
@@ -76,6 +75,20 @@ class BatonAPI:
 
 
     @classmethod
+    def _get_baton_list_metadata_for_list_of_files_result(cls, list_of_data_obj_as_json):
+        p = subprocess.Popen([config.BATON_LIST_BIN_PATH, '--avu', '--acl', '--checksum'],     # not necessary to add also '--checksum' if --replicate is there
+                             stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.STDOUT)
+        for f in list_of_data_obj_as_json:
+            p.stdin.write(f)
+        out, err = p.communicate()
+        #print "OUT: " + str(out) + "ERR " + str(err)
+        if err:
+            raise IOError("Some irods error : " + str(err))
+        return out
+
+
+
+    @classmethod
     def query_by_metadata_and_get_results_as_json(cls, avu_tuple_list, zone=constants.IRODS_SEQ_ZONE, operator='='):
         """
         THis method is querying iRODS using BATON in order to get the metadata for the files (data objects) that match the search criteria.
@@ -94,7 +107,7 @@ class BatonAPI:
 
 
     @classmethod
-    def list_file_metadata(cls, fpath):
+    def get_file_metadata(cls, fpath):
         """
         :param fpath:
         :return:
@@ -102,5 +115,19 @@ class BatonAPI:
         fpath_as_dict = cls._split_path_in_data_obj_and_coll(fpath)
         irods_fpath_dict_as_json = json.dumps(fpath_as_dict)
         return cls._get_baton_list_metadata_result(irods_fpath_dict_as_json)
+
+
+    @classmethod
+    def get_all_files_metadata(cls, fpaths):
+        """
+        :param fpath:
+        :return:
+        """
+        list_of_fpaths_as_json = []
+        for f in fpaths:
+            fpath_as_dict = cls._split_path_in_data_obj_and_coll(f)
+            irods_fpath_dict_as_json = json.dumps(fpath_as_dict)
+            list_of_fpaths_as_json.append(irods_fpath_dict_as_json)
+        return cls._get_baton_list_metadata_for_list_of_files_result(list_of_fpaths_as_json)
 
 
