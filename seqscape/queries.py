@@ -31,7 +31,6 @@ from com import wrappers
 
 #def connect(host, port, database, user, password=None, dialect='mysql'):
     #db_url = dialect + "://" + user + ":@" + host + ":" + str(port) + "/" + database
-print "IN seqscape queries:..."
 db_url = 'mysql://' + str(config.SEQSC_USER) + ":@" + str(config.SEQSC_HOST) + ":" + str(config.SEQSC_PORT)+ "/" + str(config.SEQSC_DB_NAME)
 engine = create_engine(db_url)
 #    return engine
