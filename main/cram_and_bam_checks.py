@@ -232,9 +232,16 @@ def get_files_and_metadata_by_metadata(search_criteria):
     print "NR OF FPATHS FOUND: " + str(len(fpaths_checksum_and_avus))
     return fpaths_checksum_and_avus
 
-def get_files_and_metadata_by_fpath(fpaths):
-    pass
 
+def get_files_and_metadata_by_fpath(fpaths):
+    fpaths_checksum_and_avus = baton.BatonAPI.get_all_files_metadata(fpaths)
+    fpaths_checksum_and_avus = filter(None, fpaths_checksum_and_avus.split('\n'))
+    print str(fpaths_checksum_and_avus)
+    #fpaths_checksum_and_avus = metadata_utils.iRODSBatonUtils.from_metaquery_results_to_fpaths_and_avus(fpaths_checksum_and_avus)  # this is a dict of key = fpath, value = dict({'avus':[], 'checksum':str})
+    fpaths_checksum_and_avus = metadata_utils.iRODSBatonUtils.from_multi_metaquery_results_to_fpaths_and_avus(fpaths_checksum_and_avus)
+    print "LEN: " + str(type(fpaths_checksum_and_avus))
+    print str(fpaths_checksum_and_avus)
+    return fpaths_checksum_and_avus
 
 
 def is_input_given_by_path(args):
@@ -282,10 +289,9 @@ def main():
         if is_input_given_by_path(args):
             if args.fpaths_irods:
                 fpaths_checksum_and_avus = get_files_and_metadata_by_fpath(args.fpaths_irods)
-                print "avus FOUND: " + str(fpaths_checksum_and_avus)
             elif args.fofn:
                 fpaths_irods = read_file_into_list(args.fofn)
-                fpaths_checksum_and_avus = get_files_and_metadata_by_fpath(args.fpaths_irods)
+                fpaths_checksum_and_avus = get_files_and_metadata_by_fpath(fpaths_irods)
         elif is_input_given_by_meta(args):
             search_criteria = extract_meta_search_criteria(args)
             if args.study_name or args.study_acc_nr or args.study_internal_id:
@@ -373,6 +379,8 @@ def main():
 
 
             all_h_samples.update(h_meta.samples['accession_number'])
+            all_h_samples.update(h_meta.samples['name'])
+            all_h_samples.update(h_meta.samples['internal_id'])
 
 
 
@@ -478,10 +486,12 @@ def main():
 
             all_problems.extend(problems)
 
-        print "NUMBER OF FILES WITH ISSUES: " + str(len(issues_per_file))
-        print "NUMBER OF SAMPLES (by name) - IRODS FOUND: " + str(len(all_i_samples_by_names))
-        print "NUMBER OF SAMPLES (by acc_nr) - IRODS FOUND: " + str(len(all_i_samples_by_egaids))
-        print "NUMBER OF SAMPLES (by name) - HEADER FOUND: " + str(all_h_samples)
+        print "NUMBER OF FILES WITH ISSUES: " + str(issues_per_file)
+        print "NUMBER OF SAMPLES (by name) - IRODS FOUND: " + str(all_i_samples_by_names)
+        print "NUMBER OF SAMPLES (by acc_nr) - IRODS FOUND: " + str(all_i_samples_by_egaids)
+        print "NUMBER OF SAMPLES (by whatever id is in the header) - HEADER FOUND: " + str(all_h_samples)
+        print "NUMBER OF STUDIES (acc nr) - IRODS:  " + str(all_i_studies_by_egaids)
+        print "NUMBER OF STUDIES (name) - IRODS:  " + str(all_i_studies_by_names)
 
         # PRINT OUTPUT:
         # FILES EXCLUDED:
@@ -504,9 +514,13 @@ def main():
 
 
         ######## OUTPUT ENTITIES #######################
-        study_name_as_ascii = args.study
-        if args.study:
-            study_name_as_ascii = ''.join([i if (ord(i) < 128 and ord(i) >= 65) or i == '_' else '' for i in args.study])
+        study_name_as_ascii = 'entities'
+        if args.study_name:
+            study_name_as_ascii = ''.join([i if (ord(i) < 128 and ord(i) >= 65) or i == '_' else '' for i in args.study_name])
+        elif args.study_acc_nr:
+            study_name_as_ascii = args.study_acc_nr
+        elif args.study_internal_id:
+            study_name_as_ascii = args.study_internal_id
 
         out_dir = ''
         if args.entities_out_dir:
