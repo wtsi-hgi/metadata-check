@@ -279,10 +279,40 @@ def must_output_entities(args):
     return False
 
 
+def print_errors(errors_list, issues_per_file):
+    #warnings = defaultdict(list) # type : files
+    warnings = []
+    errors = {}
+    warning_types = [error_types.TestImpossibleToRunError]   # TODO: organize the errors in warnings and errors (here I assumed the TestIm err has the attribute test_name)
+    for fpath, problems in issues_per_file.items():
+        file_pbs = []
+        for pb in problems:
+            if type(pb) in warning_types:
+                #warnings[pb.test_name].append(fpath)
+                warnings.append(pb)
+            elif problems:
+                file_pbs.append(pb)
+        if file_pbs:
+            errors[fpath] = file_pbs
+            #print "File: " + str(fpath) + " has problems: " + str(file_pbs)
+
+    if errors:
+        print "ERRORS: "
+        for fpath, err in errors.items():
+            print "File: " + str(err)
+    if warnings:
+        print "WARNINGS:"
+        for warn in warnings:
+            print str(warn)
+
+        # for warn, files in warnings.items():
+        #     print str(warn) + " - files affected: " + str(files)
+
+
 def main():
     args = arg_parser.parse_args()
 
-    print str(args)
+    #print str(args)
     header_meta_needed = is_header_metadata_needed(args)
     irods_meta_needed = is_irods_metadata_needed(args)  # Is there any scenario in which we don't need the irods meta?
 
@@ -363,7 +393,7 @@ def main():
                 try:
                     header = metadata_utils.HeaderUtils.get_parsed_header_from_irods_file(fpath)
                 except IOError as e:
-                    problems.append(str(e))
+                    problems.append(e)
                 else:
                     h_meta = header_meta_module.HeaderSAMFileMetadata.from_header_to_metadata(header, fpath)
 
@@ -377,25 +407,25 @@ def main():
                 try:
                     i_meta.test_md5_calculated_vs_metadata()
                 except (error_types.WrongMD5Error, error_types.TestImpossibleToRunError) as e:
-                    problems.append(str(e))
+                    problems.append(e)
 
             #if args.test_reference or args.all_tests:
             if args.desired_reference or args.all_tests:
                 try:
                     i_meta.test_reference(args.desired_reference)
                 except (error_types.WrongReferenceError, error_types.TestImpossibleToRunError) as e:
-                    problems.append(str(e))
+                    problems.append(e)
 
             if args.test_filename or args.all_tests:
                 try:
                     i_meta.test_lane_from_fname_vs_metadata()
                 except (error_types.IrodsMetadataAttributeVsFileNameError, error_types.TestImpossibleToRunError) as e:
-                    problems.append(str(e))
+                    problems.append(e)
 
                 try:
                     i_meta.test_run_id_from_fname_vs_metadata()
                 except (error_types.IrodsMetadataAttributeVsFileNameError, error_types.TestImpossibleToRunError) as e:
-                    problems.append(str(e))
+                    problems.append(e)
 
             # TODO : test also the tag
             if args.test_sample or args.all_tests:
@@ -459,11 +489,16 @@ def main():
                         d.fpath = fpath
                     problems.extend(diffs_as_exc)
 
-            print "FILE: " + str(fpath) + " -- PROBLEMS found: " + str(problems)
+            #print "FILE: " + str(fpath) + " -- PROBLEMS found: " + str(problems)
             if problems:
                 issues_per_file[fpath] = problems
 
             all_problems.extend(problems)
+
+
+
+
+        ########## PROVIDE THE OUTPUT BACK TO THE USER ##########################
 
         if wanted_entities_as_output:
             print "NUMBER OF FILES WITH ISSUES: " + str(issues_per_file)
@@ -482,15 +517,20 @@ def main():
         #     for f_excl in files:
         #         str(f_excl)
 
-        print "DIFFERENT FILES RETRIEVED BY QUERYING BY DIFF STUDY IDS: "
+
+        print_errors(all_problems, issues_per_file)
+
+        #print "DIFFERENT FILES RETRIEVED BY QUERYING BY DIFF STUDY IDS: "
         for err in all_problems:
             if type(err) is error_types.DifferentFilesRetrievedByDiffStudyIdsOfSameStudy:
                 print "Number of files retrieved when querying by: " + err.id1 + " and " + err.id2 + " = " + str(len(err.diffs))
 
-
-        # # OUTPUTS
-        if args.fofn_probl:
-            write_list_to_file(issues_per_file.keys(), args.fofn_probl)
+        # for pb in all_problems:
+        #     print "PB Type: " + str(type(pb)) + "PB: " + str(pb)
+        #
+        # # # OUTPUTS
+        # if args.fofn_probl:
+        #     write_list_to_file(issues_per_file.keys(), args.fofn_probl)
 
 
         ######## OUTPUT ENTITIES #######################
