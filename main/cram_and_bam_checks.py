@@ -236,11 +236,8 @@ def get_files_and_metadata_by_metadata(search_criteria):
 def get_files_and_metadata_by_fpath(fpaths):
     fpaths_checksum_and_avus = baton.BatonAPI.get_all_files_metadata(fpaths)
     fpaths_checksum_and_avus = filter(None, fpaths_checksum_and_avus.split('\n'))
-    print str(fpaths_checksum_and_avus)
     #fpaths_checksum_and_avus = metadata_utils.iRODSBatonUtils.from_metaquery_results_to_fpaths_and_avus(fpaths_checksum_and_avus)  # this is a dict of key = fpath, value = dict({'avus':[], 'checksum':str})
     fpaths_checksum_and_avus = metadata_utils.iRODSBatonUtils.from_multi_metaquery_results_to_fpaths_and_avus(fpaths_checksum_and_avus)
-    print "LEN: " + str(type(fpaths_checksum_and_avus))
-    print str(fpaths_checksum_and_avus)
     return fpaths_checksum_and_avus
 
 
@@ -255,6 +252,32 @@ def is_input_given_by_meta(args):
         return True
     return False
 
+def save_metadata(irods_meta, header_dict, output_dict):
+    # populate the samples and libraries for outputting them (in case someone asked for them)
+    output_dict['irods_samples_by_names'].extend(irods_meta.samples.get('name'))
+    output_dict['irods_samples_by_egaids'].extend(irods_meta.samples.get('accession_number'))
+
+    output_dict['irods_libraries_by_names'].extend(irods_meta.libraries.get('name'))
+    output_dict['irods_libraries_by_ids'].extend(irods_meta.libraries.get('internal_id'))
+
+    output_dict['irods_studies_by_names'].extend(irods_meta.studies.get('name'))
+    output_dict['irods_studies_by_egaids'].extend(irods_meta.studies.get('accession_number'))
+
+    output_dict['header_samples'].extend(header_dict.samples['accession_number'])
+    output_dict['header_samples'].extend(header_dict.samples['name'])
+    output_dict['header_samples'].extend(header_dict.samples['internal_id'])
+
+    output_dict['header_libraries'].extend(header_dict.libraries['name'])
+    output_dict['header_libraries'].extend(header_dict.libraries['internal_id'])
+
+
+def must_output_entities(args):
+    if (args.header_sample_ids_file or args.sample_ega_out_file or args.sample_names_out_file or
+        args.library_names_out_file or args.library_ids_out_file or args.header_library_ids_file or
+        args.study_egaids_out_file or args.study_names_out_file or args.entities_out_dir or args.entities_out_file):
+        return True
+    return False
+
 
 def main():
     args = arg_parser.parse_args()
@@ -263,25 +286,10 @@ def main():
     header_meta_needed = is_header_metadata_needed(args)
     irods_meta_needed = is_irods_metadata_needed(args)  # Is there any scenario in which we don't need the irods meta?
 
-    all_h_samples = set()
-    all_h_libraries = set()
-    all_i_samples_by_names = set()
-    all_i_samples_by_egaids = set()
-
-    all_i_libraries_by_ids = set()
-    all_i_libraries_by_names = set()
-
-    all_i_studies_by_egaids = set()
-    all_i_studies_by_names = set()
-
-    # TODO: implement here also the option of getting a list of files as input
-    # in which case use:metadata_utils.BatonStuff.from_metalist_results_to_avus
-
     all_problems = []
     issues_per_file = {}
-    # GET THE FILES AND METADATA:
-    if irods_meta_needed:
 
+    if irods_meta_needed:
         filters = extract_filters_from_args(args)
 
         # QUERY BY AVUS and get AVUS for all the data objects found:
@@ -298,20 +306,10 @@ def main():
                 try:
                     fpaths_checksum_and_avus = get_files_and_metadata_by_metadata(search_criteria)
                 except IOError as e:
-                    #all_problems.append(e)
                     print "iRODS error when retrieving metadata: " + str(e)
                     sys.exit(0)
                 else:
-                    # study_obj = None
-                    # if args.study_internal_id:
-                    #     study_obj = query_study(internal_id=args.study_internal_id)
-                    # if args.study_name:
-                    #     study_obj = query_study(name=args.study_name)
-                    # if args.study_acc_nr:
-                    #     study_obj = query_study(accession_number=args.study_acc_nr)
-                    # if study_obj:
                     issues = check_same_files_by_diff_study_ids(args.study_name, args.study_internal_id, args.study_acc_nr, filters)
-                    #diff_files_problems.extend(issues)
                     all_problems.extend(issues)
                     print "Ran check on the list of files retrieved by each study identifier -- result is: " + str(issues)
 
@@ -343,6 +341,8 @@ def main():
          ########################## TESTS #####################
         # PREPARING FOR THE TESTS
 
+        wanted_entities_as_output = must_output_entities(args)
+        all_entities_as_output = defaultdict(list)
 
         for fpath, meta_dict in fpaths_checksum_and_avus.items():
             problems = []
@@ -367,28 +367,9 @@ def main():
                 else:
                     h_meta = header_meta_module.HeaderSAMFileMetadata.from_header_to_metadata(header, fpath)
 
-            # populate the samples and libraries for outputting them (in case someone asked for them)
-            all_i_samples_by_names.update(i_meta.samples.get('name'))
-            all_i_samples_by_egaids.update(i_meta.samples.get('accession_number'))
 
-            all_i_libraries_by_names.update(i_meta.libraries.get('name'))
-            all_i_libraries_by_ids.update(i_meta.libraries.get('internal_id'))
-
-            all_i_studies_by_names.update(i_meta.studies.get('name'))
-            all_i_studies_by_egaids.update(i_meta.studies.get('accession_number'))
-
-
-            all_h_samples.update(h_meta.samples['accession_number'])
-            all_h_samples.update(h_meta.samples['name'])
-            all_h_samples.update(h_meta.samples['internal_id'])
-
-
-
-            ## Filter by manual_qc:
-            if not args.filter_npg_qc is None:
-                if args.filter_npg_qc != i_meta.npg_qc:
-                    continue
-
+            if wanted_entities_as_output:
+                save_metadata(i_meta, h_meta, all_entities_as_output)
 
             ####### RUN THE TESTS: #########
             # MD5 tests:
@@ -398,7 +379,6 @@ def main():
                 except (error_types.WrongMD5Error, error_types.TestImpossibleToRunError) as e:
                     problems.append(str(e))
 
-            # TODO - not working properly
             #if args.test_reference or args.all_tests:
             if args.desired_reference or args.all_tests:
                 try:
@@ -417,8 +397,7 @@ def main():
                 except (error_types.IrodsMetadataAttributeVsFileNameError, error_types.TestImpossibleToRunError) as e:
                     problems.append(str(e))
 
-                # TODO : test also the tag
-
+            # TODO : test also the tag
             if args.test_sample or args.all_tests:
                 if 'all' in args.test_sample or args.all_tests:
                     issues = check_irods_vs_header_metadata(fpath, h_meta.samples, i_meta.samples, 'sample')
@@ -486,12 +465,13 @@ def main():
 
             all_problems.extend(problems)
 
-        print "NUMBER OF FILES WITH ISSUES: " + str(issues_per_file)
-        print "NUMBER OF SAMPLES (by name) - IRODS FOUND: " + str(all_i_samples_by_names)
-        print "NUMBER OF SAMPLES (by acc_nr) - IRODS FOUND: " + str(all_i_samples_by_egaids)
-        print "NUMBER OF SAMPLES (by whatever id is in the header) - HEADER FOUND: " + str(all_h_samples)
-        print "NUMBER OF STUDIES (acc nr) - IRODS:  " + str(all_i_studies_by_egaids)
-        print "NUMBER OF STUDIES (name) - IRODS:  " + str(all_i_studies_by_names)
+        if wanted_entities_as_output:
+            print "NUMBER OF FILES WITH ISSUES: " + str(issues_per_file)
+            print "NUMBER OF SAMPLES (by name) - IRODS FOUND: " + str(all_entities_as_output['irods_samples_by_names'])
+            print "NUMBER OF SAMPLES (by acc_nr) - IRODS FOUND: " + str(all_entities_as_output['irods_samples_by_egaids'])
+            print "NUMBER OF SAMPLES (by whatever id is in the header) - HEADER FOUND: " + str(all_entities_as_output['header_samples'])
+            print "NUMBER OF STUDIES (acc nr) - IRODS:  " + str(all_entities_as_output['irods_studies_by_egaids'])
+            print "NUMBER OF STUDIES (name) - IRODS:  " + str(all_entities_as_output['irods_studies_by_names'])
 
         # PRINT OUTPUT:
         # FILES EXCLUDED:
@@ -522,6 +502,7 @@ def main():
         elif args.study_internal_id:
             study_name_as_ascii = args.study_internal_id
 
+        # TODO: add try - except to test if the user has permission to write to this dir
         out_dir = ''
         if args.entities_out_dir:
             out_dir = args.entities_out_dir
@@ -545,58 +526,49 @@ def main():
         ############ OUTPUT HEADER METADATA ############
         # outputting HEADER samples:
         if args.header_sample_ids_file:
-            #write_list_to_file(all_h_samples, args.header_sample_ids_file)
-            write_list_to_file(all_h_samples, HEADER_SAMPLE_IDS_FILE)
+            write_list_to_file(all_entities_as_output['header_samples'], HEADER_SAMPLE_IDS_FILE)
 
         # outputting HEADER libraries:
         if args.header_library_ids_file:
-            #write_list_to_file(all_h_libraries, args.header_library_ids_file)
-            write_list_to_file(all_h_libraries, HEADER_LIBRARY_IDS_FILE)
+            write_list_to_file(all_entities_as_output['header_libraries'], HEADER_LIBRARY_IDS_FILE)
 
         ############ OUTPUT IRODS METADATA ###############
         # outputting IRODS samples by EGA ID:
         if args.sample_ega_out_file:
-    #        write_list_to_file(all_i_samples_by_egaids, args.sample_ega_out_file)
-            write_list_to_file(all_i_samples_by_egaids, IRODS_SAMPLE_EGAIDS_FILE)
-
+            write_list_to_file(all_entities_as_output['irods_samples_by_egaids'], IRODS_SAMPLE_EGAIDS_FILE)
 
         # outputting iRODS samples by name
         if args.sample_names_out_file:
-    #        write_list_to_file(all_i_samples_by_names,args.sample_names_out_file)
-            write_list_to_file(all_i_samples_by_names, IRODS_SAMPLE_NAMES_FILE)
+            write_list_to_file(all_entities_as_output['irods_samples_by_names'], IRODS_SAMPLE_NAMES_FILE)
 
         # outputting iRODS libraries by id
         if args.library_ids_out_file:
-    #        write_list_to_file(all_i_libraries_by_ids, args.library_ids_out_file)
-            write_list_to_file(all_i_libraries_by_ids, IRODS_LIBRARY_IDS_FILE)
+            write_list_to_file(all_entities_as_output['irods_libraries_by_ids'], IRODS_LIBRARY_IDS_FILE)
 
         #outputting iRODS libraries by name
         if args.library_names_out_file:
-    #        write_list_to_file(all_i_libraries_by_names,args.library_names_out_file)
-            write_list_to_file(all_i_libraries_by_names, IRODS_LIBRARY_NAMES_FILE)
+            write_list_to_file(all_entities_as_output['irods_libraries_by_names'], IRODS_LIBRARY_NAMES_FILE)
 
         ##### STUDIES #####
         # outputting IRODS studies by ega id:
         if args.study_egaids_out_file:
-    #        write_list_to_file(all_i_studies_by_egaids, args.study_egaids_out_file)
-            write_list_to_file(all_i_studies_by_egaids, IRODS_STUDY_EGAIDS_FILE)
+            write_list_to_file(all_entities_as_output['irods_studies_by_egaids'], IRODS_STUDY_EGAIDS_FILE)
 
         # outputting IRODS studies by name:
         if args.study_names_out_file:
-    #        write_list_to_file(all_i_studies_by_names, args.study_names_out_file)
-            write_list_to_file(all_i_studies_by_names, IRODS_STUDY_NAMES_FILE)
+            write_list_to_file(all_entities_as_output['irods_studies_by_names'], IRODS_STUDY_NAMES_FILE)
 
 
         ##################  OUTPUTTING ALL THE ENTITIES ########################
         if args.entities_out_file:
-            write_list_to_file(all_h_samples, ALL_ENTITIES_FILE, header="HEADER SAMPLES")
-            write_list_to_file(all_h_libraries, ALL_ENTITIES_FILE, header="HEADER LIBRARIES")
-            write_list_to_file(all_i_samples_by_egaids, ALL_ENTITIES_FILE, header="IRODS SAMPLES BY EGA ID")
-            write_list_to_file(all_i_samples_by_names, ALL_ENTITIES_FILE, header="IRODS SAMPLES BY NAME")
-            write_list_to_file(all_i_libraries_by_ids, ALL_ENTITIES_FILE, header="IRODS LIBRARIES BY ID")
-            write_list_to_file(all_i_libraries_by_names, ALL_ENTITIES_FILE, header="IRODS LIBRARIES BY NAME")
-            write_list_to_file(all_i_studies_by_egaids, ALL_ENTITIES_FILE, header="IRODS STUDIES BY EGA ID")
-            write_list_to_file(all_i_studies_by_names, ALL_ENTITIES_FILE, header="IRODS STUDIES BY NAME")
+            write_list_to_file(all_entities_as_output['header_samples'], ALL_ENTITIES_FILE, header="HEADER SAMPLES")
+            write_list_to_file(all_entities_as_output['header_libraries'], ALL_ENTITIES_FILE, header="HEADER LIBRARIES")
+            write_list_to_file(all_entities_as_output['irods_samples_by_egaids'], ALL_ENTITIES_FILE, header="IRODS SAMPLES BY EGA ID")
+            write_list_to_file(all_entities_as_output['irods_samples_by_names'], ALL_ENTITIES_FILE, header="IRODS SAMPLES BY NAME")
+            write_list_to_file(all_entities_as_output['irods_libraries_by_ids'], ALL_ENTITIES_FILE, header="IRODS LIBRARIES BY ID")
+            write_list_to_file(all_entities_as_output['irods_libraries_by_names'], ALL_ENTITIES_FILE, header="IRODS LIBRARIES BY NAME")
+            write_list_to_file(all_entities_as_output['irods_studies_by_egaids'], ALL_ENTITIES_FILE, header="IRODS STUDIES BY EGA ID")
+            write_list_to_file(all_entities_as_output['irods_studies_by_names'], ALL_ENTITIES_FILE, header="IRODS STUDIES BY NAME")
 
 
         #### OUTPUTTING the files by type ############
@@ -646,53 +618,7 @@ def main():
                 print str(error)
 
 
-
-
-
-
-            # separate files from files_and_metadata_irods by file, and build a list of irodsMetadata objects ...
-
-        #     if irods_meta_needed:
-        #         irods_avus = metadata_utils.iRODSiCmdsUtils.retrieve_irods_avus(f)
-        #         avu_issues = irods_meta_module.IrodsSeqFileMetadata.run_avu_count_checks(f, irods_avus)
-        #         problems.extend(avu_issues)
-        #
-        #         i_meta = irods_meta_module.IrodsSeqFileMetadata.from_avus_to_irods_metadata(irods_avus, f)
-
-
-
             # TODO:  Remove duplicates for files..
-
-
-            # irods_data = get_metadata_for_all_files(search_criteria)
-            # metadata_per_file = get_meta_for_each_file(irods_data)  #split_meta_per_file# outputs a list of irods_metadata objects, one for each file
-            # apply_filters(metadata_per_file)
-            # for f in metadata_per_file:
-            #     run tests
-            #     add_issues_for_file_to_all_issues_container
-            #
-            #
-            # # GET the AVUs for all the data objects found:
-            # fpaths = []
-            # if args.fofn:
-            #     files_from_fofn = read_file_into_list(args.fofn)
-            #     fpaths = files_from_fofn
-            #
-            # if args.fpaths_irods:
-            #     fpaths = args.fpaths_irods
-            #
-            # for f in fpaths:
-            #     metadata_per_file = get_irods_metadata_with_baton(f)
-            #     apply_filters(metadata_per_file) # still the case?
-            #
-            #
-            #
-            # irods_avus = metadata_utils.iRODSUtils.retrieve_irods_avus(f)
-            # avu_issues = irods_meta_module.IrodsSeqFileMetadata.run_avu_count_checks(f, irods_avus)
-            # problems.extend(avu_issues)
-            #
-            # i_meta = irods_meta_module.IrodsSeqFileMetadata.from_avus_to_irods_metadata(irods_avus, f)
-            #
 
 
 
@@ -718,16 +644,19 @@ def is_header_metadata_needed(args):
 def is_irods_metadata_needed(args):
     irods_meta_needed = False
     if args.all_tests:
-        irods_meta_needed = True
+        #irods_meta_needed = True
+        return True
     else:
         if any([args.test_sample, args.test_library, args.test_study, args.desired_reference, args.test_md5, args.test_filename, args.all_tests, args.config_file]):
-            irods_meta_needed = True
+#            irods_meta_needed = True
+            return True
         # check by wanted output:
         if any([args.sample_ega_out_file, args.sample_names_out_file, args.bad_sample_egaids_out_file,
                 args.bad_sample_names_out_file, args.library_names_out_file, args.library_ids_out_file,
                 args.bad_library_names_out_file, args.bad_library_ids_out_file, args.study_names_out_file,
                 args.study_egaids_out_file, args.entities_out_dir, args.entities_out_file]):
-            irods_meta_needed = True
+#            irods_meta_needed = True
+            return True
     return irods_meta_needed
 
 
