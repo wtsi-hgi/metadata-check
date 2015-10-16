@@ -27,6 +27,8 @@ import constants
 def parse_args():
 
     parser = argparse.ArgumentParser(prog='Metadata Checks')
+    parser.add_argument("-v", "--verbosity", action="count",
+                        help="increase output verbosity")
     input = parser.add_argument_group('INPUT',
                                             'Choose one or more ways of getting the list of files to check'
     )
@@ -235,22 +237,23 @@ def parse_args():
                                         help='Include in the output also a list of samples names '
                                              'as they appears in the tests requested'
     )
-    additional_outputs_grp.add_argument('--output_only_bad_samples_by_ega_id',
-                                        #nargs='?',
-                                        action='store_true',
-                                        dest='bad_sample_egaids_out_file',
-                                        required=False,
-                                        help='Include in the output also a list of samples names '
-                                             'as they appears in the tests requested'
-    )
-    additional_outputs_grp.add_argument('--output_only_bad_samples_by_name',
-                                        #nargs='?',
-                                        action='store_true',
-                                        dest='bad_sample_names_out_file',
-                                        required=False,
-                                        help='Include in the output also a list of samples names '
-                                             'as they appears in the tests requested'
-    )
+    # additional_outputs_grp.add_argument('--output_only_bad_samples_by_ega_id',
+    #                                     #nargs='?',
+    #                                     action='store_true',
+    #                                     dest='bad_sample_egaids_out_file',
+    #                                     required=False,
+    #                                     help='Include in the output also a list of samples names '
+    #                                          'as they appears in the tests requested'
+    # )
+    # additional_outputs_grp.add_argument('--output_only_bad_samples_by_name',
+    #                                     #nargs='?',
+    #                                     action='store_true',
+    #                                     dest='bad_sample_names_out_file',
+    #                                     required=False,
+    #                                     help='Include in the output also a list of samples names '
+    #                                          'as they appears in the tests requested'
+    # )
+
     additional_outputs_grp.add_argument('--output_libraries_by_name',
                                         #nargs='?',
                                         action='store_true',
@@ -278,23 +281,23 @@ def parse_args():
                                              'as they appear in the tests requested'
     )
 
-    additional_outputs_grp.add_argument('--output_only_bad_libraries_by_name',
-                                        #nargs='?',
-                                        action='store_true',
-                                        dest='bad_library_names_out_file',
-                                        required=False,
-                                        help='Include in the output also a list of problematic libraries by names '
-                                             'as they appear in the tests requested'
-    )
-
-    additional_outputs_grp.add_argument('--output_only_bad_libraries_by_id',
-                                        #nargs='?',
-                                        action='store_true',
-                                        dest='bad_library_ids_out_file',
-                                        required=False,
-                                        help='Include in the output a list of problematic libraries by id '
-                                             'as they appear in the tests requested'
-    )
+    # additional_outputs_grp.add_argument('--output_only_bad_libraries_by_name',
+    #                                     #nargs='?',
+    #                                     action='store_true',
+    #                                     dest='bad_library_names_out_file',
+    #                                     required=False,
+    #                                     help='Include in the output also a list of problematic libraries by names '
+    #                                          'as they appear in the tests requested'
+    # )
+    #
+    # additional_outputs_grp.add_argument('--output_only_bad_libraries_by_id',
+    #                                     #nargs='?',
+    #                                     action='store_true',
+    #                                     dest='bad_library_ids_out_file',
+    #                                     required=False,
+    #                                     help='Include in the output a list of problematic libraries by id '
+    #                                          'as they appear in the tests requested'
+    # )
 
     additional_outputs_grp.add_argument('--output_studies_by_ega_id',
                                         #nargs='?',
@@ -339,12 +342,12 @@ def parse_args():
     #                                          'found in the tests ran'
     # )
 
-    additional_outputs_grp.add_argument('--output_files_filtered_out',
-                                        nargs='?',
-                                        dest='files_filtered_out',
-                                        required=False,
-                                        help='Include all the files filtered out as a result of applying some fiters when querying for data'
-                                        )
+    # additional_outputs_grp.add_argument('--output_files_filtered_out',
+    #                                     nargs='?',
+    #                                     dest='files_filtered_out',
+    #                                     required=False,
+    #                                     help='Include all the files filtered out as a result of applying some fiters when querying for data'
+    #                                     )
 
     additional_outputs_grp.add_argument('--include_tests_not_exec',
                                         action='store_true',
