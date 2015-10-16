@@ -186,9 +186,29 @@ class iRODSBatonUtils(iRODSUtils):
         return do_avus
 
 
+    @classmethod
+    def _parse_metaquery_result(cls, metaquery_result, fields_list):
+        """
+        :param metaquery_result:  metaquery element to parse (usually a dict)
+        :param fields_list: the fields of interest to extract from the json
+        :return:
+        """
+        result = []
+        coll, do = None, None
+        for item, item_val in metaquery_result.items():
+            if str(item) == 'collection':
+                coll = item_val
+            elif str(item) == 'data_object':
+                do = item_val
+            else:
+                avu = data_types.MetaAVU(attribute=str(item), value=str(item_val))
+                result.append(avu)
+        #     if item in fields_list:
+        #         result[item] = item_val
+        return result, coll, do
 
     @classmethod
-    def from_metaquery_results_to_fpaths_and_avus(cls, search_results_json, filters=[]):
+    def from_metaquery_results_to_fpaths_and_avus(cls, search_results_json):
         """
             This method takes as parameter the json result of a metaquery containing avus and checksum,
             and turns the json into a dict having as key a fpath, and as value: dict of
@@ -197,7 +217,6 @@ class iRODSBatonUtils(iRODSUtils):
         :param filters: optional (not implemented yet)
         :return: dict key = fpath, value = {'avus' : [MetaAVU(), MetaAVU()], 'checksum' : 'the_result_of_ichksum'}
         """
-        print "SEARCH results - for ppl without permissions: " + str(search_results_json)
         files_with_chksum_and_avus = defaultdict(dict)
         for data_obj in json.loads(search_results_json):
             coll = None
@@ -220,87 +239,43 @@ class iRODSBatonUtils(iRODSUtils):
                 # sometimes there is an error here!!!!!
 
                 # TODO: can add also: 1) data access checks, 2) replicate checksum checks, plus verify there are actually 2 replicas of each DO
+            # print "PARsed do: " + str(parsed_do) + " coll = " + str(coll) + " do = " + str(do)
+            # fpath = os.path.join(coll, do)
+            # files_with_chksum_and_avus[fpath] = parsed_do
             fpath = os.path.join(coll, fname)
             files_with_chksum_and_avus[fpath] = {'avus' : do_avus, 'checksum' : do_checksum}
         return files_with_chksum_and_avus
 
-
-
-
-#            file_meta = irods_metadata.IrodsSeqFileMetadata()
-            # sample_names = []
-            # sample_ids = []
-            # sample_acc_nr = []
-            #
-            # library_names = []
-            # library_ids = []
-            #
-            # study_names = []
-            # study_ids = []
-            # study_acc_nr = []
-
-                    #
-                    # for avu in do_item_val:
-                    #     if avu['attribute'] == 'sample':
-                    #         sample_names.append(avu['value'])
-                    #     elif avu['attribute'] == 'sample_id':
-                    #         sample_ids.append(avu['value'])
-                    #     elif avu['attribute'] == 'sample_accession_number':
-                    #         sample_acc_nr.append(avu['value'])
-                    #
-                    #     elif avu['attribute'] == 'library':
-                    #         library_names.append(avu['value'])
-                    #     elif avu['attribute'] == 'library_id':
-                    #         library_ids.append(avu['value'])
-                    #
-                    #     elif avu['attribute'] == 'study':
-                    #         study_names.append(avu['value'])
-                    #     elif avu['attribute'] == 'study_id':
-                    #         study_ids.append(avu['value'])
-                    #     elif avu['attribute'] == 'study_accession_number':
-                    #         study_acc_nr.append(avu['value'])
-                    #
-                    #     elif avu['attribute'] == 'md5':
-                    #         file_meta.md5 = avu['value']
-                    #     elif avu['attribute'] == 'npg_qc':
-                    #         file_meta.npg_qc == avu['value']
-                    #     elif avu['attribute'] == 'target':
-                    #         file_meta.target == avu['target']
-                    #     elif avu['attribute'] == 'id_run':
-                    #         file_meta.run_id = avu['value']
-                    #     elif avu['attribute'] == 'lane':
-                    #         file_meta.lane_id == avu['value']
-                    #     elif avu['attribute'] == 'reference':
-                    #         file_meta.reference = irods_metadata.IrodsSeqFileMetadata.extract_reference_name_from_ref_path(avu['value'])
-
-        # irods_samples = {'name': irods_sample_names_list,
-        #                  'accession_number': irods_sample_acc_nr_list,
-        #                  'internal_id': irods_sample_internal_id_list
-        # }
-
-
-
-#         if item == 'avus':
-#             for avu in val:
-#                 print "Attribute = " + str(avu['attribute']) + ", value = " + str(avu['value'])
-
-
-    # def __init__(self, fpath, fname, samples=[], libraries=[], studies=[], md5=None,
-    #              ichksum_md5=None, reference=None, run_id=None, lane_id=None, npg_qc=None, target=None):
-    #
-        # self.fname = fname
-        # self.fpath = fpath
-        # self.samples = samples
-        # self.libraries = libraries
-        # self.studies = studies
-        # self.md5 = md5
-        # self.ichksum_md5 = ichksum_md5
-        # self.reference = reference
-        # self.run_id = run_id
-        # self.lane_id = lane_id
-        # self.npg_qc = npg_qc
-        # self.target = target
-
+    @classmethod
+    def from_multi_metaquery_results_to_fpaths_and_avus(cls, search_results_json_list):
+        """
+            This method takes as parameter the json result of a metaquery containing avus and checksum,
+            and turns the json into a dict having as key a fpath, and as value: dict of
+            {'avus' : [MetaAVU(), MetaAVU()], 'checksum' : 'the_result_of_ichksum'}
+        :param search_results_json_list: a list of json documents, one for each fpath that was queried for
+        :param filters: optional (not implemented yet)
+        :return: dict key = fpath, value = {'avus' : [MetaAVU(), MetaAVU()], 'checksum' : 'the_result_of_ichksum'}
+        """
+        results = {}
+        for json_doc in search_results_json_list:
+            do_avus = []
+            #file_with_checksum_and_avu = cls.from_metaquery_results_to_fpaths_and_avus(json_doc)
+            for do_item, do_item_val in json.loads(json_doc).items():
+#                print "DATA obj item: " + str(do_item)
+                if do_item == 'collection':
+                    coll = do_item_val
+                elif do_item == 'data_object':
+                    fname = do_item_val
+                elif do_item == 'avus':
+                    for avu in do_item_val:
+                        avu_obj = data_types.MetaAVU(attribute=str(avu['attribute']), value=str(avu['value']))  # MetaAVU = namedtuple('MetaAVU', ['attribute', 'value'])    # list of attribute-value tuples
+                        do_avus.append(avu_obj)
+                elif do_item == 'checksum':
+                    do_checksum = str(do_item_val)
+            fpath = os.path.join(coll, fname)
+            results[fpath] = {'avus': do_avus, 'checksum': do_checksum}
+            #results.append(file_with_checksum_and_avu)
+        return results
 
 
 class iRODSiCmdsUtils(iRODSUtils):
