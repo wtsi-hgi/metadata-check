@@ -167,32 +167,39 @@ def parse_args():
     # )
 
     # OUTPUT: how to output the results?
-    # out = parser.add_argument_group('OUTPUT FORMAT', 'What output to return and how', )
-    # output_grp = out.add_mutually_exclusive_group(required=True)
-    # output_grp.add_argument('--output_as_json',
-    #                         nargs='?',
-    #                         dest='out_file',
-    #                         #default='stdout',
-    #                         required=False,
-    #                         help='write the output as json')
-    #
-    # output_grp.add_argument('--output_as_report',
-    #                         nargs='?',
-    #                         dest='out_file',
-    #                         #default='stdout',
-    #                         required=False,
-    #                         help='write the output as a text report')
+    out = parser.add_argument_group('OUTPUT FORMAT', 'What output to return and how', )
+    output_grp = out.add_mutually_exclusive_group()    #(required=True)
+    output_grp.add_argument('--output_as_json',
+                            nargs='?',
+                            dest='out_file_json',
+                            #default='stdout',
+                            required=False,
+                            help='write the output as json')
+
+    output_grp.add_argument('--output_as_report',
+                            nargs='?',
+                            dest='out_file',
+                            default='output.txt',
+                            #default='stdout',
+                            required=False,
+                            help='write the output as a text report')
 
 
     # ADDITIONALS:
     additional_outputs_grp = parser.add_argument_group('INCLUDE IN OUTPUT', 'What to include in the output')
-    additional_outputs_grp.add_argument('--output_file_count', action='store_true')
-    additional_outputs_grp.add_argument('--output_problematic_files',
-                                        dest='fofn_probl',
+    additional_outputs_grp.add_argument('--dump_meta',
+                                        dest='meta_dir',
                                         required=False,
-                                        help='Write the list of files with problems to this file')
+                                        help='Dump all the metadata extracted to the directory given as parameter'
+                                        )
 
-    additional_outputs_grp.add_argument('--output_filenames_by_type',
+    # additional_outputs_grp.add_argument('--output_file_count', action='store_true')
+    # additional_outputs_grp.add_argument('--output_problematic_files',
+    #                                     dest='fofn_probl',
+    #                                     required=False,
+    #                                     help='Write the list of files with problems to this file')
+    #
+    additional_outputs_grp.add_argument('--dump_fnames_by_type',
                                         #default='report',
                                         #nargs='*',
                                         required=False,
@@ -201,16 +208,16 @@ def parse_args():
                                         help='Output a list of files analyzed grouped by type to a file '
                                              '(by default if no param given - include in the report)'
                                         )
-
-    additional_outputs_grp.add_argument('--output_header_sample_ids',
-                                        #nargs='?',
-                                        #default='samples.header.ids', - for some reason doesn't work
-                                        dest='header_sample_ids_file',
-                                        action='store_true',
-                                        required=False,
-                                        help='Include in the output also a list of sample ega accession numbers '
-                                             'as they appears in the tests requested'
-    )
+    #
+    # additional_outputs_grp.add_argument('--output_header_sample_ids',
+    #                                     #nargs='?',
+    #                                     #default='samples.header.ids', - for some reason doesn't work
+    #                                     dest='header_sample_ids_file',
+    #                                     action='store_true',
+    #                                     required=False,
+    #                                     help='Include in the output also a list of sample ega accession numbers '
+    #                                          'as they appears in the tests requested'
+    # )
 
     # additional_outputs_grp.add_argument('--aaaaafile_types2',
     #                         choices=['bam', 'cram'],
@@ -222,22 +229,22 @@ def parse_args():
     #                         help='Options are: bam | cram, you can choose more than 1 param.')
 
 
-    additional_outputs_grp.add_argument('--output_samples_by_ega_id',
-                                        #nargs='?',
-                                        action='store_true',
-                                        dest='sample_ega_out_file',
-                                        required=False,
-                                        help='Include in the output also a list of sample ega accession numbers '
-                                             'as they appears in the tests requested'
-    )
-    additional_outputs_grp.add_argument('--output_samples_by_name',
-                                        #nargs='?',
-                                        action='store_true',
-                                        dest='sample_names_out_file',
-                                        required=False,
-                                        help='Include in the output also a list of samples names '
-                                             'as they appears in the tests requested'
-    )
+    # additional_outputs_grp.add_argument('--output_samples_by_ega_id',
+    #                                     #nargs='?',
+    #                                     action='store_true',
+    #                                     dest='sample_ega_out_file',
+    #                                     required=False,
+    #                                     help='Include in the output also a list of sample ega accession numbers '
+    #                                          'as they appears in the tests requested'
+    # )
+    # additional_outputs_grp.add_argument('--output_samples_by_name',
+    #                                     #nargs='?',
+    #                                     action='store_true',
+    #                                     dest='sample_names_out_file',
+    #                                     required=False,
+    #                                     help='Include in the output also a list of samples names '
+    #                                          'as they appears in the tests requested'
+    # )
     # additional_outputs_grp.add_argument('--output_only_bad_samples_by_ega_id',
     #                                     #nargs='?',
     #                                     action='store_true',
@@ -255,32 +262,32 @@ def parse_args():
     #                                          'as they appears in the tests requested'
     # )
 
-    additional_outputs_grp.add_argument('--output_libraries_by_name',
-                                        #nargs='?',
-                                        action='store_true',
-                                        dest='library_names_out_file',
-                                        required=False,
-                                        help='Include in the output also a list of library names '
-                                             'as they appear in the tests requested'
-    )
-
-    additional_outputs_grp.add_argument('--output_libraries_by_id',
-                                        #nargs='?',
-                                        action='store_true',
-                                        dest='library_ids_out_file',
-                                        required=False,
-                                        help='Include in the output also a list of library internal ids '
-                                             'as they appear in the tests requested'
-    )
-
-    additional_outputs_grp.add_argument('--output_header_libraries',
-                                        #nargs='?',
-                                        action='store_true',
-                                        dest='header_library_ids_file',
-                                        required=False,
-                                        help='Include in the output also a list of library names '
-                                             'as they appear in the tests requested'
-    )
+    # additional_outputs_grp.add_argument('--output_libraries_by_name',
+    #                                     #nargs='?',
+    #                                     action='store_true',
+    #                                     dest='library_names_out_file',
+    #                                     required=False,
+    #                                     help='Include in the output also a list of library names '
+    #                                          'as they appear in the tests requested'
+    # )
+    #
+    # additional_outputs_grp.add_argument('--output_libraries_by_id',
+    #                                     #nargs='?',
+    #                                     action='store_true',
+    #                                     dest='library_ids_out_file',
+    #                                     required=False,
+    #                                     help='Include in the output also a list of library internal ids '
+    #                                          'as they appear in the tests requested'
+    # )
+    #
+    # additional_outputs_grp.add_argument('--output_header_libraries',
+    #                                     #nargs='?',
+    #                                     action='store_true',
+    #                                     dest='header_library_ids_file',
+    #                                     required=False,
+    #                                     help='Include in the output also a list of library names '
+    #                                          'as they appear in the tests requested'
+    # )
 
     # additional_outputs_grp.add_argument('--output_only_bad_libraries_by_name',
     #                                     #nargs='?',
@@ -299,41 +306,41 @@ def parse_args():
     #                                     help='Include in the output a list of problematic libraries by id '
     #                                          'as they appear in the tests requested'
     # )
-
-    additional_outputs_grp.add_argument('--output_studies_by_ega_id',
-                                        #nargs='?',
-                                        action='store_true',
-                                        dest='study_egaids_out_file',
-                                        required=False,
-                                        help='Include in the output also a list of study names '
-                                             'as they appear in the tests requested'
-    )
-
-    additional_outputs_grp.add_argument('--output_studies_by_name',
-                                        #nargs='?',
-                                        action='store_true',
-                                        dest='study_names_out_file',
-                                        required=False,
-                                        help='Include in the output also a list of study names '
-                                             'as they appear in the tests requested'
-    )
-
-    additional_outputs_grp.add_argument('--output_all_entities_to_dir',
-                                        #nargs='?',
-                                        #action='store_true',
-                                        dest='entities_out_dir',
-                                        required=False,
-                                        help='Output all the entities found to individual files '
-                                             '(1 file per type of entity (e.g. sample,library) per type of id)'
-    )
-
-    additional_outputs_grp.add_argument('--output_all_entities_to_file',
-                                        #nargs='?',
-                                        action='store_true',
-                                        dest='entities_out_file',
-                                        required=False,
-                                        help='Output all the entities found to a file'
-    )
+    #
+    # additional_outputs_grp.add_argument('--output_studies_by_ega_id',
+    #                                     #nargs='?',
+    #                                     action='store_true',
+    #                                     dest='study_egaids_out_file',
+    #                                     required=False,
+    #                                     help='Include in the output also a list of study names '
+    #                                          'as they appear in the tests requested'
+    # )
+    #
+    # additional_outputs_grp.add_argument('--output_studies_by_name',
+    #                                     #nargs='?',
+    #                                     action='store_true',
+    #                                     dest='study_names_out_file',
+    #                                     required=False,
+    #                                     help='Include in the output also a list of study names '
+    #                                          'as they appear in the tests requested'
+    # )
+    #
+    # additional_outputs_grp.add_argument('--output_all_entities_to_dir',
+    #                                     #nargs='?',
+    #                                     #action='store_true',
+    #                                     dest='entities_out_dir',
+    #                                     required=False,
+    #                                     help='Output all the entities found to individual files '
+    #                                          '(1 file per type of entity (e.g. sample,library) per type of id)'
+    # )
+    #
+    # additional_outputs_grp.add_argument('--output_all_entities_to_file',
+    #                                     #nargs='?',
+    #                                     action='store_true',
+    #                                     dest='entities_out_file',
+    #                                     required=False,
+    #                                     help='Output all the entities found to a file'
+    # )
 
     # additional_outputs_grp.add_argument('--output_only_bad_entities',
     #                                     nargs='?',
@@ -350,13 +357,13 @@ def parse_args():
     #                                     help='Include all the files filtered out as a result of applying some fiters when querying for data'
     #                                     )
 
-    additional_outputs_grp.add_argument('--include_tests_not_exec',
-                                        action='store_true',
-                                        required=False,
-                                        help='Include in the output also a report containing '
-                                             'the list of tests that havent been executed and the reasons')
-
-    #argcomplete.autocomplete(parser)
+    # additional_outputs_grp.add_argument('--include_tests_not_exec',
+    #                                     action='store_true',
+    #                                     required=False,
+    #                                     help='Include in the output also a report containing '
+    #                                          'the list of tests that havent been executed and the reasons')
+    #
+    # #argcomplete.autocomplete(parser)
     return parser.parse_args()
 
 #print parse_args()
