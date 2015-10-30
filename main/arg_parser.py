@@ -167,21 +167,22 @@ def parse_args():
     # )
 
     # OUTPUT: how to output the results?
-    out = parser.add_argument_group('OUTPUT FORMAT', 'What output to return and how', )
-    output_grp = out.add_mutually_exclusive_group(required=True)
-    output_grp.add_argument('--output_as_json',
-                            nargs='?',
-                            dest='out_file',
-                            #default='stdout',
-                            required=False,
-                            help='write the output as json')
+    # out = parser.add_argument_group('OUTPUT FORMAT', 'What output to return and how', )
+    # output_grp = out.add_mutually_exclusive_group(required=True)
+    # output_grp.add_argument('--output_as_json',
+    #                         nargs='?',
+    #                         dest='out_file',
+    #                         #default='stdout',
+    #                         required=False,
+    #                         help='write the output as json')
+    #
+    # output_grp.add_argument('--output_as_report',
+    #                         nargs='?',
+    #                         dest='out_file',
+    #                         #default='stdout',
+    #                         required=False,
+    #                         help='write the output as a text report')
 
-    output_grp.add_argument('--output_as_report',
-                            nargs='?',
-                            dest='out_file',
-                            #default='stdout',
-                            required=False,
-                            help='write the output as a text report')
 
     # ADDITIONALS:
     additional_outputs_grp = parser.add_argument_group('INCLUDE IN OUTPUT', 'What to include in the output')
