@@ -272,11 +272,14 @@ def save_metadata(irods_meta, header_dict, output_dict):
 
 
 def must_output_entities(args):
-    if (args.header_sample_ids_file or args.sample_ega_out_file or args.sample_names_out_file or
-        args.library_names_out_file or args.library_ids_out_file or args.header_library_ids_file or
-        args.study_egaids_out_file or args.study_names_out_file or args.entities_out_dir or args.entities_out_file):
+    if args.meta_dir:
         return True
     return False
+    # if (args.header_sample_ids_file or args.sample_ega_out_file or args.sample_names_out_file or
+    #     args.library_names_out_file or args.library_ids_out_file or args.header_library_ids_file or
+    #     args.study_egaids_out_file or args.study_names_out_file or args.entities_out_dir or args.entities_out_file):
+    #     return True
+    # return False
 
 
 def print_errors(errors_list, issues_per_file):
@@ -375,6 +378,7 @@ def main():
         all_entities_as_output = defaultdict(list)
 
         for fpath, meta_dict in fpaths_checksum_and_avus.items():
+            #print str(fpath)
             problems = []
             avu_issues = irods_meta_module.IrodsSeqFileMetadata.run_avu_count_checks(fpath, meta_dict['avus'])
             problems.extend(avu_issues)
@@ -409,7 +413,6 @@ def main():
                 except (error_types.WrongMD5Error, error_types.TestImpossibleToRunError) as e:
                     problems.append(e)
 
-            #if args.test_reference or args.all_tests:
             if args.desired_reference or args.all_tests:
                 try:
                     i_meta.test_reference(args.desired_reference)
@@ -500,6 +503,8 @@ def main():
 
         ########## PROVIDE THE OUTPUT BACK TO THE USER ##########################
 
+            
+
         if wanted_entities_as_output:
             print "NUMBER OF FILES WITH ISSUES: " + str(issues_per_file)
             print "NUMBER OF SAMPLES (by name) - IRODS FOUND: " + str(all_entities_as_output['irods_samples_by_names'])
@@ -533,94 +538,25 @@ def main():
         #     write_list_to_file(issues_per_file.keys(), args.fofn_probl)
 
 
-        ######## OUTPUT ENTITIES #######################
-        study_name_as_ascii = 'entities'
+        base_fname = 'metadata'
         if args.study_name:
-            study_name_as_ascii = ''.join([i if (ord(i) < 128 and ord(i) >= 65) or i == '_' else '' for i in args.study_name])
+            base_fname = remove_non_ascii(args.study_name)
         elif args.study_acc_nr:
-            study_name_as_ascii = args.study_acc_nr
+            base_fname = args.study_acc_nr
         elif args.study_internal_id:
-            study_name_as_ascii = args.study_internal_id
-
-        # TODO: add try - except to test if the user has permission to write to this dir
-        out_dir = ''
-        if args.entities_out_dir:
-            out_dir = args.entities_out_dir
-            if not os.path.exists(out_dir):
-                os.makedirs(out_dir)
+            base_fname = args.study_internal_id
 
 
-        HEADER_SAMPLE_IDS_FILE = os.path.join(out_dir, study_name_as_ascii + '.header.sample.ids')
-        HEADER_LIBRARY_IDS_FILE = os.path.join(out_dir, study_name_as_ascii + '.header.library.ids')
-        IRODS_SAMPLE_NAMES_FILE = os.path.join(out_dir, study_name_as_ascii + '.irods.sample.names')
-        IRODS_SAMPLE_EGAIDS_FILE = os.path.join(out_dir, study_name_as_ascii + '.irods.sample.egaids')
-        IRODS_LIBRARY_NAMES_FILE = os.path.join(out_dir, study_name_as_ascii + '.irods.library.names')
-        IRODS_LIBRARY_IDS_FILE = os.path.join(out_dir, study_name_as_ascii + '.irods.library.ids')
-        IRODS_STUDY_NAMES_FILE = os.path.join(out_dir, study_name_as_ascii + '.irods.study.names')
-        IRODS_STUDY_EGAIDS_FILE = os.path.join(out_dir, study_name_as_ascii + '.irods.study.egaids')
 
-        ALL_ENTITIES_FILE = os.path.join(out_dir, study_name_as_ascii + '.entities.txt')
-
-        FILE_OF_FNAMES_BY_FTYPES = os.path.join(study_name_as_ascii + '.fnames_by_ftypes.txt')
-
-        ############ OUTPUT HEADER METADATA ############
-        # outputting HEADER samples:
-        if args.header_sample_ids_file:
-            write_list_to_file(all_entities_as_output['header_samples'], HEADER_SAMPLE_IDS_FILE)
-
-        # outputting HEADER libraries:
-        if args.header_library_ids_file:
-            write_list_to_file(all_entities_as_output['header_libraries'], HEADER_LIBRARY_IDS_FILE)
-
-        ############ OUTPUT IRODS METADATA ###############
-        # outputting IRODS samples by EGA ID:
-        if args.sample_ega_out_file:
-            write_list_to_file(all_entities_as_output['irods_samples_by_egaids'], IRODS_SAMPLE_EGAIDS_FILE)
-
-        # outputting iRODS samples by name
-        if args.sample_names_out_file:
-            write_list_to_file(all_entities_as_output['irods_samples_by_names'], IRODS_SAMPLE_NAMES_FILE)
-
-        # outputting iRODS libraries by id
-        if args.library_ids_out_file:
-            write_list_to_file(all_entities_as_output['irods_libraries_by_ids'], IRODS_LIBRARY_IDS_FILE)
-
-        #outputting iRODS libraries by name
-        if args.library_names_out_file:
-            write_list_to_file(all_entities_as_output['irods_libraries_by_names'], IRODS_LIBRARY_NAMES_FILE)
-
-        ##### STUDIES #####
-        # outputting IRODS studies by ega id:
-        if args.study_egaids_out_file:
-            write_list_to_file(all_entities_as_output['irods_studies_by_egaids'], IRODS_STUDY_EGAIDS_FILE)
-
-        # outputting IRODS studies by name:
-        if args.study_names_out_file:
-            write_list_to_file(all_entities_as_output['irods_studies_by_names'], IRODS_STUDY_NAMES_FILE)
-
-
-        ##################  OUTPUTTING ALL THE ENTITIES ########################
-        if args.entities_out_file:
-            write_list_to_file(all_entities_as_output['header_samples'], ALL_ENTITIES_FILE, header="HEADER SAMPLES")
-            write_list_to_file(all_entities_as_output['header_libraries'], ALL_ENTITIES_FILE, header="HEADER LIBRARIES")
-            write_list_to_file(all_entities_as_output['irods_samples_by_egaids'], ALL_ENTITIES_FILE, header="IRODS SAMPLES BY EGA ID")
-            write_list_to_file(all_entities_as_output['irods_samples_by_names'], ALL_ENTITIES_FILE, header="IRODS SAMPLES BY NAME")
-            write_list_to_file(all_entities_as_output['irods_libraries_by_ids'], ALL_ENTITIES_FILE, header="IRODS LIBRARIES BY ID")
-            write_list_to_file(all_entities_as_output['irods_libraries_by_names'], ALL_ENTITIES_FILE, header="IRODS LIBRARIES BY NAME")
-            write_list_to_file(all_entities_as_output['irods_studies_by_egaids'], ALL_ENTITIES_FILE, header="IRODS STUDIES BY EGA ID")
-            write_list_to_file(all_entities_as_output['irods_studies_by_names'], ALL_ENTITIES_FILE, header="IRODS STUDIES BY NAME")
-
+        print str(all_entities_as_output)
+        #crt_dir = os.path.dirname(os.path.realpath(__file__))
+        mkdir_if_doesnt_exist(args.meta_dir)
+        output_entities_to_dir(all_entities_as_output, base_fname, args.meta_dir)
 
         #### OUTPUTTING the files by type ############
-        # Count nr of files per type and build the sorted dict:
-        counter_by_ftype = defaultdict(int)
-        files_sorted_by_type = defaultdict(dict)  # dict of key = file name (no ext), value = dict - of type : fpath
-        #for f in filtered_fpaths:
-        for fpath in fpaths_checksum_and_avus:
-            fname = utils.extract_fname_without_ext(fpath)
-            ftype = infer_file_type(fpath)
-            files_sorted_by_type[fname][ftype] = fpath
-            counter_by_ftype[ftype] += 1
+        counter_by_ftype = count_files_per_format(fpaths_checksum_and_avus.keys())
+
+        files_sorted_by_type = group_fpaths_by_fname(fpaths_checksum_and_avus.keys())
 
         # printing out the count of files per format:
         for format, n in counter_by_ftype.items():
@@ -629,37 +565,144 @@ def main():
 
         if args.fnames_by_ftype:
             # Going through the sorted files by type and put them in tuples
-            ftypes_tuples = []
-            wanted_ftypes = args.file_types
-            for fname, ftypes_dict in files_sorted_by_type.items():
-                ftyptes_per_fname = []
-                for wanted_ft in wanted_ftypes:
-                    fpath_per_type = ftypes_dict.get(wanted_ft) or 'missing'
-                    ftyptes_per_fname.append(fpath_per_type)
-                ftypes_tuples.append(ftyptes_per_fname)
-            write_tuples_to_file(ftypes_tuples, FILE_OF_FNAMES_BY_FTYPES, wanted_ftypes)
-
+            ftypes_tuples = group_fpaths_by_format_in_tuples(args.file_types, files_sorted_by_type)
+            write_tuples_to_file(ftypes_tuples, args.out_file, args.file_types)
 
             # Analyze the sorted dict to test that it all looks fine:
-            missing_ftypes_errors = []
-            for fname, files in files_sorted_by_type.items():
-                existing_ftypes = set()
-                wanted_ftypes = set(args.file_types)
-                for f in files:
-                    ftype = infer_file_type(f)
-                    existing_ftypes.add(ftype)
-
-                # CHeck if the existing file types are the wanted ones...
-                if wanted_ftypes != existing_ftypes:
-                    missing_ftypes = wanted_ftypes.difference(existing_ftypes)
-                    missing_ftypes_errors.append(error_types.MissingFileFormatsFromIRODSError(fname, missing_ftypes))
-
-            for error in missing_ftypes_errors:
-                print str(error)
+            missing_formats_errors = check_for_missing_file_formats(files_sorted_by_type, args.file_types)
+            if missing_formats_errors:
+                all_problems.extend(missing_formats_errors)
 
 
-            # TODO:  Remove duplicates for files..
+def write_output_report_to_file(fpath, issues, metadata):
 
+
+
+def mkdir_if_doesnt_exist(dir_path):
+    if dir_path and not os.path.exists(dir_path):
+        os.makedirs(dir_path)
+
+
+def check_for_missing_file_formats(files_sorted_by_type, formats):
+    missing_ftypes_errors = []
+    for fname, files in files_sorted_by_type.items():
+        existing_ftypes = set()
+        wanted_formats = set(formats)
+        for f in files:
+            format = infer_file_type(f)
+            existing_ftypes.add(format)
+
+        # Check if the existing file types are the wanted ones...
+        if wanted_formats != existing_ftypes:
+            missing_ftypes = wanted_formats.difference(existing_ftypes)
+            missing_ftypes_errors.append(error_types.MissingFileFormatsFromIRODSError(fname, missing_ftypes))
+    return missing_ftypes_errors
+
+# Count nr of files per type and build the sorted dict:
+def count_files_per_format(fpaths):
+    """
+    This function counts the number of files in each format.
+    :param fpaths: string - list of file paths
+    :return: a defaultdict having as key = the file format (CRAM/BAM/..) and value = int (nr of files in CRAM format)
+    """
+    counter_by_ftype = defaultdict(int)
+    for fpath in fpaths:
+        ftype = infer_file_type(fpath)
+        counter_by_ftype[ftype] += 1
+    return counter_by_ftype
+
+def group_fpaths_by_fname(fpaths):
+    """
+    This function groups a list of file paths by filename. This is useful because a file can appear in different formats,
+    (the same filename but a different extension).
+    :param fpaths: list of strings corresponding to filepaths
+    :return: a defaultdict containing as key = filename (without extension), value = {file_format : fpath}
+    """
+    files_sorted_by_type = defaultdict(dict)
+    for fpath in fpaths:
+        fname = utils.extract_fname_without_ext(fpath)
+        ftype = infer_file_type(fpath)
+        files_sorted_by_type[fname][ftype] = fpath
+    return files_sorted_by_type
+
+def group_fpaths_by_format_in_tuples(ftypes, files_sorted_by_type):
+    ftypes_tuples = []
+    for fname, ftypes_dict in files_sorted_by_type.items():
+        ftyptes_per_fname = []
+        for ftype in ftypes:
+            fpath_per_type = ftypes_dict.get(ftype) or 'missing'
+            ftyptes_per_fname.append(fpath_per_type)
+        ftypes_tuples.append(ftyptes_per_fname)
+    return ftypes_tuples
+
+def remove_non_ascii(input_str):
+    return ''.join([i if (ord(i) < 128 and ord(i) >= 65) or i == '_' else '' for i in input_str])
+
+def output_entities_to_dir( entities, base_fname, out_dir):
+        # TODO: add try - except to test if the user has permission to write to this dir
+
+        header_sample_ids_file = os.path.join(out_dir, base_fname + '.header.sample.ids')
+        header_library_ids_file = os.path.join(out_dir, base_fname + '.header.library.ids')
+        irods_sample_names_file = os.path.join(out_dir, base_fname + '.irods.sample.names')
+        irods_sample_egaids_file = os.path.join(out_dir, base_fname + '.irods.sample.egaids')
+        irods_library_names_file = os.path.join(out_dir, base_fname + '.irods.library.names')
+        irods_library_ids_file = os.path.join(out_dir, base_fname + '.irods.library.ids')
+        irods_study_names_file = os.path.join(out_dir, base_fname + '.irods.study.names')
+        irods_study_egaids_file = os.path.join(out_dir, base_fname + '.irods.study.egaids')
+
+
+        ############ OUTPUT HEADER METADATA ############
+        # outputting HEADER samples:
+        #if args.header_sample_ids_file:
+        write_list_to_file(entities['header_samples'], header_sample_ids_file)
+
+        # outputting HEADER libraries:
+        #if args.header_library_ids_file:
+        write_list_to_file(entities['header_libraries'], header_library_ids_file)
+
+        ############ OUTPUT IRODS METADATA ###############
+        # outputting IRODS samples by EGA ID:
+        #if args.sample_ega_out_file:
+        write_list_to_file(entities['irods_samples_by_egaids'], irods_sample_egaids_file)
+
+        # outputting iRODS samples by name
+        #if args.sample_names_out_file:
+        write_list_to_file(entities['irods_samples_by_names'], irods_sample_names_file)
+
+        # outputting iRODS libraries by id
+        #if args.library_ids_out_file:
+        write_list_to_file(entities['irods_libraries_by_ids'], irods_library_ids_file)
+
+        #outputting iRODS libraries by name
+        #if args.library_names_out_file:
+        write_list_to_file(entities['irods_libraries_by_names'], irods_library_names_file)
+
+        ##### STUDIES #####
+        # outputting IRODS studies by ega id:
+        #if args.study_egaids_out_file:
+        write_list_to_file(entities['irods_studies_by_egaids'], irods_study_egaids_file)
+
+        # outputting IRODS studies by name:
+        #if args.study_names_out_file:
+        write_list_to_file(entities['irods_studies_by_names'], irods_study_names_file)
+
+
+
+
+        ##################  OUTPUTTING ALL THE ENTITIES TO A FILE########################
+        # WORKING but I commented out for now, let's just stick to the dump_meta to an output dir
+        # if args.entities_out_file:
+        #     ALL_ENTITIES_FILE = os.path.join(out_dir, base_fname + '.entities.txt')
+        #
+        #     FILE_OF_FNAMES_BY_FTYPES = os.path.join(base_fname + '.fnames_by_ftypes.txt')
+        #     write_list_to_file(entities['header_samples'], ALL_ENTITIES_FILE, header="HEADER SAMPLES")
+        #     write_list_to_file(entities['header_libraries'], ALL_ENTITIES_FILE, header="HEADER LIBRARIES")
+        #     write_list_to_file(entities['irods_samples_by_egaids'], ALL_ENTITIES_FILE, header="IRODS SAMPLES BY EGA ID")
+        #     write_list_to_file(entities['irods_samples_by_names'], ALL_ENTITIES_FILE, header="IRODS SAMPLES BY NAME")
+        #     write_list_to_file(entities['irods_libraries_by_ids'], ALL_ENTITIES_FILE, header="IRODS LIBRARIES BY ID")
+        #     write_list_to_file(entities['irods_libraries_by_names'], ALL_ENTITIES_FILE, header="IRODS LIBRARIES BY NAME")
+        #     write_list_to_file(entities['irods_studies_by_egaids'], ALL_ENTITIES_FILE, header="IRODS STUDIES BY EGA ID")
+        #     write_list_to_file(entities['irods_studies_by_names'], ALL_ENTITIES_FILE, header="IRODS STUDIES BY NAME")
 
 
 
@@ -676,7 +719,7 @@ def is_header_metadata_needed(args):
             if 'irods_vs_header' in args.test_library or 'all' in args.test_library:
                 header_meta_needed = True
         # check by wanted output:
-        if any([args.header_sample_ids_file, args.header_library_ids_file]):
+        if args.meta_dir:
             header_meta_needed = True
     return header_meta_needed
 
@@ -691,10 +734,11 @@ def is_irods_metadata_needed(args):
 #            irods_meta_needed = True
             return True
         # check by wanted output:
-        if any([args.sample_ega_out_file, args.sample_names_out_file, args.bad_sample_egaids_out_file,
-                args.bad_sample_names_out_file, args.library_names_out_file, args.library_ids_out_file,
-                args.bad_library_names_out_file, args.bad_library_ids_out_file, args.study_names_out_file,
-                args.study_egaids_out_file, args.entities_out_dir, args.entities_out_file]):
+        # if any([args.sample_ega_out_file, args.sample_names_out_file, #args.bad_sample_egaids_out_file,args.bad_sample_names_out_file, args.bad_library_names_out_file,args.bad_library_ids_out_file,
+        #         args.library_names_out_file, args.library_ids_out_file,
+        #         args.study_names_out_file,
+        #         args.study_egaids_out_file, args.entities_out_dir, args.entities_out_file]):
+        if args.meta_dir:
 #            irods_meta_needed = True
             return True
     return irods_meta_needed
@@ -763,6 +807,8 @@ def main_imeta():
     diff_files_problems = []
     if args.study_internal_id:
         study_obj = query_study(internal_id=args.study_internal_id)
+        print "STUDY object variables: " + str(study_obj)
+        print "STUDY __dict__: " + str(study_obj.__dict__)
     if args.study_name:
         study_obj = query_study(name=args.study_name)
     if args.study_acc_nr:
