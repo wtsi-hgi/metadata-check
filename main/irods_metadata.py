@@ -363,7 +363,8 @@ class IrodsSeqFileMetadata(object):
 
     def __str__(self):
         return "Fpath = " + str(self.fpath) + ", fname = " + str(self.fname) + ", samples = " + str(self.samples) + \
-               ", libraries = " + str(self.libraries) + ", studies = " + str(self.studies)
+               ", libraries = " + str(self.libraries) + ", studies = " + str(self.studies) + ", md5 = " + str(self.md5) \
+               + ", ichksum_md5 = " + str(self.ichksum_md5) + ", reference = " + str(self.reference)
 
     def __repr__(self):
         return self.__str__()
