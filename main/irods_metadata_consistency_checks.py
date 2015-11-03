@@ -62,6 +62,23 @@ def get_entities_from_seqscape(entity_type, ids_list, id_type):
         return seqsc.query_all_studies_as_batch(ids_list, id_type)
     raise ValueError("Entity type = " + str(entity_type) + " unknown")
 
+def from_seqsc_entity_list_to_list_of_ids(seqsc_entities):
+    """
+    This function extracts from a list of entities (where an entity is an object as defined in model classes) the lists
+    of ids by type of id
+    e.g.:
+    input = [{ internal_id=1248309, name=APP5201377, accession_number=EGAN00001221878 }]
+    output = {'internal_id' : [1248309], 'name': ['APP5201377'], 'accession_number': ['EGAN00001221878']}
+    :param seqsc_entities:
+    :return:
+    """
+    result = {'internal_id':[], 'accession_number': [], 'name': []}
+    for id_type, entity_list in seqsc_entities.items():
+        for entity in entity_list:
+            result[id_type].append(getattr(entity, id_type))
+    print "RESULTS from from_seqsc_ent: " + str(result)
+    return result
+
 
 def compare_entity_sets_in_seqsc(entities_dict, entity_type):
     problems = []
@@ -70,6 +87,7 @@ def compare_entity_sets_in_seqsc(entities_dict, entity_type):
     for id_type, ids_list in entities_dict.items():
         if ids_list:
             entities = get_entities_from_seqscape(entity_type, ids_list, id_type)
+            print "Entities as got from SS: " + str(entities)
             for id in ids_list:
                 if is_id_missing(id, id_type, entities):
                     problems.append(str(error_types.NotFoundInSeqscapeError(id_type, id, entity_type)))
@@ -80,7 +98,7 @@ def compare_entity_sets_in_seqsc(entities_dict, entity_type):
 
     # HERE I assume I know what the id_types are (internal_id, etc..):
     problems.extend(metadata_utils.GeneralUtils.check_same_entities(seqsc_entities, entity_type))
-    return problems
+    return problems, seqsc_entities
 
 
 
