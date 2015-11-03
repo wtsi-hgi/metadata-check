@@ -281,7 +281,7 @@ def must_output_entities(args):
     #     return True
     # return False
 
-
+# unused
 def print_errors(errors_list, issues_per_file):
     #warnings = defaultdict(list) # type : files
     warnings = []
@@ -315,12 +315,10 @@ def print_errors(errors_list, issues_per_file):
 def main():
     args = arg_parser.parse_args()
 
-    #print str(args)
     header_meta_needed = is_header_metadata_needed(args)
     irods_meta_needed = is_irods_metadata_needed(args)  # Is there any scenario in which we don't need the irods meta?
 
-    all_problems = []
-    issues_per_file = {}
+    general_errors = []
 
     if irods_meta_needed:
         filters = extract_filters_from_args(args)
@@ -343,7 +341,7 @@ def main():
                     sys.exit(0)
                 else:
                     issues = check_same_files_by_diff_study_ids(args.study_name, args.study_internal_id, args.study_acc_nr, filters)
-                    all_problems.extend(issues)
+                    general_errors.extend(issues)
                     print "Ran check on the list of files retrieved by each study identifier -- result is: " + str(issues)
 
             elif args.sample_names or args.fosn:
@@ -374,11 +372,11 @@ def main():
          ########################## TESTS #####################
         # PREPARING FOR THE TESTS
 
-        wanted_entities_as_output = must_output_entities(args)
-        all_entities_as_output = defaultdict(list)
-
+#        wanted_entities_as_output = must_output_entities(args)
+        #all_entities_as_output = defaultdict(list)
+        issues_per_file = {}
+        metadata_per_file = {}
         for fpath, meta_dict in fpaths_checksum_and_avus.items():
-            #print str(fpath)
             problems = []
             avu_issues = irods_meta_module.IrodsSeqFileMetadata.run_avu_count_checks(fpath, meta_dict['avus'])
             problems.extend(avu_issues)
@@ -401,12 +399,12 @@ def main():
                 else:
                     h_meta = header_meta_module.HeaderSAMFileMetadata.from_header_to_metadata(header, fpath)
 
+            print "i meta: " + str(i_meta)
+            print "H meta: " + str(h_meta)
+           # save_metadata(i_meta, h_meta, all_entities_as_output)
 
-            if wanted_entities_as_output:
-                save_metadata(i_meta, h_meta, all_entities_as_output)
-
+            seqsc_meta = {}
             ####### RUN THE TESTS: #########
-            # MD5 tests:
             if args.test_md5 or args.all_tests:
                 try:
                     i_meta.test_md5_calculated_vs_metadata()
@@ -432,47 +430,36 @@ def main():
 
             # TODO : test also the tag
             if args.test_sample or args.all_tests:
-                if 'all' in args.test_sample or args.all_tests:
+                if 'irods_vs_header' in args.test_sample or 'all' in args.test_sample or args.all_tests:
                     issues = check_irods_vs_header_metadata(fpath, h_meta.samples, i_meta.samples, 'sample')
                     problems.extend(issues)
 
-                    issues = seq_consistency_checks.compare_entity_sets_in_seqsc(i_meta.samples, 'sample')    #def compare_entity_sets_in_seqsc(entities_dict, entity_type):
+                if 'irods_vs_seqsc' in args.test_sample or 'all' in args.test_sample or args.all_tests:
+                    issues, ss_samples = seq_consistency_checks.compare_entity_sets_in_seqsc(i_meta.samples, 'sample')
                     problems.extend(issues)
+                    ss_samples = seq_consistency_checks.from_seqsc_entity_list_to_list_of_ids(ss_samples)
+                    seqsc_meta['samples'] = ss_samples
 
                     issues = seq_consistency_checks.check_sample_is_in_desired_study(i_meta.samples['internal_id'], i_meta.studies['name'])
                     problems.extend(issues)
-                else:
-                    if 'irods_vs_header' in args.test_sample:
-                        issues = check_irods_vs_header_metadata(fpath, h_meta.samples, i_meta.samples, 'sample')
-                        problems.extend(issues)
-
-                    if 'irods_vs_seqsc' in args.test_sample:
-                        issues = seq_consistency_checks.compare_entity_sets_in_seqsc(i_meta.samples, 'sample')    #def compare_entity_sets_in_seqsc(entities_dict, entity_type):
-                        problems.extend(issues)
-
-                        issues = seq_consistency_checks.check_sample_is_in_desired_study(i_meta.samples['internal_id'], i_meta.studies['name'])
-                        problems.extend(issues)
 
             if args.test_library or args.all_tests:
-                if args.all_tests or 'all' in args.test_library:
+                if 'irods_vs_header' in args.test_library or args.all_tests or 'all' in args.test_library:
                     issues = check_irods_vs_header_metadata(fpath, h_meta.libraries, i_meta.libraries, 'library')
                     problems.extend(issues)
 
-                    issues = seq_consistency_checks.compare_entity_sets_in_seqsc(i_meta.libraries, 'library')
+                if 'irods_vs_seqsc' in args.test_library or args.all_tests or 'all' in args.test_library:
+                    issues, ss_libs = seq_consistency_checks.compare_entity_sets_in_seqsc(i_meta.libraries, 'library')
                     problems.extend(issues)
-                else:
-                    if 'irods_vs_header' in args.test_library:
-                        issues = check_irods_vs_header_metadata(fpath, h_meta.libraries, i_meta.libraries, 'library')
-                        problems.extend(issues)
-
-                    if 'irods_vs_seqsc' in args.test_library:
-                        issues = seq_consistency_checks.compare_entity_sets_in_seqsc(i_meta.libraries, 'library')
-                        problems.extend(issues)
+                    ss_libs = seq_consistency_checks.from_seqsc_entity_list_to_list_of_ids(ss_libs)
+                    seqsc_meta['libraries'] = ss_libs
 
 
             if args.test_study or args.all_tests:
-                issues = seq_consistency_checks.compare_entity_sets_in_seqsc(i_meta.studies, 'study')
+                issues, ss_studies = seq_consistency_checks.compare_entity_sets_in_seqsc(i_meta.studies, 'study')
                 problems.extend(issues)
+                ss_studies = seq_consistency_checks.from_seqsc_entity_list_to_list_of_ids(ss_studies)
+                seqsc_meta['studies'] = ss_studies
 
 
             if args.all_tests or args.test_complete_meta:
@@ -492,66 +479,26 @@ def main():
                         d.fpath = fpath
                     problems.extend(diffs_as_exc)
 
-            #print "FILE: " + str(fpath) + " -- PROBLEMS found: " + str(problems)
             if problems:
                 issues_per_file[fpath] = problems
+            metadata_per_file[fpath] = {'i_meta' : i_meta, 'h_meta': h_meta, 'seqsc_meta': seqsc_meta}
+        print "Metadata per file: " + str(metadata_per_file)
 
-            all_problems.extend(problems)
+            #all_problems.extend(problems)
 
 
 
 
         ########## PROVIDE THE OUTPUT BACK TO THE USER ##########################
 
-            
-
-        if wanted_entities_as_output:
-            print "NUMBER OF FILES WITH ISSUES: " + str(issues_per_file)
-            print "NUMBER OF SAMPLES (by name) - IRODS FOUND: " + str(all_entities_as_output['irods_samples_by_names'])
-            print "NUMBER OF SAMPLES (by acc_nr) - IRODS FOUND: " + str(all_entities_as_output['irods_samples_by_egaids'])
-            print "NUMBER OF SAMPLES (by whatever id is in the header) - HEADER FOUND: " + str(all_entities_as_output['header_samples'])
-            print "NUMBER OF STUDIES (acc nr) - IRODS:  " + str(all_entities_as_output['irods_studies_by_egaids'])
-            print "NUMBER OF STUDIES (name) - IRODS:  " + str(all_entities_as_output['irods_studies_by_names'])
-
-        # PRINT OUTPUT:
-        # FILES EXCLUDED:
-        # TODO: add an option in which you see also the files that were filtered out
-        #print "FILES FILTERED OUT: "
-        # for reason,files in files_excluded.iteritems():
-        #     print "REASON: " + str(reason)
-        #     for f_excl in files:
-        #         str(f_excl)
+        # (out_file, issues, metadata):
+        # if args.out_file:
+        #     write_output_report_to_file(args.out_file, general_errors, all_entities_as_output)
 
 
-        print_errors(all_problems, issues_per_file)
-
-        #print "DIFFERENT FILES RETRIEVED BY QUERYING BY DIFF STUDY IDS: "
-        for err in all_problems:
-            if type(err) is error_types.DifferentFilesRetrievedByDiffStudyIdsOfSameStudy:
-                print "Number of files retrieved when querying by: " + err.id1 + " and " + err.id2 + " = " + str(len(err.diffs))
-
-        # for pb in all_problems:
-        #     print "PB Type: " + str(type(pb)) + "PB: " + str(pb)
-        #
-        # # # OUTPUTS
-        # if args.fofn_probl:
-        #     write_list_to_file(issues_per_file.keys(), args.fofn_probl)
-
-
-        base_fname = 'metadata'
-        if args.study_name:
-            base_fname = remove_non_ascii(args.study_name)
-        elif args.study_acc_nr:
-            base_fname = args.study_acc_nr
-        elif args.study_internal_id:
-            base_fname = args.study_internal_id
-
-
-
-        print str(all_entities_as_output)
-        #crt_dir = os.path.dirname(os.path.realpath(__file__))
-        mkdir_if_doesnt_exist(args.meta_dir)
-        output_entities_to_dir(all_entities_as_output, base_fname, args.meta_dir)
+        # if args.meta_dir:
+        #     mkdir_if_doesnt_exist(args.meta_dir)
+        #     output_entities_to_dir(all_entities_as_output, args.meta_dir)
 
         #### OUTPUTTING the files by type ############
         counter_by_ftype = count_files_per_format(fpaths_checksum_and_avus.keys())
@@ -562,7 +509,7 @@ def main():
         for format, n in counter_by_ftype.items():
             print "format = " + str(format) + " nr files = " + str(n)
 
-
+        # TEST IF all the files appear in all formats requested:
         if args.fnames_by_ftype:
             # Going through the sorted files by type and put them in tuples
             ftypes_tuples = group_fpaths_by_format_in_tuples(args.file_types, files_sorted_by_type)
@@ -571,11 +518,37 @@ def main():
             # Analyze the sorted dict to test that it all looks fine:
             missing_formats_errors = check_for_missing_file_formats(files_sorted_by_type, args.file_types)
             if missing_formats_errors:
-                all_problems.extend(missing_formats_errors)
+                general_errors.extend(missing_formats_errors)
 
 
-def write_output_report_to_file(fpath, issues, metadata):
+def write_output_report_to_file(out_file, issues, metadata):
 
+    #  out_fd = open(output_file, 'a')
+    # if header:
+    #     out_fd.write(header+'\n')
+    # for entry in input_list:
+    #     out_fd.write(entry+'\n')
+    # out_fd.write('\n')
+    # out_fd.close()
+
+    out_fd = open(out_file, 'w')
+    print "NUMBER OF SAMPLES (by name) - IRODS FOUND: " + str(metadata['irods_samples_by_names'])
+    print "NUMBER OF SAMPLES (by acc_nr) - IRODS FOUND: " + str(metadata['irods_samples_by_egaids'])
+    print "NUMBER OF SAMPLES (by whatever id is in the header) - HEADER FOUND: " + str(metadata['header_samples'])
+    print "NUMBER OF STUDIES (acc nr) - IRODS:  " + str(metadata['irods_studies_by_egaids'])
+    print "NUMBER OF STUDIES (name) - IRODS:  " + str(metadata['irods_studies_by_names'])
+
+    #print "NUMBER OF FILES WITH ISSUES: " + str(issues_per_file)
+    print "NUMBER OF SAMPLES (by name) - IRODS FOUND: " + str(metadata['irods_samples_by_names'])
+    print "NUMBER OF SAMPLES (by acc_nr) - IRODS FOUND: " + str(metadata['irods_samples_by_egaids'])
+    print "NUMBER OF SAMPLES (by whatever id is in the header) - HEADER FOUND: " + str(metadata['header_samples'])
+    print "NUMBER OF STUDIES (acc nr) - IRODS:  " + str(metadata['irods_studies_by_egaids'])
+    print "NUMBER OF STUDIES (name) - IRODS:  " + str(metadata['irods_studies_by_names'])
+
+    #print "DIFFERENT FILES RETRIEVED BY QUERYING BY DIFF STUDY IDS: "
+    for err in issues:
+        if type(err) is error_types.DifferentFilesRetrievedByDiffStudyIdsOfSameStudy:
+            print "Number of files retrieved when querying by: " + err.id1 + " and " + err.id2 + " = " + str(len(err.diffs))
 
 
 def mkdir_if_doesnt_exist(dir_path):
@@ -638,7 +611,7 @@ def group_fpaths_by_format_in_tuples(ftypes, files_sorted_by_type):
 def remove_non_ascii(input_str):
     return ''.join([i if (ord(i) < 128 and ord(i) >= 65) or i == '_' else '' for i in input_str])
 
-def output_entities_to_dir( entities, base_fname, out_dir):
+def output_entities_to_dir( entities, out_dir, base_fname=''):
         # TODO: add try - except to test if the user has permission to write to this dir
 
         header_sample_ids_file = os.path.join(out_dir, base_fname + '.header.sample.ids')
