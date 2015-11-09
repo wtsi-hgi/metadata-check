@@ -79,15 +79,30 @@ def from_seqsc_entity_list_to_list_of_ids(seqsc_entities):
     print "RESULTS from from_seqsc_ent: " + str(result)
     return result
 
+def fetch_entities_from_seqsc(entity_ids_by_type, entity_type):
+    seqsc_entities = {}
+    for id_type, ids_list in entity_ids_by_type.items():
+        entities = get_entities_from_seqscape(entity_type, ids_list, id_type)
+        seqsc_entities[id_type] = entities
+    return entities
 
-def compare_entity_sets_in_seqsc(entities_dict, entity_type):
+
+def check_seqsc_entity_sets_are_same(entities_by_id_type):
+    for id_type, entities in entities_by_id_type.items():
+        pass
+        # pb: hmm, below I check also if the id is found in seqsc...here, not
+
+def fetch_and_compare_entity_sets_in_seqsc(entities_dict, entity_type):
+      # entities_dict = {'name': irods_sample_names_list,
+      #                    'accession_number': irods_sample_acc_nr_list,
+      #                    'internal_id': irods_sample_internal_id_list
+      #   }
     problems = []
     seqsc_entities = {}
     # SEARCH FOR ENTITIES in SEQSCAPE BY ID_TYPE:
     for id_type, ids_list in entities_dict.items():
         if ids_list:
             entities = get_entities_from_seqscape(entity_type, ids_list, id_type)
-            print "Entities as got from SS: " + str(entities)
             for id in ids_list:
                 if is_id_missing(id, id_type, entities):
                     problems.append(str(error_types.NotFoundInSeqscapeError(id_type, id, entity_type)))
