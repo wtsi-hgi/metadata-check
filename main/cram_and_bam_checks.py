@@ -312,6 +312,20 @@ def print_errors(errors_list, issues_per_file):
         #     print str(warn) + " - files affected: " + str(files)
 
 
+class TestResult(object):
+    def __init__(self, test_name, result, reason=None):
+        self.test_name = test_name
+        self.result = result
+        self.reason = reason
+
+    def __str__(self):
+        if self.reason:
+            return "Test " + str(self.test_name) + " result = " + str(self.result) + " reson = " + str(self.reason)
+        return "Test " + str(self.test_name) + " result = " + str(self.result) + " reson = "
+
+    def __repr__(self):
+        return self.__str__()
+
 def main():
     args = arg_parser.parse_args()
 
@@ -376,7 +390,9 @@ def main():
         #all_entities_as_output = defaultdict(list)
         issues_per_file = {}
         metadata_per_file = {}
+        tests_per_file = {}
         for fpath, meta_dict in fpaths_checksum_and_avus.items():
+            tests_results = []
             problems = []
             avu_issues = irods_meta_module.IrodsSeqFileMetadata.run_avu_count_checks(fpath, meta_dict['avus'])
             problems.extend(avu_issues)
@@ -389,8 +405,6 @@ def main():
             problems.extend(sanity_issues)
 
 
-            # LATER ON this part!!!
-            # need to get the files here....to have them here already
             if header_meta_needed:
                 try:
                     header = metadata_utils.HeaderUtils.get_parsed_header_from_irods_file(fpath)
@@ -404,38 +418,76 @@ def main():
            # save_metadata(i_meta, h_meta, all_entities_as_output)
 
             seqsc_meta = {}
-            ####### RUN THE TESTS: #########
             if args.test_md5 or args.all_tests:
+                test_name = 'check_md5_in_irods_meta_vs_ichcksum'
                 try:
                     i_meta.test_md5_calculated_vs_metadata()
-                except (error_types.WrongMD5Error, error_types.TestImpossibleToRunError) as e:
+                except error_types.WrongMD5Error as e:
                     problems.append(e)
+                    tests_results.append(TestResult(test_name=test_name, result='FAIL', reason=str(e)))
+                except error_types.TestImpossibleToRunError as e:
+                    tests_results.append(TestResult(test_name=test_name, result='SKIP', reason=str(e)))
+                else:
+                    tests_results.append(TestResult(test_name=test_name, result='PASS'))
 
             if args.desired_reference or args.all_tests:
+                test_name = 'check_reference_in_irods_vs_param'
                 try:
                     i_meta.test_reference(args.desired_reference)
-                except (error_types.WrongReferenceError, error_types.TestImpossibleToRunError) as e:
+                except error_types.WrongReferenceError as e:
                     problems.append(e)
+                    tests_results.append(TestResult(test_name=test_name, result='FAIL', reason=str(e)))
+                except error_types.TestImpossibleToRunError as e:
+                    tests_results.append(TestResult(test_name=test_name, result='SKIP', reason=str(e)))
+                else:
+                    tests_results.append(TestResult(test_name=test_name, result='PASS'))
+
 
             if args.test_filename or args.all_tests:
+                test_name = 'check_lane_in_filename_vs_irods'
                 try:
                     i_meta.test_lane_from_fname_vs_metadata()
-                except (error_types.IrodsMetadataAttributeVsFileNameError, error_types.TestImpossibleToRunError) as e:
+                except error_types.IrodsMetadataAttributeVsFileNameError as e:
                     problems.append(e)
+                    tests_results.append(TestResult(test_name=test_name, result='FAIL', reason=str(e)))
+                except error_types.TestImpossibleToRunError as e:
+                    tests_results.append(TestResult(test_name=test_name, result='SKIP', reason=str(e)))
+                else:
+                    tests_results.append(TestResult(test_name=test_name, result='PASS'))
 
+
+                # test run_id
+                test_name = 'check_run_id_in_filename_vs_irods'
                 try:
                     i_meta.test_run_id_from_fname_vs_metadata()
-                except (error_types.IrodsMetadataAttributeVsFileNameError, error_types.TestImpossibleToRunError) as e:
+                except error_types.IrodsMetadataAttributeVsFileNameError as e:
                     problems.append(e)
+                    tests_results.append(TestResult(test_name=test_name, result='FAIL', reason=str(e)))
+                except error_types.TestImpossibleToRunError as e:
+                    tests_results.append(TestResult(test_name=test_name, result='SKIP', reason=str(e)))
+                else:
+                    tests_results.append(TestResult(test_name=test_name, result='PASS'))
 
-            # TODO : test also the tag
             if args.test_sample or args.all_tests:
                 if 'irods_vs_header' in args.test_sample or 'all' in args.test_sample or args.all_tests:
-                    issues = check_irods_vs_header_metadata(fpath, h_meta.samples, i_meta.samples, 'sample')
-                    problems.extend(issues)
+                    test_name = 'check_sample_meta_irods_vs_header'
+                    if not i_meta.samples:
+                        tests_results.append(TestResult(test_name=test_name, result='SKIP', reason='No irods sample metadata'))
+                    elif not h_meta.samples:
+                        tests_results.append(TestResult(test_name=test_name, result='SKIP', reason='No header sample metadata'))
+                    else:
+                        issues = check_irods_vs_header_metadata(fpath, h_meta.samples, i_meta.samples, 'sample')
+                        problems.extend(issues)
+                        if issues:
+                            tests_results.append(TestResult(test_name=test_name, result='FAIL', reason=str(issues)))
+                        else:
+                            tests_results.append(TestResult(test_name=test_name, result='PASS'))
 
                 if 'irods_vs_seqsc' in args.test_sample or 'all' in args.test_sample or args.all_tests:
-                    issues, ss_samples = seq_consistency_checks.compare_entity_sets_in_seqsc(i_meta.samples, 'sample')
+                    test_name = 'check_sample_meta_irods_vs_seqsc'
+                    if not i_meta.samples:
+                        tests_results.append(TestResult(test_name=test_name, result='SKIP', reason='No irods sample metadata'))
+                    issues, ss_samples = seq_consistency_checks.fetch_and_compare_entity_sets_in_seqsc(i_meta.samples, 'sample')
                     problems.extend(issues)
                     ss_samples = seq_consistency_checks.from_seqsc_entity_list_to_list_of_ids(ss_samples)
                     seqsc_meta['samples'] = ss_samples
@@ -449,14 +501,14 @@ def main():
                     problems.extend(issues)
 
                 if 'irods_vs_seqsc' in args.test_library or args.all_tests or 'all' in args.test_library:
-                    issues, ss_libs = seq_consistency_checks.compare_entity_sets_in_seqsc(i_meta.libraries, 'library')
+                    issues, ss_libs = seq_consistency_checks.fetch_and_compare_entity_sets_in_seqsc(i_meta.libraries, 'library')
                     problems.extend(issues)
                     ss_libs = seq_consistency_checks.from_seqsc_entity_list_to_list_of_ids(ss_libs)
                     seqsc_meta['libraries'] = ss_libs
 
 
             if args.test_study or args.all_tests:
-                issues, ss_studies = seq_consistency_checks.compare_entity_sets_in_seqsc(i_meta.studies, 'study')
+                issues, ss_studies = seq_consistency_checks.fetch_and_compare_entity_sets_in_seqsc(i_meta.studies, 'study')
                 problems.extend(issues)
                 ss_studies = seq_consistency_checks.from_seqsc_entity_list_to_list_of_ids(ss_studies)
                 seqsc_meta['studies'] = ss_studies
@@ -521,34 +573,45 @@ def main():
                 general_errors.extend(missing_formats_errors)
 
 
-def write_output_report_to_file(out_file, issues, metadata):
+def write_report_to_file(report_file, issues_per_file):
+    with open(report_file, 'w') as report_fd:
+#        for fpath, set_of_tests in issues_per_file
+        pass
 
-    #  out_fd = open(output_file, 'a')
-    # if header:
-    #     out_fd.write(header+'\n')
-    # for entry in input_list:
-    #     out_fd.write(entry+'\n')
-    # out_fd.write('\n')
-    # out_fd.close()
+def write_meta_to_file(meta_file, metadata_per_file):
+    with open(meta_file, 'w') as meta_fd:
+        pass
 
-    out_fd = open(out_file, 'w')
-    print "NUMBER OF SAMPLES (by name) - IRODS FOUND: " + str(metadata['irods_samples_by_names'])
-    print "NUMBER OF SAMPLES (by acc_nr) - IRODS FOUND: " + str(metadata['irods_samples_by_egaids'])
-    print "NUMBER OF SAMPLES (by whatever id is in the header) - HEADER FOUND: " + str(metadata['header_samples'])
-    print "NUMBER OF STUDIES (acc nr) - IRODS:  " + str(metadata['irods_studies_by_egaids'])
-    print "NUMBER OF STUDIES (name) - IRODS:  " + str(metadata['irods_studies_by_names'])
 
-    #print "NUMBER OF FILES WITH ISSUES: " + str(issues_per_file)
-    print "NUMBER OF SAMPLES (by name) - IRODS FOUND: " + str(metadata['irods_samples_by_names'])
-    print "NUMBER OF SAMPLES (by acc_nr) - IRODS FOUND: " + str(metadata['irods_samples_by_egaids'])
-    print "NUMBER OF SAMPLES (by whatever id is in the header) - HEADER FOUND: " + str(metadata['header_samples'])
-    print "NUMBER OF STUDIES (acc nr) - IRODS:  " + str(metadata['irods_studies_by_egaids'])
-    print "NUMBER OF STUDIES (name) - IRODS:  " + str(metadata['irods_studies_by_names'])
 
-    #print "DIFFERENT FILES RETRIEVED BY QUERYING BY DIFF STUDY IDS: "
-    for err in issues:
-        if type(err) is error_types.DifferentFilesRetrievedByDiffStudyIdsOfSameStudy:
-            print "Number of files retrieved when querying by: " + err.id1 + " and " + err.id2 + " = " + str(len(err.diffs))
+# def write_output_report_to_file(out_file, issues, metadata):
+#
+#     #  out_fd = open(output_file, 'a')
+#     # if header:
+#     #     out_fd.write(header+'\n')
+#     # for entry in input_list:
+#     #     out_fd.write(entry+'\n')
+#     # out_fd.write('\n')
+#     # out_fd.close()
+#
+#     out_fd = open(out_file, 'w')
+#     print "NUMBER OF SAMPLES (by name) - IRODS FOUND: " + str(metadata['irods_samples_by_names'])
+#     print "NUMBER OF SAMPLES (by acc_nr) - IRODS FOUND: " + str(metadata['irods_samples_by_egaids'])
+#     print "NUMBER OF SAMPLES (by whatever id is in the header) - HEADER FOUND: " + str(metadata['header_samples'])
+#     print "NUMBER OF STUDIES (acc nr) - IRODS:  " + str(metadata['irods_studies_by_egaids'])
+#     print "NUMBER OF STUDIES (name) - IRODS:  " + str(metadata['irods_studies_by_names'])
+#
+#     #print "NUMBER OF FILES WITH ISSUES: " + str(issues_per_file)
+#     print "NUMBER OF SAMPLES (by name) - IRODS FOUND: " + str(metadata['irods_samples_by_names'])
+#     print "NUMBER OF SAMPLES (by acc_nr) - IRODS FOUND: " + str(metadata['irods_samples_by_egaids'])
+#     print "NUMBER OF SAMPLES (by whatever id is in the header) - HEADER FOUND: " + str(metadata['header_samples'])
+#     print "NUMBER OF STUDIES (acc nr) - IRODS:  " + str(metadata['irods_studies_by_egaids'])
+#     print "NUMBER OF STUDIES (name) - IRODS:  " + str(metadata['irods_studies_by_names'])
+#
+#     #print "DIFFERENT FILES RETRIEVED BY QUERYING BY DIFF STUDY IDS: "
+#     for err in issues:
+#         if type(err) is error_types.DifferentFilesRetrievedByDiffStudyIdsOfSameStudy:
+#             print "Number of files retrieved when querying by: " + err.id1 + " and " + err.id2 + " = " + str(len(err.diffs))
 
 
 def mkdir_if_doesnt_exist(dir_path):
@@ -895,7 +958,7 @@ def main_imeta():
                     issues = check_irods_vs_header_metadata(f, h_meta.samples, i_meta.samples, 'sample')
                     problems.extend(issues)
 
-                    issues = seq_consistency_checks.compare_entity_sets_in_seqsc(i_meta.samples, 'sample')    #def compare_entity_sets_in_seqsc(entities_dict, entity_type):
+                    issues = seq_consistency_checks.fetch_and_compare_entity_sets_in_seqsc(i_meta.samples, 'sample')    #def compare_entity_sets_in_seqsc(entities_dict, entity_type):
                     problems.extend(issues)
 
                     issues = seq_consistency_checks.check_sample_is_in_desired_study(i_meta.samples['internal_id'], i_meta.studies['name'])
@@ -906,7 +969,7 @@ def main_imeta():
                         problems.extend(issues)
 
                     if 'irods_vs_seqsc' in args.test_sample:
-                        issues = seq_consistency_checks.compare_entity_sets_in_seqsc(i_meta.samples, 'sample')    #def compare_entity_sets_in_seqsc(entities_dict, entity_type):
+                        issues = seq_consistency_checks.fetch_and_compare_entity_sets_in_seqsc(i_meta.samples, 'sample')    #def compare_entity_sets_in_seqsc(entities_dict, entity_type):
                         problems.extend(issues)
 
                         issues = seq_consistency_checks.check_sample_is_in_desired_study(i_meta.samples['internal_id'], i_meta.studies['name'])
@@ -917,7 +980,7 @@ def main_imeta():
                     issues = check_irods_vs_header_metadata(f, h_meta.libraries, i_meta.libraries, 'library')
                     problems.extend(issues)
 
-                    issues = seq_consistency_checks.compare_entity_sets_in_seqsc(i_meta.libraries, 'library')
+                    issues = seq_consistency_checks.fetch_and_compare_entity_sets_in_seqsc(i_meta.libraries, 'library')
                     problems.extend(issues)
                 else:
                     if 'irods_vs_header' in args.test_library:
@@ -925,12 +988,12 @@ def main_imeta():
                         problems.extend(issues)
 
                     if 'irods_vs_seqsc' in args.test_library:
-                        issues = seq_consistency_checks.compare_entity_sets_in_seqsc(i_meta.libraries, 'library')
+                        issues = seq_consistency_checks.fetch_and_compare_entity_sets_in_seqsc(i_meta.libraries, 'library')
                         problems.extend(issues)
 
 
             if args.test_study or args.all_tests:
-                issues = seq_consistency_checks.compare_entity_sets_in_seqsc(i_meta.studies, 'study')
+                issues = seq_consistency_checks.fetch_and_compare_entity_sets_in_seqsc(i_meta.studies, 'study')
                 problems.extend(issues)
 
 
