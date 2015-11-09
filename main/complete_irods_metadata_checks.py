@@ -79,13 +79,13 @@ def check_avus_freq_vs_config_freq(avus, config_path):
     return get_dict_differences(config_attr_freq_dict, irods_attr_freq_dict)
 
 
-
-if __name__ == '__main__':
-    #irods_fpath = '/seq/15254/15254_4.cram'
-    irods_fpath = '/seq/8284/8284_5#55_xahuman.bam'
-    print str(check_irods_metadata_is_complete_for_file(irods_fpath, '/nfs/users/nfs_i/ic4/Projects/metadata-check/irods_meta.conf'))
-    # irods_avus = metadata_utils.iRODSUtils.retrieve_irods_avus(irods_fpath)
-    # diffs = compare_avus_vs_config_frequencies(irods_fpath, '/nfs/users/nfs_i/ic4/Projects/metadata-check/irods_meta.conf')
-    # print str(diffs)
-    # excs = from_tuples_to_exceptions(diffs)
-    # print "AS EXCEPTIONS : "+ str(excs)
+#
+# if __name__ == '__main__':
+#     #irods_fpath = '/seq/15254/15254_4.cram'
+#     irods_fpath = '/seq/8284/8284_5#55_xahuman.bam'
+#     print str(check_irods_metadata_is_complete_for_file(irods_fpath, '/nfs/users/nfs_i/ic4/Projects/metadata-check/irods_meta.conf'))
+#     # irods_avus = metadata_utils.iRODSUtils.retrieve_irods_avus(irods_fpath)
+#     # diffs = compare_avus_vs_config_frequencies(irods_fpath, '/nfs/users/nfs_i/ic4/Projects/metadata-check/irods_meta.conf')
+#     # print str(diffs)
+#     # excs = from_tuples_to_exceptions(diffs)
+#     # print "AS EXCEPTIONS : "+ str(excs)
