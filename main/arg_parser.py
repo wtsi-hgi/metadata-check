@@ -126,7 +126,7 @@ def parse_args():
     #                         help='Check if the reference in iRODS metadata is the same as this one'
     # )
 
-    tests_grp.add_argument('--ref',
+    tests_grp.add_argument('--test-reference',
                             dest='desired_reference',
                             choices=[constants.HS37D5, constants.GRCH38, constants.G1K, constants.GRCH37],
                             help='The desired reference, given by name'
