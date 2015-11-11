@@ -598,7 +598,7 @@ class TestIrodsSeqFileMetadata(unittest.TestCase):
     def test_run_avu_count_checks1(self):
         fpath = '/seq/6661/6661_2#12.bam'
         avus = metadata_utils.iRODSiCmdsUtils.retrieve_irods_avus(fpath)
-        print str(avus)
+        print(str(avus))
         result = IrodsSeqFileMetadata.run_avu_count_checks(fpath, avus)
         self.assertEqual([], result)
 

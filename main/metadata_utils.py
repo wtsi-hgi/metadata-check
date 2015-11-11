@@ -19,15 +19,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 This file has been created on Feb 10, 2015.
 """
 
-import irods_metadata
+from . import irods_metadata
 from irods import api as irods_api
 from irods import icommands_wrapper
 from irods import data_types
 from header_parser import sam_header_analyser as header_analyser
 import os
-from identifiers import EntityIdentifier as Identif
+from .identifiers import EntityIdentifier as Identif
 from com import  utils as common_utils
-import error_types
+from . import error_types
 from collections import defaultdict
 
 
@@ -36,8 +36,8 @@ class GeneralUtils:
     @classmethod
     def check_same_entities(cls, seqsc_entities, entity_type):
         problems = []
-        id_types = seqsc_entities.keys()
-        for i in xrange(1, len(id_types)-1):
+        id_types = list(seqsc_entities.keys())
+        for i in range(1, len(id_types)-1):
             if seqsc_entities.get(id_types[i-1]) and seqsc_entities.get(id_types[i]):
                 if not set(seqsc_entities.get(id_types[i-1])) == set(seqsc_entities.get(id_types[i])):
                     problems.append(str(error_types.DifferentEntitiesFoundInSeqscapeQueryingByDiffIdTypesError(entity_type=entity_type,
@@ -58,7 +58,7 @@ class GeneralUtils:
     def filter_out_non_entities(cls, fpath, entity_dict, entity_type):
         filtered_entities = {}
         problems = []
-        for id_type, ids_list in entity_dict.items():
+        for id_type, ids_list in list(entity_dict.items()):
             filtered_ids = cls.filter_out_non_ids(ids_list)
             non_ids = set(ids_list).difference(set(filtered_ids))
             problems.extend([error_types.WrongMetadataValue(fpath=fpath, attribute=str(entity_type)+'_'+str(id_type), value=id) for id in non_ids])
@@ -146,22 +146,22 @@ class iRODSBatonUtils(iRODSUtils):
             for subitem in o:
                 found = False
                 checksum = None
-                for attr, val in subitem.items():
+                for attr, val in list(subitem.items()):
                     #print "ATTR: " + str(attr) + " VAL = " + str(val) + "\n"
                     if attr == 'data_object' and val == '14633_3.cram':
                         found = True
                     if attr == 'checksum':
                         checksum = val
                 if checksum and found:
-                    print "CHECKSUM: " + str(checksum)
+                    print("CHECKSUM: " + str(checksum))
 
                     if attr == 'avus':
                         #avus = json.loads(val)
-                        print "AFTER json load: " + str(val)
+                        print("AFTER json load: " + str(val))
                         for avu in val:
-                            print "A = " + str(avu['attribute']) + " V = " + str(avu['value']) + "\n"
-                        for a, v in attr.items():
-                            print "A = " + str(a) + " V = " + str(v) + "\n"
+                            print("A = " + str(avu['attribute']) + " V = " + str(avu['value']) + "\n")
+                        for a, v in list(attr.items()):
+                            print("A = " + str(a) + " V = " + str(v) + "\n")
 
             #print "COLL: " + str(o['collection']) + " \n"
 
@@ -177,7 +177,7 @@ class iRODSBatonUtils(iRODSUtils):
         """
         do_avus = []
         data_dict = json.loads(search_results_json)
-        for do_item, do_item_val in data_dict.items():
+        for do_item, do_item_val in list(data_dict.items()):
             if do_item == 'avus':
                 for avu in do_item_val:
                     avu_obj = data_types.MetaAVU(attribute=str(avu['attribute']), value=str(avu['value']))  # MetaAVU = namedtuple('MetaAVU', ['attribute', 'value'])    # list of attribute-value tuples
@@ -195,7 +195,7 @@ class iRODSBatonUtils(iRODSUtils):
         """
         result = []
         coll, do = None, None
-        for item, item_val in metaquery_result.items():
+        for item, item_val in list(metaquery_result.items()):
             if str(item) == 'collection':
                 coll = item_val
             elif str(item) == 'data_object':
@@ -223,7 +223,7 @@ class iRODSBatonUtils(iRODSUtils):
             fname = None
             do_avus = []
             do_checksum = None
-            for do_item, do_item_val in data_obj.items():
+            for do_item, do_item_val in list(data_obj.items()):
 #                print "DATA obj item: " + str(do_item)
                 if do_item == 'collection':
                     coll = do_item_val
@@ -260,7 +260,7 @@ class iRODSBatonUtils(iRODSUtils):
         for json_doc in search_results_json_list:
             do_avus = []
             #file_with_checksum_and_avu = cls.from_metaquery_results_to_fpaths_and_avus(json_doc)
-            for do_item, do_item_val in json.loads(json_doc).items():
+            for do_item, do_item_val in list(json.loads(json_doc).items()):
 #                print "DATA obj item: " + str(do_item)
                 if do_item == 'collection':
                     coll = do_item_val

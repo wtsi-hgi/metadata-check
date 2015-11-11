@@ -20,8 +20,8 @@ This file has been created on Jun 23, 2015.
 """
 
 import re
-import error_types
-import metadata_utils
+from . import error_types
+from . import metadata_utils
 from com import utils as common_utils
 from irods import icommands_wrapper, constants as irods_consts
 

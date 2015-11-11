@@ -211,12 +211,12 @@ class _RGTagAnalyser(object):
                 platforms.append(read_grp['PL'])
 
         return BAMHeaderRG(
-            seq_centers=filter(None, list(set(seq_center_list))),
-            seq_dates=filter(None, list(set(seq_dates))),
-            lanelets=filter(None, list(set(lanelets))),
-            platforms=filter(None, list(set(platforms))),
-            libraries=filter(None, list(set(libraries))),
-            samples=filter(None, list(set(samples)))
+            seq_centers=[_f for _f in list(set(seq_center_list)) if _f],
+            seq_dates=[_f for _f in list(set(seq_dates)) if _f],
+            lanelets=[_f for _f in list(set(lanelets)) if _f],
+            platforms=[_f for _f in list(set(platforms)) if _f],
+            libraries=[_f for _f in list(set(libraries)) if _f],
+            samples=[_f for _f in list(set(samples)) if _f]
         )
 
 
@@ -274,7 +274,7 @@ class BAMHeaderAnalyser(object):
         child_proc = subprocess.Popen([config.SAMTOOLS_PATH, 'view', '-H', path], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
         (out, err) = child_proc.communicate()
         if err:
-            print "ERROR calling samtools on " + str(path)
+            print("ERROR calling samtools on " + str(path))
             raise IOError(err)
         return out
 
@@ -300,7 +300,7 @@ class BAMHeaderAnalyser(object):
         child_proc = subprocess.Popen([config.SAMTOOLS_IRODS_PATH, 'view', '-H', irods_fpath], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
         (out, err) = child_proc.communicate()
         if err:
-            print "ERROR calling samtools irods on " + str(irods_fpath)
+            print("ERROR calling samtools irods on " + str(irods_fpath))
             raise IOError(err)
         return out
 

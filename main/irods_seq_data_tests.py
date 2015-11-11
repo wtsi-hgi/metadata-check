@@ -23,7 +23,7 @@ from main import metadata_utils
 from com import utils
 from irods import icommands_wrapper as irods_wrapper
 
-import error_types
+from . import error_types
 
 
 

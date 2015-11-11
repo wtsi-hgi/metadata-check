@@ -1,5 +1,5 @@
 """
-Copyright (C) 2013, 2014  Genome Research Ltd.
+Copyright (C) 2014  Genome Research Ltd.
 
 Author: Irina Colgiu <ic4@sanger.ac.uk>
 
@@ -24,11 +24,11 @@ This file has been created on Nov 3, 2014.
 
 import re
 import pysam
+import subprocess
 from collections import namedtuple
-from header_parser.hparser import HeaderParser
 
+import config
 from com import wrappers
-
 
 LANELET_NAME_REGEX = '[0-9]{4}_[0-9]{1}#[0-9]{1,2}'
 
@@ -52,7 +52,7 @@ BAMHeaderHD = namedtuple('BAMHeaderHD', [])
 BAMHeader = namedtuple('BAMHeader', ['rg', 'pg', 'hd', 'sq'])
 
 
-class _RGTagParser(object):
+class _RGTagAnalyser(object):
     @classmethod
     @wrappers.check_args_not_none
     def _extract_platform_list_from_rg(cls, rg_dict):
@@ -67,7 +67,7 @@ class _RGTagParser(object):
         if 'PL' in rg_dict:
             platform = rg_dict['PL']
         if 'PU' in rg_dict:
-            platform = platform + ' ' + cls._extract_platform_from_pu_entry(rg_dict['PU'])
+            platform = str(platform) + ' ' + str(cls._extract_platform_from_pu_entry(rg_dict['PU']))
         return platform
 
 
@@ -86,7 +86,7 @@ class _RGTagParser(object):
                 This is the name of the lanelet extracted from this part of the header, looking like: e.g. 1234_1#1
         """
         pattern = re.compile(LANELET_NAME_REGEX)
-        if pattern.match(pu_entry) != None:  # PU entry is just a list of lanelet names
+        if pattern.match(pu_entry) is not None:  # PU entry is just a list of lanelet names
             return pu_entry
         else:
             run = cls._extract_run_from_pu_entry(pu_entry)
@@ -169,7 +169,7 @@ class _RGTagParser(object):
 
     @classmethod
     @wrappers.check_args_not_none
-    def parse_all(cls, rgs_list):
+    def analyse_all(cls, rgs_list):
         """ This method parses all the RGs (ReadGroup) in the list received as parameter
             and returns a BAMHeaderRG containing the information found there.
             Parameters
@@ -212,54 +212,156 @@ class _RGTagParser(object):
         )
 
 
-class _SQTagParser(object):
+class _SQTagAnalyser(object):
     @classmethod
-    def parse_all(cls, sqs_list):
+    def analyse_all(cls, sqs_list):
         raise NotImplementedError
 
 
-class _HDTagParser(object):
+class _HDTagAnalyser(object):
     @classmethod
-    def parse_all(cls, hds_list):
+    def analyse_all(cls, hds_list):
         raise NotImplementedError
 
 
-class _PGTagParser(object):
+class _PGTagAnalyser(object):
     @classmethod
-    def parse_all(cls, pgs_list):
+    def analyse_all(cls, pgs_list):
         raise NotImplementedError
 
 
-class BAMHeaderParser(HeaderParser):
+class BAMHeaderAnalyser(object):
     """
         Class containing the functionality for parsing BAM file's header.
     """
 
     @classmethod
     @wrappers.check_args_not_none
-    def extract_header(cls, path):
-        ''' This method extracts the header from a BAM file, given its path
+    def extract_and_parse_header_from_file(cls, path):
+        """ This method extracts the header from a BAM file, given its path and parses it
+            returning the header as a dict, where the keys are header tags (e.g. 'SM', 'LB')
             Parameters
             ----------
             path: str
-                The path to the file
+                The path to the file - in a non-iRODS File System
             Returns
             -------
-            header
+            header : dict
                 A dict containing the groups in the BAM header.
             Raises
             ------
             ValueError - if the file is not SAM/BAM format
 
-        '''
+        """
         with pysam.Samfile(path, "rb") as bamfile:
             return bamfile.header
+
+    @classmethod
+    @wrappers.check_args_not_none
+    def extract_header_from_file(cls, path):
+        """
+            This method extract the header from a file stored in a
+            non-irods file system and returns it as text (string)
+        """
+        child_proc = subprocess.Popen([config.SAMTOOLS_PATH, 'view', '-H', path], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+        (out, err) = child_proc.communicate()
+        if err:
+            print("ERROR calling samtools on " + str(path))
+            raise IOError(err)
+        return out
+
+    @classmethod
+    @wrappers.check_args_not_none
+    def extract_header_from_irods_file(cls, path):
+        """
+            This method extracts the header from iRODS file and returns it as text.
+            Parameters
+            ----------
+            path : str
+                The path to the file in iRODS
+            Returns
+            -------
+            header : str
+                The header of the file as text.
+            Raises
+            ------
+            IOError - if the file header could not have been extracted
+                        (probably because the file could not be accessed in iRODS)
+        """
+        irods_fpath = 'irods:'+str(path)
+        child_proc = subprocess.Popen([config.SAMTOOLS_IRODS_PATH, 'view', '-H', irods_fpath], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+        (out, err) = child_proc.communicate()
+        if err:
+            print("ERROR calling samtools irods on " + str(irods_fpath))
+            raise IOError(err)
+        return out
 
 
     @classmethod
     @wrappers.check_args_not_none
-    def parse(cls, header_dict, rg=True, sq=True, hd=True, pg=True):
-        """ This method takes a BAM file path and parses its header, returning a BAMHeader object
+    def _parse_RG_tag(cls, rg_list):
+        """
+        Takes a list of rg tags, each tag is represented as text.
+        Parameters
+        ----------
+        rg_list : list
+            A list of RG tags, as they appear in the BAM header.
+        """
+        rgs_parsed = []
+        for rg in rg_list:
+            new_rg = {}
+            groups = rg.split('\t')
+            for grp in groups:
+                tag_name = grp[0:2]
+                if tag_name in ['SM', 'LB', 'PL', 'PU', 'DS', 'DT', 'CN']:
+                    tag_value = grp[3:]
+                    new_rg[tag_name] = tag_value
+            rgs_parsed.append(new_rg)
+        return rgs_parsed
+
+    @classmethod
+    @wrappers.check_args_not_none
+    def parse_header(cls, header):
+        """
+            Receives a BAM header as text (string) and parses it.
+            It returns a dict containing as keys the header tags.
+            Parameters
+            ----------
+            header : str
+                Header as text (string)
+            Returns
+            -------
+            header_dict : dict
+                The contents of the header as dict of tags and tag-contents
+        """
+        header_dict = {}
+        rg_list, sq_list, pg_list, hd_list = [], [], [], []
+        lines = header.split('\n')
+        for line in lines:
+            if line.startswith('@SQ'):
+                # sq_list.append(line)
+                pass
+            elif line.startswith('@HD'):
+                # hd_list.append(line)
+                pass
+            elif line.startswith('@PG'):
+                break
+            elif line.startswith('@RG'):
+                rg_list.append(line)
+        rg_parsed_list = cls._parse_RG_tag(rg_list)
+        #sq_parsed_list = cls._parse_SQ_tag(sq_list)
+
+        header_dict['RG'] = rg_parsed_list
+        header_dict['SQ'] = sq_list  #should be sq_parsed_list, but since we don't have a parser for these tags...
+        header_dict['HD'] = hd_list
+        header_dict['PG'] = pg_list
+        return header_dict
+
+
+    @classmethod
+    @wrappers.check_args_not_none
+    def extract_metadata_from_header(cls, header_dict, rg=True, sq=False, hd=False, pg=False):
+        """ This method takes a BAM file path and processes its header into a BAMHeader object
             Parameters
             ----------
             path: str
@@ -280,28 +382,22 @@ class BAMHeaderParser(HeaderParser):
             ------
             ValueError - if the file is not SAM/BAM format
         """
-        sq = _SQTagParser.parse_all(header_dict['SQ']) if sq else None
-        hd = _HDTagParser.parse_all(header_dict['HD']) if hd else None
-        pg = _PGTagParser.parse_all(header_dict['PG']) if pg else None
-        rg = _RGTagParser.parse_all(header_dict['RG']) if rg else None
+        sq = _SQTagAnalyser.analyse_all(header_dict['SQ']) if sq else None
+        hd = _HDTagAnalyser.analyse_all(header_dict['HD']) if hd else None
+        pg = _PGTagAnalyser.analyse_all(header_dict['PG']) if pg else None
+        rg = _RGTagAnalyser.analyse_all(header_dict['RG']) if rg else None
         return BAMHeader(sq=sq, hd=hd, pg=pg, rg=rg)
 
 
-# # import os
-# # from Celery_Django_Prj import configs    
-# # header = BAMHeaderParser.extract_header('/home/ic4/media-tmp2/mc14-vb-carl-fvg-hdd/F13FTSEUHT1058/WX51A92R4342/F13FTSEUHT1058_HUMabyR/result/582130/result_alignment.582130.rmdup.bam')
-# # print "Header: ", header
-# header_dict = {'RG' :[{'ID' :'SZAIPI037008-27', 'PL':'illumina', 'PU': '140123_I878_FCC3LVVACXX_L6_SZAIPI037008-27', 'LB':'SZAIPI037008-27', 'SM': '582130'}]}
-# # @RG     ID:SZAIPI037008-27.1    PL:illumina     PU:131217_I297_FCC35YVACXX_L7_SZAIPI037008-27   LB:SZAIPI037008-27      SM:582130
-# # @RG     ID:SZAIPI037008-27.2    PL:illumina     PU:140123_I878_FCC3LVVACXX_L5_SZAIPI037008-27   LB:SZAIPI037008-27      SM:582130
-# 
-# parsed = BAMHeaderParser.parse(header_dict, sq=False, hd=False, pg=False)
-# print "Parsed: ", parsed
-#
-#
-# # header = [{"ID" : "1#71.5", "PL" : "ILLUMINA", "PU" : "120910_HS11_08408_B_C0PNFACXX_8#71", "LB" : "5507617"},
-# #                   {"ID" : "1#71.4", "PL" : "ILLUMINA", "PU" : "120910_HS11_08408_B_C0PNFACXX_7#71", "LB" : "5507617"}]
-#   
-    
-    
 
+#if __name__ == '__main__':
+
+# header = BAMHeaderAnalyser.extract_header_from_irods_file('/seq/11010/11010_8#21.bam')
+# rgs_list = BAMHeaderAnalyser.parse_header(header)
+# print "EXTRACTED HEADER from file from iRODS: "+str(rgs_list)
+
+# print "\n"
+
+# header = BAMHeaderAnalyser.extract_header_from_file('/lustre/scratch113/teams/hgi/mc14-vb-carl-fvg-hdd/F12HPCEUHK0358/WCAZAK513578/F12HPCEUHK0358_HUMcoqR/582009/Alignment_result/582009.dedup.realn.recal.bam')
+# rgs_list = BAMHeaderAnalyser.parse_header(header)
+# print "Extracted header from file in lustre: "+str(rgs_list)

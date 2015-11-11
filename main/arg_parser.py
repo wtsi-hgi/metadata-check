@@ -20,7 +20,8 @@ This file has been created on Jun 23, 2015.
 """
 
 import argparse
-import constants
+#from . import constants
+from main import constants
 #import argcomplete
 
 
@@ -369,5 +370,5 @@ def parse_args():
 #print parse_args()
 
 if __name__ == '__main__':
-    print parse_args()
+    print(parse_args())
 
