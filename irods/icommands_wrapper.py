@@ -561,6 +561,7 @@ class iRODSMetaQueryOperations(iRODSOperations):
                 that have as metadata the avus given as parameter
         """
         output = cls._run_imeta_qu(avu_dict, zone, operator)
+        output = output.decode("utf-8")
         return cls._process_icmd_output(output)
     
 
