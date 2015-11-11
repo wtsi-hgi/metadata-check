@@ -52,7 +52,7 @@ class BatonAPI:
         #temp = tempfile.NamedTemporaryFile(mode='w')
         p = subprocess.Popen([config.BATON_METAQUERY_BIN_PATH, '--zone', zone, '--obj', '--checksum', '--avu', '--acl'],   # not necessary to add also '--checksum' if --replicate is there
                              stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE) # ,stdout=temp, stderr=subprocess.STDERR
-        out, err = p.communicate(input=query_as_json)
+        out, err = p.communicate(input=str.encode(query_as_json))
         if err:
             #print "ERROR REPORT: " + str(err)
             raise IOError("Some irods error : " + str(err))
@@ -103,7 +103,8 @@ class BatonAPI:
         """
         irods_avus = cls._from_dict_to_irods_avus(avu_tuple_list)
         irods_avus_json = json.dumps(irods_avus)
-        return cls._get_baton_metaquery_result(irods_avus_json, zone)
+        out = cls._get_baton_metaquery_result(irods_avus_json, zone)
+        return out.decode("utf-8")
 
 
     @classmethod
@@ -128,6 +129,7 @@ class BatonAPI:
             fpath_as_dict = cls._split_path_in_data_obj_and_coll(f)
             irods_fpath_dict_as_json = json.dumps(fpath_as_dict)
             list_of_fpaths_as_json.append(irods_fpath_dict_as_json)
-        return cls._get_baton_list_metadata_for_list_of_files_result(list_of_fpaths_as_json)
+        out = cls._get_baton_list_metadata_for_list_of_files_result(list_of_fpaths_as_json)
+        return out.decode("utf-8")
 
 
