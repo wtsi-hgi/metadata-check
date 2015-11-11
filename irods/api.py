@@ -97,7 +97,8 @@ class iRODSAPI:
 
     @classmethod
     def search_files_by_metadata(cls, avu_dict):
-        return irods_api.iRODSMetaQueryOperations.query_by_metadata(avu_dict)
+        avu_dict_bytes = str.encode(avu_dict)
+        return irods_api.iRODSMetaQueryOperations.query_by_metadata(avu_dict_bytes)
 
 
     @classmethod

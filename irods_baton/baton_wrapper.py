@@ -103,7 +103,9 @@ class BatonAPI:
         """
         irods_avus = cls._from_dict_to_irods_avus(avu_tuple_list)
         irods_avus_json = json.dumps(irods_avus)
-        return cls._get_baton_metaquery_result(irods_avus_json, zone)
+        irods_avus_bytes = str.encode(irods_avus_json)
+        out = cls._get_baton_metaquery_result(irods_avus_bytes, zone)
+        return out.decode("utf-8")
 
 
     @classmethod
@@ -114,7 +116,9 @@ class BatonAPI:
         """
         fpath_as_dict = cls._split_path_in_data_obj_and_coll(fpath)
         irods_fpath_dict_as_json = json.dumps(fpath_as_dict)
-        return cls._get_baton_list_metadata_result(irods_fpath_dict_as_json)
+        json_as_bytes = str.encode(irods_fpath_dict_as_json)
+        out = cls._get_baton_list_metadata_result(json_as_bytes)
+        return out.decode("utf-8")
 
 
     @classmethod
@@ -127,7 +131,9 @@ class BatonAPI:
         for f in fpaths:
             fpath_as_dict = cls._split_path_in_data_obj_and_coll(f)
             irods_fpath_dict_as_json = json.dumps(fpath_as_dict)
+            json_as_bytes = str.encode(irods_fpath_dict_as_json)
             list_of_fpaths_as_json.append(irods_fpath_dict_as_json)
-        return cls._get_baton_list_metadata_for_list_of_files_result(list_of_fpaths_as_json)
+        out = cls._get_baton_list_metadata_for_list_of_files_result(json_as_bytes)
+        return out.decode("utf-8")
 
 

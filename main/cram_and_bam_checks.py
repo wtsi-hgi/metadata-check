@@ -22,24 +22,24 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
-#from . import arg_parser
+#from main import arg_parser
 #from meta_check.main import arg_parser
 
 from main import arg_parser
 
-from . import metadata_utils
+from main import metadata_utils
 #from main import irods_seq_data_tests as seq_tests
-from . import irods_metadata_consistency_checks as seq_consistency_checks
-from . import error_types
-from . import complete_irods_metadata_checks
-from . import irods_metadata_consistency_checks as irods_checks
-from . import irods_metadata as irods_meta_module
-from . import header_metadata as header_meta_module
-#from ... import config
+from main import irods_metadata_consistency_checks as seq_consistency_checks
+from main import error_types
+from main import complete_irods_metadata_checks
+from main import irods_metadata_consistency_checks as irods_checks
+from main import irods_metadata as irods_meta_module
+from main import header_metadata as header_meta_module
+#from main.. import config
 import config
-from . import constants
+from main import constants
 from collections import defaultdict
-from .identifiers import EntityIdentifier, IdentifierMapper
+from main.identifiers import EntityIdentifier, IdentifierMapper
 from irods_baton import baton_wrapper as baton
 import sys
 import os
@@ -496,7 +496,7 @@ def main():
                     seqsc_meta['samples'] = ss_samples
 
                     issues = seq_consistency_checks.check_sample_is_in_desired_study(i_meta.samples['internal_id'], i_meta.studies['name'])
-                    problems.extend(issues)
+                    problems.append(issues)
 
             if args.test_library or args.all_tests:
                 if 'irods_vs_header' in args.test_library or args.all_tests or 'all' in args.test_library:

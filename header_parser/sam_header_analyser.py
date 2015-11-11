@@ -276,6 +276,7 @@ class BAMHeaderAnalyser(object):
         if err:
             print("ERROR calling samtools on " + str(path))
             raise IOError(err)
+        out = out.decode("utf-8")
         return out
 
     @classmethod
@@ -302,6 +303,7 @@ class BAMHeaderAnalyser(object):
         if err:
             print("ERROR calling samtools irods on " + str(irods_fpath))
             raise IOError(err)
+        out = out.decode("utf-8")
         return out
 
 
