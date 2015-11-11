@@ -83,7 +83,7 @@ class TestBamChecks(unittest.TestCase):
         study_id = 3644
         study_acc_nr = 'EGAS00001001247'
         result = cram_and_bam_checks.check_same_files_by_diff_study_ids(study_name, study_id, study_acc_nr)
-        print "ERROR: " + str(result)
+        print("ERROR: " + str(result))
         #self.assertEqual(result, [])
 
 

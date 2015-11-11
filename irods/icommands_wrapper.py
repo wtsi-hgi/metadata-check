@@ -26,14 +26,14 @@ This file has been created on Oct 27, 2014
 
 import os
 import subprocess
-import exceptions
+from . import exceptions
 from collections import defaultdict, namedtuple
 from multimethods import multimethod
 
 from com import wrappers, utils
 from irods import data_types as irods_types
 
-import constants
+from . import constants
 ######################## UTILS ##########################################
 
 def assemble_new_irods_fpath(fpath, irods_coll):
@@ -73,7 +73,7 @@ class iRODSOperations(object):
         child_proc = subprocess.Popen(cmd_args, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
         (out, err) = child_proc.communicate()
         if err:
-            print "ERROR ILS serapis_staging!!!! "
+            print("ERROR ILS serapis_staging!!!! ")
             raise exceptions.iRODSException(err, out, cmd=str(cmd_args))
         return out
     
@@ -163,7 +163,7 @@ class iRODSListOperations(iRODSOperations):
         '''
         out_lines = output.split('\n')[1:]
         clean_lines = [f.strip() for f in out_lines]
-        clean_lines = filter(None, clean_lines)
+        clean_lines = [_f for _f in clean_lines if _f]
 
         files_list = [cls._process_file_line(f) for f in clean_lines if f.split()[0] != 'C-']
         colls_list = [cls._process_coll_line(c) for c in clean_lines if c.split()[0] == 'C-']
@@ -182,7 +182,7 @@ class iRODSListOperations(iRODSOperations):
                 A list of irods_types.FileLine and a list of irods_types.CollLine
         '''
         output = cls._run_ils_long(path)
-        print "OUTPUT from list_files_in_coll: "+str(output)
+        print("OUTPUT from list_files_in_coll: "+str(output))
         return cls._process_icmd_output(output)
     
     
@@ -483,7 +483,7 @@ class iRODSMetaQueryOperations(iRODSOperations):
         # cmd_args.append("=")
         # cmd_args.append("1")
         # cmd_args.append('and')
-        for attribute, value in avu_dict.iteritems():
+        for attribute, value in avu_dict.items():
             cmd_args.append(str(attribute))
             cmd_args.append(str(operator))
             cmd_args.append(str(value))

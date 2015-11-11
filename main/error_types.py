@@ -140,10 +140,10 @@ class WrongMD5Error(Exception):
 
 class NotFoundInSeqscapeError(Exception):
 
-    def __init__(self, id_type, id_missing, entity_type, fpath=None):
+    def __init__(self, id_type, ids_missing, entity_type, fpath=None):
         self.fpath = fpath
         self.id_type = id_type
-        self.id_missing = id_missing
+        self.ids_missing = ids_missing
         self.entity_type = entity_type
 
     def __str__(self):

@@ -78,7 +78,7 @@ class TestIRODSvsSeqscMetadata(unittest.TestCase):
     def test_compare_entity_sets_in_seqsc(self):
         irods_samples = {'name': ['491STDY5478742'], 'accession_number': ['EGAN00001096108'], 'internal_id': [1571544]}
         result = checks.fetch_and_compare_entity_sets_in_seqsc(irods_samples, 'sample')
-        print str(result)
+        print(str(result))
         self.assertEqual(len(result), 0)
 
         irods_samples = {'name': ['491STDY5478742'], 'accession_number': ['EGAN0000'], 'internal_id': [1571544]}

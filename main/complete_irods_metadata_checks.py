@@ -20,8 +20,8 @@ This file has been created on Jun 09, 2015.
 """
 
 from collections import defaultdict
-import metadata_utils
-import error_types
+from . import metadata_utils
+from . import error_types
 from com import wrappers
 
 @wrappers.check_args_not_none
@@ -50,7 +50,7 @@ def build_freq_dict_from_avus_list(avus_list):
 def get_dict_differences(dict1, dict2):
 #    return set(dict1.items()) - set(dict2.items())
     diffs = []
-    for k,v, in dict1.items():
+    for k,v, in list(dict1.items()):
         if not dict2.get(k):
             diffs.append((k, v, 0))
         elif v != dict2[k]:

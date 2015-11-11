@@ -19,9 +19,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 This file has been created on Jun 30, 2015.
 """
 
-import metadata_utils
+from . import metadata_utils
 from com import utils as common_utils
-import error_types
+from . import error_types
 
 
 class HeaderSAMFileMetadata(object):

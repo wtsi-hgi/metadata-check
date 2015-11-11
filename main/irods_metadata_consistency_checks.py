@@ -21,8 +21,8 @@ This file has been created on Jun 18, 2015.
 
 from main import error_types
 import seqscape.queries as seqsc
-import metadata_utils
-
+from . import metadata_utils
+from .seqscape_metadata import SeqscapeMetadata, SeqscapeEntitiesFetchedByIdType
 
 def is_id_missing(id, id_type, entities):
     for entity in entities:
@@ -73,22 +73,29 @@ def from_seqsc_entity_list_to_list_of_ids(seqsc_entities):
     :return:
     """
     result = {'internal_id':[], 'accession_number': [], 'name': []}
-    for id_type, entity_list in seqsc_entities.items():
+    for id_type, entity_list in list(seqsc_entities.items()):
         for entity in entity_list:
             result[id_type].append(getattr(entity, id_type))
-    print "RESULTS from from_seqsc_ent: " + str(result)
+    print("RESULTS from from_seqsc_ent: " + str(result))
     return result
 
+
 def fetch_entities_from_seqsc(entity_ids_by_type, entity_type):
-    seqsc_entities = {}
-    for id_type, ids_list in entity_ids_by_type.items():
-        entities = get_entities_from_seqscape(entity_type, ids_list, id_type)
-        seqsc_entities[id_type] = entities
-    return entities
+    seqsc_meta = SeqscapeMetadata()
+    for id_type, ids_list in list(entity_ids_by_type.items()):
+        entities_list = get_entities_from_seqscape(entity_type, ids_list, id_type)
+        entities_fetched = SeqscapeEntitiesFetchedByIdType(entities_fetched=entities_list, query_ids=ids_list, query_id_type=id_type, entity_type=entity_type)
+        seqsc_meta.add_fetched_entities_by_type(entities_fetched, entity_type)
+        #seqsc_meta.entities_fetched.append(entities_fetched)
+    return seqsc_meta
 
+     # self.entities_fetched = entities_fetched
+     #    self.query_ids = query_ids
+     #    self.query_id_type = query_id_type
+     #    self.entity_type = entity_type
 
-def check_seqsc_entity_sets_are_same(entities_by_id_type):
-    for id_type, entities in entities_by_id_type.items():
+def check_seqsc_entity_sets(entities_by_id_type):
+    for id_type, entities in list(entities_by_id_type.items()):
         pass
         # pb: hmm, below I check also if the id is found in seqsc...here, not
 
@@ -100,7 +107,7 @@ def fetch_and_compare_entity_sets_in_seqsc(entities_dict, entity_type):
     problems = []
     seqsc_entities = {}
     # SEARCH FOR ENTITIES in SEQSCAPE BY ID_TYPE:
-    for id_type, ids_list in entities_dict.items():
+    for id_type, ids_list in list(entities_dict.items()):
         if ids_list:
             entities = get_entities_from_seqscape(entity_type, ids_list, id_type)
             for id in ids_list:
