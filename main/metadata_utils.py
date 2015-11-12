@@ -40,7 +40,7 @@ class GeneralUtils:
         for i in range(1, len(id_types)-1):
             if seqsc_entities.get(id_types[i-1]) and seqsc_entities.get(id_types[i]):
                 if not set(seqsc_entities.get(id_types[i-1])) == set(seqsc_entities.get(id_types[i])):
-                    problems.append(str(error_types.DifferentEntitiesFoundInSeqscapeQueryingByDiffIdTypesError(entity_type=entity_type,
+                    problems.append(str(error_types.DiffEntitiesRetrievedFromSeqscapeByDiffIdTypesError(entity_type=entity_type,
                                                                                          id_type1=id_types[i-1],
                                                                                          id_type2=id_types[i],
                                                                                          entities_set1=seqsc_entities[id_types[i-1]],
