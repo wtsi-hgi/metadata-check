@@ -56,6 +56,7 @@ class SeqscapeMetadata(object):
     def __init__(self):
         """
         Constructor - initializez the internal field keeping all the entities by entity type.
+        _entities_dict_by_type = { 'sample' : [SeqscapeEntitiesFetchedByIdType(), SeqscapeEntitiesFetchedByIdType(),..]}
         :return:
         """
         self._entities_dict_by_type = defaultdict(list)
