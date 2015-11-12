@@ -22,8 +22,9 @@ This file has been created on Nov 10, 2015.
 from typing import List
 import collections
 from main import error_types
+from seqscape import queries as seqsc_q
 
-from main.seqscape_metadata import SeqscapeMetadata, SeqscapeEntitiesFetchedByIdType
+from main.seqscape_metadata import SeqscapeMetadata, SeqscapeEntitiesFetchedBasedOnIds
 
 class SeqscapeFetchedEntitiesChecks(object):
 
@@ -49,27 +50,11 @@ class SeqscapeFetchedEntitiesChecks(object):
             raise error_types.TooManyEntitiesSameIdSeqscapeError(entities_fetched_obj.query_id_type, ids_duplicated, entities_dupl_ids)
 
 
-
-    # @classmethod
-    # def check_same_entities(cls, seqsc_entities, entity_type):
-    #     problems = []
-    #     id_types = seqsc_entities.keys()
-    #     for i in xrange(1, len(id_types)-1):
-    #         if seqsc_entities.get(id_types[i-1]) and seqsc_entities.get(id_types[i]):
-    #             if not set(seqsc_entities.get(id_types[i-1])) == set(seqsc_entities.get(id_types[i])):
-    #                 problems.append(str(error_types.DifferentEntitiesFoundInSeqscapeQueryingByDiffIdTypesError(entity_type=entity_type,
-    #                                                                                      id_type1=id_types[i-1],
-    #                                                                                      id_type2=id_types[i],
-    #                                                                                      entities_set1=seqsc_entities[id_types[i-1]],
-    #                                                                                      entities_set2=seqsc_entities[id_types[i]])))
-    #     return problems
-
-
 class SeqscapeMetadataChecks(object):
 
-    def _compare_entity_sets(self, entities_list: List[SeqscapeEntitiesFetchedByIdType]):
+    def _compare_entity_sets(self, entities_list: List[SeqscapeEntitiesFetchedBasedOnIds]) -> List[error_types.DiffEntitiesRetrievedFromSeqscapeByDiffIdTypesError]:
         problems = []
-        for i in xrange(1, len(entities_list)-1):
+        for i in range(1, len(entities_list)-1):
             if not set(entities_list[i-1]) == set(entities_list[i]):
                 problems.append(error_types.DiffEntitiesRetrievedFromSeqscapeByDiffIdTypesError(entity_type=entities_list[i].entity_type,
                                                                                       id_type1=entities_list[i].query_id_type,
@@ -87,44 +72,15 @@ class SeqscapeMetadataChecks(object):
         return problems
 
 
-        # prototype_entity_set = None
-        # #for entity_type in seqscape_meta.get_all_fetched_entities():   # _entities_dict_by_type = { 'sample' : [SeqscapeEntitiesFetchedByIdType(), SeqscapeEntitiesFetchedByIdType(),..]}
-        # all_fetched_entities = seqscape_meta.get_all_fetched_entities().items()
-        # for i in xrange(1, len(all_fetched_entities)-1):
-        #     entity_sets = all_fetched_entities[i]
-        #     if not prototype_entity_set:
-        #         prototype_entity_set = set(seqscape_meta.get_fetched_entities_by_type(entity_type))
-        #     else:
-        #         if not prototype_entity_set == set(seqscape_meta.get_fetched_entities_by_type(entity_type)):
-        #             #raise error_types.DifferentEntitiesFoundInSeqscapeQueryingByDiffIdTypesError(entity_type=entity_type, id_type1=)
-        #             pass
+    def check_samples_belong_to_studies_given(self, seqscape_meta: SeqscapeMetadata) -> None:
+        studies_by_samples = seqsc_q.query_for_studies_by_samples(seqscape_meta.samples)
+
+
+    # actual_studies_from_seqsc = seqsc.query_for_studies_by_samples(sample_ids)
+    # studies_by_name = [s.name for s in actual_studies_from_seqsc]
+    # if study_name not in studies_by_name:
+    #     return error_types.SamplesDontBelongToGivenStudy(sample_ids=sample_ids, actual_study=str(studies_by_name), desired_study=study_name)
+    #
 
 
 
-# class SeqscapeEntitiesFetchedByIdType(object):
-#
-#     def __init__(self, entities_fetched, query_ids, query_id_type, entity_type):
-#         """
-#         This is a class used to store data retrieved from Sequencescape DB.
-#         It holds entities are fetched from Seqscape when querying by a list of ids of type query_id_type.
-#         :param entities_fetched: entities fetched from Seqscape
-#         :param query_id_type: a type of id - e.g. "accession_number", "internal_id", "name"
-#         :param query_ids: a list of strings = the list of ids that Seqscape was queried by,
-#         :return:
-#         """
-#         self.entities_fetched = entities_fetched
-#         self.query_ids = query_ids
-#         self.query_id_type = query_id_type
-#         self.entity_type = entity_type
-
-
-# class SeqscapeMetadata(object):
-#
-#     def __init__(self):
-#         self._entities_dict_by_type = defaultdict(list)
-#
-#     def add_fetched_entities_by_type(self, entities_fetched, entity_type):
-#         self._entities_dict_by_type[entity_type].append(entities_fetched)
-#
-#     def get_fetched_entities_by_type(self, entity_type):
-#         return self._entities_dict_by_type[entity_type]

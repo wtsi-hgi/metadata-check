@@ -22,7 +22,7 @@ This file has been created on Jun 18, 2015.
 from main import error_types
 import seqscape.queries as seqsc
 from . import metadata_utils
-from .seqscape_metadata import SeqscapeMetadata, SeqscapeEntitiesFetchedByIdType
+from .seqscape_metadata import SeqscapeMetadata, SeqscapeEntitiesFetchedBasedOnIds
 
 def is_id_missing(id, id_type, entities):
     for entity in entities:
@@ -81,23 +81,28 @@ def from_seqsc_entity_list_to_list_of_ids(seqsc_entities):
 
 
 def fetch_entities_from_seqsc(entity_ids_by_type, entity_type):
-    seqsc_meta = SeqscapeMetadata()
+    #seqsc_meta = SeqscapeMetadata()
+    all_entities_fetched = []
     for id_type, ids_list in list(entity_ids_by_type.items()):
         entities_list = get_entities_from_seqscape(entity_type, ids_list, id_type)
-        entities_fetched = SeqscapeEntitiesFetchedByIdType(entities_fetched=entities_list, query_ids=ids_list, query_id_type=id_type, entity_type=entity_type)
-        seqsc_meta.add_fetched_entities_by_type(entities_fetched, entity_type)
-        #seqsc_meta.entities_fetched.append(entities_fetched)
-    return seqsc_meta
+        entities_fetched = SeqscapeEntitiesFetchedBasedOnIds(entities_fetched=entities_list, query_ids=ids_list,
+                                                             query_id_type=id_type, query_entity_type=entity_type,
+                                                             fetched_entity_type=entity_type)
+        #seqsc_meta.add_fetched_entities_by_type(entities_fetched)
+        all_entities_fetched.append(entities_fetched)
+    #return seqsc_meta
+    return all_entities_fetched
 
-     # self.entities_fetched = entities_fetched
-     #    self.query_ids = query_ids
-     #    self.query_id_type = query_id_type
-     #    self.entity_type = entity_type
+def fetch_studies_by_samples(samples):
+    sample_ids = [s.internal_id for s in samples]
+    entities_fetched = seqsc.query_for_studies_by_samples(sample_ids)
+    entities_fetched = SeqscapeEntitiesFetchedBasedOnIds(entities_fetched=entities_fetched, query_ids=sample_ids,
+                                                         query_id_type='internal_id', query_entity_type='sample',
+                                                         fetched_entity_type='study'
+                                                         )
+    return entities_fetched
 
-def check_seqsc_entity_sets(entities_by_id_type):
-    for id_type, entities in list(entities_by_id_type.items()):
-        pass
-        # pb: hmm, below I check also if the id is found in seqsc...here, not
+
 
 def fetch_and_compare_entity_sets_in_seqsc(entities_dict, entity_type):
       # entities_dict = {'name': irods_sample_names_list,
@@ -131,7 +136,7 @@ def check_sample_is_in_desired_study(sample_ids, study_name):
     :param study_name: the name of the study that all the samples should be part of
     :return: Nothing if everything is ok, error_types.SampleDoesntBelongToGivenStudy if there are inconsistencies
     """
-    actual_studies_from_seqsc = seqsc.query_all_studies_associated_with_samples(sample_ids)
+    actual_studies_from_seqsc = seqsc.query_for_studies_by_samples(sample_ids)
     studies_by_name = [s.name for s in actual_studies_from_seqsc]
     if study_name not in studies_by_name:
         return error_types.SamplesDontBelongToGivenStudy(sample_ids=sample_ids, actual_study=str(studies_by_name), desired_study=study_name)
