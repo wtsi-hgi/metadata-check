@@ -171,7 +171,7 @@ class TooManyEntitiesSameIdSeqscapeError(Exception):
                str(self.id_type) + " = " + str(self.ids_list) +" found in Seqscape: " + str(self.entites)
 
 
-class DifferentEntitiesFoundInSeqscapeQueryingByDiffIdTypesError(Exception):
+class DiffEntitiesRetrievedFromSeqscapeByDiffIdTypesError(Exception):
 
     def __init__(self, entity_type, id_type1, entities_set1, id_type2, entities_set2, fpath=None):
         self.entity_type = entity_type
