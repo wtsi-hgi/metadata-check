@@ -24,7 +24,7 @@ import collections
 from main import error_types
 from seqscape import queries as seqsc_q
 
-from main.seqscape_metadata import SeqscapeMetadata, SeqscapeEntitiesFetchedBasedOnIds
+from main.seqscape_metadata import SeqscapeRawFetchedMetadata, SeqscapeEntitiesFetchedBasedOnIds
 
 class SeqscapeFetchedEntitiesChecks(object):
 
@@ -64,7 +64,7 @@ class SeqscapeMetadataChecks(object):
                                                                                     ))
         return problems
 
-    def check_same_entity_sets_fetched_by_different_ids(self, seqscape_meta: SeqscapeMetadata) -> None:
+    def check_same_entity_sets_fetched_by_different_ids(self, seqscape_meta: SeqscapeRawFetchedMetadata) -> None:
         problems = []
         for entity_type, entities_fetched_list in seqscape_meta.get_all_fetched_entities():
             entity_type_pbs = self._compare_entity_sets(entities_fetched_list)
@@ -72,7 +72,7 @@ class SeqscapeMetadataChecks(object):
         return problems
 
 
-    def check_samples_belong_to_studies_given(self, seqscape_meta: SeqscapeMetadata) -> None:
+    def check_samples_belong_to_studies_given(self, seqscape_meta: SeqscapeRawFetchedMetadata) -> None:
         studies_by_samples = seqsc_q.query_for_studies_by_samples(seqscape_meta.samples)
 
 

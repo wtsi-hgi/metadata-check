@@ -53,8 +53,10 @@ class SeqscapeEntitiesFetchedBasedOnIds:
         return hash(frozenset(self.entities_fetched))
 
 
-class SeqscapeMetadata(object):
-
+class SeqscapeRawFetchedMetadata(object):
+    """
+    This class holds the metadata fetched from sequencescapeDB before being tested for sanity on its own.
+    """
     def __init__(self):
         """
         Constructor - initializez the internal field keeping all the entities by entity type.
@@ -65,7 +67,7 @@ class SeqscapeMetadata(object):
         self._entities_dict_by_type = defaultdict(list)
         self._entities_fetched_by_association = defaultdict(list)
 
-    def add_fetched_entities_by_type(self, entities_fetched):
+    def add_fetched_entities(self, entities_fetched):
         """
         :param entities_fetched: SeqscapeEntitiesFetchedByIdType object
         :param entity_type: str = the type of entity, can be 'sample', or 'library' or 'study'
@@ -81,12 +83,30 @@ class SeqscapeMetadata(object):
         :return:
         """
         if entities_fetched:
-            key = (entities_fetched[0].query_entity_type, entities_fetched[0].fetched_entity_type)
-            self._entities_fetched_by_association[key] = entities_fetched
-
+            entity_type = (entities_fetched[0].query_entity_type, entities_fetched[0].fetched_entity_type)
+            self._entities_fetched_by_association[entity_type] = entities_fetched
 
     def get_fetched_entities_by_type(self, entity_type):
         return self._entities_dict_by_type[entity_type]
+
+    def get_entities_without_duplicates_by_entity_type(self, entity_type):
+        fetched_entities = self.get_fetched_entities_by_type(entity_type)
+        entities = []
+        for fetched_ent in fetched_entities:
+            all_fetched = []
+            for fe in fetched_ent:
+                all_fetched.extend(fe.entities_fetched)
+            #all_fetched = [fe.entities_fetched for fe in fetched_ent]
+            entities.extend(all_fetched)
+        return entities
+
+
+    # def get_fetched_entities_by_entity_type_and_id_type(self, entity_type, id_type):
+    #     entities_fetched_by_type = self.get_fetched_entities_by_type(entity_type)
+    #     for entity_fetched in entities_fetched_by_type:
+    #         pass
+    #     #     if entity_fetched.
+    #     # return self._entities_dict_by_type[entity_type].
 
     def get_all_fetched_entities(self):
         return self._entities_dict_by_type
@@ -94,25 +114,6 @@ class SeqscapeMetadata(object):
     def get_fetched_entities_by_association(self):
         return self._entities_fetched_by_association
 
-    @property
-    def samples(self):
-        return self._entities_dict_by_type['sample']
-
-    @property
-    def libraries(self):
-        return self._entities_dict_by_type['libraries']
-
-    @property
-    def studies(self):
-        return self._entities_dict_by_type['studies']
-
-    @property
-    def studies_by_samples(self):
-        return self._entities_fetched_by_association[('sample', 'study')]
-
-    @property
-    def samples_by_study(self):
-        return self._entities_fetched_by_association[('study', 'sample')]
 
     def __str__(self):
         return "Entities fetched: " + str(self._entities_dict_by_type)
@@ -125,6 +126,101 @@ class SeqscapeMetadata(object):
 
     def __hash__(self):
         return hash(frozenset(self._entities_dict_by_type)) # + hash(frozenset(self.libraries)) + hash(frozenset(self.studies))
+
+
+class SeqscapeMetadata:
+    """
+    This class holds the metadata that has been tested for sanity and is meant to be used
+    for comparison with other metadata (fetched from different sources).
+    """
+
+    def __init__(self, samples=None, libraries=None, studies=None):
+        """
+        :param samples: a dict like: {'internal_id': [1,2,3], 'name': ['s1',..], 'accession_number': []}
+        :param libraries: a dict like above
+        :param studies: a dict like above
+        :return:
+        """
+        self.samples = samples
+        self.libraries = libraries
+        self.studies = studies
+
+        # I think these fields are used only for self-checks, not for the metadata to be "exported"
+        # to be compared with other types of metadata
+        # self.samples_by_study = samples_by_study
+        # self.studies_by_sample = studies_by_sample
+
+    def _extract_list_of_ids_from_entities(self, entities, id_type):
+        print("From _extract_list_of_ids..."+str(entities))
+        return [getattr(ent, id_type) for ent in entities if hasattr(ent, id_type)]
+
+    def _group_entity_ids_by_id_type(self, entities):
+        return {'name': self._extract_list_of_ids_from_entities(entities, 'name'),
+                'accession_number': self._extract_list_of_ids_from_entities(entities, 'accession_number'),
+                'internal_id': self._extract_list_of_ids_from_entities(entities, 'internal_id')
+                }
+
+
+    @staticmethod
+    def from_raw_metadata(raw_metadata: SeqscapeRawFetchedMetadata):
+        """
+        This method creates an SeqscapeMetadata object based on a SeqqscapeRawFetchedMetadata
+        :param raw_metadata:
+        :return:
+        """
+        ss_metadata = SeqscapeMetadata()
+        samples = raw_metadata.get_entities_without_duplicates_by_entity_type('sample')
+        ss_metadata.samples = ss_metadata._group_entity_ids_by_id_type(samples)
+
+        libraires = raw_metadata.get_entities_without_duplicates_by_entity_type('library')
+        ss_metadata.libraries = ss_metadata._group_entity_ids_by_id_type(libraires)
+
+        studies = raw_metadata.get_entities_without_duplicates_by_entity_type('study')
+        ss_metadata.studies = ss_metadata._group_entity_ids_by_id_type(studies)
+
+
+       #  self._entities_dict_by_type = defaultdict(list)
+       #  self._entities_fetched_by_association = defaultdict(list)
+
+
+    # @property
+    # def samples(self):
+    #     return self._entities_dict_by_type['samples']
+    #
+    # @samples.setter
+    # def samples(self, samples):
+    #     self._entities_dict_by_type['samples'] = samples
+    #
+    # @property
+    # def libraries(self):
+    #     return self._entities_dict_by_type['libraries']
+    #
+    # @libraries.setter
+    # def libraries(self, libraries):
+    #     self._entities_dict_by_type['libraries'] = libraries
+    #
+    # @property
+    # def studies(self):
+    #     return self._entities_dict_by_type['studies']
+    #
+    # @studies.setter
+    # def studies(self, studies):
+    #     self._entities_dict_by_type['studies'] = studies
+    #
+    # @property
+    # def studies_by_samples(self):
+    #     return self._entities_fetched_by_association[('sample', 'study')]
+    #
+    # @property
+    # def samples_by_study(self):
+    #     return self._entities_fetched_by_association[('study', 'sample')]
+
+
+
+
+
+
+
 
 
 
