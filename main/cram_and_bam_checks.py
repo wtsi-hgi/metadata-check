@@ -405,8 +405,32 @@ def main():
             sanity_issues = i_meta.run_field_sanity_checks_and_filter()
             problems.extend(sanity_issues)
 
-            ss_meta = seq_consistency_checks.fetch_entities_from_seqsc(i_meta.samples, 'sample')
-            print("SS META FETCHED: ::::::::::::::::::: " + str(ss_meta))
+
+            # FETCH Seqscape metadata:
+            from main.seqscape_metadata import SeqscapeRawFetchedMetadata, SeqscapeMetadata
+            from sequencescape import connect_to_sequencescape, Sample, Study, Library, MultiplexedLibrary, Well, Model
+            sequencescape = connect_to_sequencescape("mysql://"+config.SEQSC_USER+":@"+config.SEQSC_HOST+":"+str(config.SEQSC_PORT)+"/"+config.SEQSC_DB_NAME)
+
+            res = sequencescape.sample.get_by_id('1164020')
+            print("----------- retrieved from seqscape sample: " + str(res))
+
+            samples_fetched = seq_consistency_checks.fetch_entities_from_seqsc(i_meta.samples, 'sample')
+            print("SS META FETCHED: ::::::::::::::::::: SAMPLES: " + str(samples_fetched))
+
+            libraries_fetched = seq_consistency_checks.fetch_entities_from_seqsc(i_meta.libraries, 'library')
+            print("SS META FETCHED: ::::::::::::::::::: LIBRARIES: " + str(libraries_fetched))
+
+            studies_fetched = seq_consistency_checks.fetch_entities_from_seqsc(i_meta.studies, 'study')
+            print("SS META FETCHED: ::::::::::::::::::: SAMPLES: " + str(studies_fetched))
+
+
+            ss_raw_meta = SeqscapeRawFetchedMetadata()
+            ss_raw_meta.add_fetched_entities(samples_fetched)
+            ss_raw_meta.add_fetched_entities(libraries_fetched)
+            ss_raw_meta.add_fetched_entities(studies_fetched)
+
+            ss_meta = SeqscapeMetadata.from_raw_metadata(ss_raw_meta)
+
 
             if header_meta_needed:
                 try:
