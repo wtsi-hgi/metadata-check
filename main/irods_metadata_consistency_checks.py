@@ -22,7 +22,7 @@ This file has been created on Jun 18, 2015.
 from main import error_types
 import seqscape.queries as seqsc
 from . import metadata_utils
-from .seqscape_metadata import SeqscapeMetadata, SeqscapeEntitiesFetchedBasedOnIds
+from .seqscape_metadata import SeqscapeRawFetchedMetadata, SeqscapeEntitiesFetchedBasedOnIds
 
 def is_id_missing(id, id_type, entities):
     for entity in entities:
