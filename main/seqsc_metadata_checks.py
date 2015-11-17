@@ -74,19 +74,9 @@ class SeqscapeRawMetadataChecks(object):
         return problems
 
     @classmethod
-    def check_fetched_entity_set_by_entity_type(cls, seqscape_meta: SeqscapeRawFetchedMetadata) -> None:
-        problems = []
-        entity_types = seqscape_meta.get_all_fetched_entity_types()
-        for ent_type in entity_types:
-            entities_fetched = seqscape_meta.get_fetched_entities_by_type(ent_type)
-            entity_set_pbs = cls._compare_entity_sets(entities_fetched)
-            problems.extend(entity_set_pbs)
-        return problems
+    def check_entities_fetched_by_different_id_types(cls, fetched_entities_list: List[SeqscapeEntitiesFetchedBasedOnIds]) -> None:
+        return cls._compare_entity_sets(fetched_entities_list)
 
-        # for entity_type, entities_fetched_list in seqscape_meta.get_all_fetched_entities().items():
-        #     entity_type_pbs = cls._compare_entity_sets(entities_fetched_list)
-        #     problems.extend(entity_type_pbs)
-        # return problems
 
     @classmethod
     def check_entities_fetched(cls, entities_fetched_list: List[SeqscapeEntitiesFetchedBasedOnIds]) -> None:
