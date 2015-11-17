@@ -20,6 +20,7 @@ This file has been created on Nov 09, 2015.
 """
 
 from collections import defaultdict
+from typing import List
 
 
 class SeqscapeEntitiesFetchedBasedOnIds:
@@ -67,14 +68,20 @@ class SeqscapeRawFetchedMetadata(object):
         self._entities_dict_by_type = defaultdict(list)
         self._entities_fetched_by_association = defaultdict(list)
 
-    def add_fetched_entities(self, entities_fetched):
+    def add_fetched_entities(self, entities_fetched: SeqscapeEntitiesFetchedBasedOnIds):
         """
         :param entities_fetched: SeqscapeEntitiesFetchedByIdType object
         :param entity_type: str = the type of entity, can be 'sample', or 'library' or 'study'
         :return:
         """
         if entities_fetched:
-            self._entities_dict_by_type[entities_fetched[0].fetched_entity_type].append(entities_fetched)
+            entity_type = entities_fetched.fetched_entity_type
+            self._entities_dict_by_type[entity_type].append(entities_fetched)
+
+    def add_all_fetched_entities(self, entities_fetched: List[SeqscapeEntitiesFetchedBasedOnIds]):
+        if entities_fetched:
+            entity_type = entities_fetched[0].fetched_entity_type
+            self._entities_dict_by_type[entity_type].extend(entities_fetched)
 
     def add_fetched_entities_by_association(self, entities_fetched) -> None:
         """
@@ -86,37 +93,37 @@ class SeqscapeRawFetchedMetadata(object):
             entity_type = (entities_fetched[0].query_entity_type, entities_fetched[0].fetched_entity_type)
             self._entities_fetched_by_association[entity_type] = entities_fetched
 
-    def get_fetched_entities_by_type(self, entity_type):
+    def get_fetched_entities_by_type(self, entity_type: str):
         return self._entities_dict_by_type[entity_type]
 
-    def get_entities_without_duplicates_by_entity_type(self, entity_type):
+    def get_entities_without_duplicates_by_entity_type(self, entity_type: str) -> List[SeqscapeEntitiesFetchedBasedOnIds]:
         fetched_entities = self.get_fetched_entities_by_type(entity_type)
         entities = []
         for fetched_ent in fetched_entities:
             all_fetched = []
-            for fe in fetched_ent:
-                all_fetched.extend(fe.entities_fetched)
-            #all_fetched = [fe.entities_fetched for fe in fetched_ent]
+            all_fetched.extend(fetched_ent.entities_fetched)
             entities.extend(all_fetched)
         return entities
 
 
-    # def get_fetched_entities_by_entity_type_and_id_type(self, entity_type, id_type):
-    #     entities_fetched_by_type = self.get_fetched_entities_by_type(entity_type)
-    #     for entity_fetched in entities_fetched_by_type:
-    #         pass
-    #     #     if entity_fetched.
-    #     # return self._entities_dict_by_type[entity_type].
+    def get_all_fetched_entity_types(self):
+        return self._entities_dict_by_type.keys()
 
-    def get_all_fetched_entities(self):
-        return self._entities_dict_by_type
+    def get_all_fetched_entities(self) -> List[SeqscapeEntitiesFetchedBasedOnIds]:
+        """
+        Returns a list of SeqscapeEntitiesFetchedBasedOnIds for all the entity types concatenated together.
+        """
+        result = []
+        for _, fetched_entities in self._entities_dict_by_type:
+            result.extend(fetched_entities)
+        return result
 
     def get_fetched_entities_by_association(self):
         return self._entities_fetched_by_association
 
 
     def __str__(self):
-        return "Entities fetched: " + str(self._entities_dict_by_type)
+        return "ENTITIES FETCHED: " + str(self._entities_dict_by_type) + " and ASSOCIATED ENTITIED: " + str(self._entities_fetched_by_association)
 
     def __repr__(self):
         return self.__str__()
@@ -151,7 +158,6 @@ class SeqscapeMetadata:
         # self.studies_by_sample = studies_by_sample
 
     def _extract_list_of_ids_from_entities(self, entities, id_type):
-        print("From _extract_list_of_ids..."+str(entities))
         return [getattr(ent, id_type) for ent in entities if hasattr(ent, id_type)]
 
     def _group_entity_ids_by_id_type(self, entities):
@@ -178,51 +184,11 @@ class SeqscapeMetadata:
         studies = raw_metadata.get_entities_without_duplicates_by_entity_type('study')
         ss_metadata.studies = ss_metadata._group_entity_ids_by_id_type(studies)
 
-
-       #  self._entities_dict_by_type = defaultdict(list)
-       #  self._entities_fetched_by_association = defaultdict(list)
+        return ss_metadata
 
 
-    # @property
-    # def samples(self):
-    #     return self._entities_dict_by_type['samples']
-    #
-    # @samples.setter
-    # def samples(self, samples):
-    #     self._entities_dict_by_type['samples'] = samples
-    #
-    # @property
-    # def libraries(self):
-    #     return self._entities_dict_by_type['libraries']
-    #
-    # @libraries.setter
-    # def libraries(self, libraries):
-    #     self._entities_dict_by_type['libraries'] = libraries
-    #
-    # @property
-    # def studies(self):
-    #     return self._entities_dict_by_type['studies']
-    #
-    # @studies.setter
-    # def studies(self, studies):
-    #     self._entities_dict_by_type['studies'] = studies
-    #
-    # @property
-    # def studies_by_samples(self):
-    #     return self._entities_fetched_by_association[('sample', 'study')]
-    #
-    # @property
-    # def samples_by_study(self):
-    #     return self._entities_fetched_by_association[('study', 'sample')]
+    def __str__(self):
+        return "SAMPLE: " + str(self.samples) + ", LIBRARIES: " + str(self.libraries) + ", STUDIES: " + str(self.studies)
 
-
-
-
-
-
-
-
-
-
-
-
+    def __repr__(self):
+        return self.__str__()
