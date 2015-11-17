@@ -18,3 +18,16 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 This file has been created on Nov 16, 2015.
 """
+
+class iRODSMetadataProvider:
+
+    @classmethod
+    def retrieve_metadata_by_file_path(cls, fpath):
+        pass
+
+    @classmethod
+    def retrieve_metadata_by_metadata(cls, metadata):
+        pass
+
+
+
