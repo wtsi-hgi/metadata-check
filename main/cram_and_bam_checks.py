@@ -413,38 +413,23 @@ def main():
             #from sequencescape import connect_to_sequencescape, Sample, Study, Library, MultiplexedLibrary, Well, Model
 
 
-            raw_meta = SeqscapeRawMetadataProvider.retrieve_raw_metadata(i_meta.samples, i_meta.libraries, i_meta.studies)
+            raw_ss_meta = SeqscapeRawMetadataProvider.retrieve_raw_metadata(i_meta.samples, i_meta.libraries, i_meta.studies)
 
-            print("RAW METADATAAAAAAAAAAAAAA", raw_meta)
-
-            exit(0)
+            print("RAW METADATAAAAAAAAAAAAAA", raw_ss_meta)
 
             # RUN CHECKS:
-            SeqscapeRawMetadataChecks.check_entities_fetched(raw_meta.get_fetched_entities_by_type('sample'))
-            SeqscapeRawMetadataChecks.check_entities_fetched(raw_meta.get_fetched_entities_by_type('library'))
-            SeqscapeRawMetadataChecks.check_entities_fetched(raw_meta.get_fetched_entities_by_type('study'))
-
-            # from main.seqsc_metadata_checks import SeqscapeFetchedEntitiesChecks, SeqscapeRawMetadataChecks
-            # SeqscapeFetchedEntitiesChecks.check_all_ids_were_found(samples_fetched_by_name)
-            # SeqscapeFetchedEntitiesChecks.check_all_ids_were_found(samples_fetched_by_accession_nr)
-            # SeqscapeFetchedEntitiesChecks.check_all_ids_were_found(samples_fetched_by_id)
-            #
-            # SeqscapeFetchedEntitiesChecks.check_no_duplicates_found(samples_fetched_by_id)
-            # SeqscapeFetchedEntitiesChecks.check_all_ids_were_found(samples_fetched_by_name)
-            # SeqscapeFetchedEntitiesChecks.check_no_duplicates_found(samples_fetched_by_accession_nr)
-            #
-            #
-            # SeqscapeFetchedEntitiesChecks.check_all_ids_were_found(libraries_fetched_by_id)
-            # SeqscapeFetchedEntitiesChecks.check_all_ids_were_found(libraries_fetched_by_name)
-            #
-            # SeqscapeFetchedEntitiesChecks.check_no_duplicates_found(libraries_fetched_by_name)
-            # SeqscapeFetchedEntitiesChecks.check_all_ids_were_found(libraries_fetched_by_id)
-
-            SeqscapeRawMetadataChecks.check_fetched_entity_set_by_entity_type(raw_meta) # seqscape_meta: SeqscapeRawFetchedMetadata)
+            SeqscapeRawMetadataChecks.check_entities_fetched(raw_ss_meta.get_fetched_entities_by_type('sample'))
+            SeqscapeRawMetadataChecks.check_entities_fetched(raw_ss_meta.get_fetched_entities_by_type('library'))
+            SeqscapeRawMetadataChecks.check_entities_fetched(raw_ss_meta.get_fetched_entities_by_type('study'))
 
 
-            ss_meta = SeqscapeMetadata.from_raw_metadata(raw_meta)
-            print("SS metadata: %s", ss_meta)
+            SeqscapeRawMetadataChecks.check_entities_fetched_by_different_id_types(raw_ss_meta.get_fetched_entities_by_type('sample'))
+            SeqscapeRawMetadataChecks.check_entities_fetched_by_different_id_types(raw_ss_meta.get_fetched_entities_by_type('library'))
+            SeqscapeRawMetadataChecks.check_entities_fetched_by_different_id_types(raw_ss_meta.get_fetched_entities_by_type('study'))
+
+
+            ss_meta = SeqscapeMetadata.from_raw_metadata(raw_ss_meta)
+            print("SS metadata: ", ss_meta)
 
             exit(0)
             # entities_list = get_entities_from_seqscape(entity_type, ids_list, id_type)
@@ -453,7 +438,7 @@ def main():
             #                                                      fetched_entity_type=entity_type)
 
 
-            samples_fetched = seq_consistency_checks.fetch_entities_from_seqsc(i_meta.samples, 'sample')
+            # samples_fetched = seq_consistency_checks.fetch_entities_from_seqsc(i_meta.samples, 'sample')
             # print("SS META FETCHED: ::::::::::::::::::: SAMPLES: " + str(samples_fetched))
             #
             # libraries_fetched = seq_consistency_checks.fetch_entities_from_seqsc(i_meta.libraries, 'library')
