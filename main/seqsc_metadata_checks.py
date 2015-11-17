@@ -26,61 +26,87 @@ from seqscape import queries as seqsc_q
 
 from main.seqscape_metadata import SeqscapeRawFetchedMetadata, SeqscapeEntitiesFetchedBasedOnIds
 
-class SeqscapeFetchedEntitiesChecks(object):
 
-    def _find_missing_ids(self, ids_found, ids_given):
+class SeqscapeFetchedEntitiesChecks:
+    @classmethod
+    def _find_missing_ids(cls, ids_found: List[str], ids_given: List[str]):
         return set(ids_given).difference(set(ids_found))
 
-    def _find_duplicated_ids(self, ids_found):
+    @classmethod
+    def _find_duplicated_ids(cls, ids_found: List[str]):
         return [item for item, count in collections.Counter(ids_found).items() if count > 1]
 
-
-    def check_all_ids_were_found(self, entities_fetched_obj):
-        ids_found = [getattr(ent, entities_fetched_obj.query_id_type) for ent in entities_fetched_obj.entities_fetched]
-        ids_missing = self._find_missing_ids(ids_found, entities_fetched_obj.query_ids)
+    @classmethod
+    def check_all_ids_were_found(cls, entities_fetched_obj: SeqscapeEntitiesFetchedBasedOnIds):
+        ids_found = [str(getattr(ent, entities_fetched_obj.query_id_type)) for ent in
+                     entities_fetched_obj.entities_fetched]
+        ids_missing = cls._find_missing_ids(ids_found, entities_fetched_obj.query_ids)
         if ids_missing:
-            raise error_types.NotFoundInSeqscapeError(entities_fetched_obj.query_id_type, ids_missing, entities_fetched_obj.entity_type)
+            raise error_types.NotFoundInSeqscapeError(entities_fetched_obj.query_id_type, ids_missing,
+                                                      entities_fetched_obj.query_entity_type)
 
-    def check_no_duplicates_found(self, entities_fetched_obj):
+    @classmethod
+    def check_no_duplicates_found(cls, entities_fetched_obj: SeqscapeEntitiesFetchedBasedOnIds):
         ids_found = [getattr(ent, entities_fetched_obj.query_id_type) for ent in entities_fetched_obj.entities_fetched]
-        ids_duplicated = self._find_duplicated_ids(ids_found)
+        ids_duplicated = cls._find_duplicated_ids(ids_found)
         entities_dupl_ids = [ent for ent in entities_fetched_obj.entities_fetched
-                                  if getattr(ent, entities_fetched_obj.query_id_type) in ids_duplicated]
+                             if getattr(ent, entities_fetched_obj.query_id_type) in ids_duplicated]
         if ids_duplicated:
-            raise error_types.TooManyEntitiesSameIdSeqscapeError(entities_fetched_obj.query_id_type, ids_duplicated, entities_dupl_ids)
+            raise error_types.TooManyEntitiesSameIdSeqscapeError(entities_fetched_obj.query_id_type, ids_duplicated,
+                                                                 entities_dupl_ids)
 
 
-class SeqscapeMetadataChecks(object):
+class SeqscapeRawMetadataChecks(object):
 
-    def _compare_entity_sets(self, entities_list: List[SeqscapeEntitiesFetchedBasedOnIds]) -> List[error_types.DiffEntitiesRetrievedFromSeqscapeByDiffIdTypesError]:
+    @classmethod
+    def _compare_entity_sets(cls, entities_list: List[SeqscapeEntitiesFetchedBasedOnIds]) -> List[
+        error_types.DiffEntitiesRetrievedFromSeqscapeByDiffIdTypesError]:
         problems = []
-        for i in range(1, len(entities_list)-1):
-            if not set(entities_list[i-1]) == set(entities_list[i]):
-                problems.append(error_types.DiffEntitiesRetrievedFromSeqscapeByDiffIdTypesError(entity_type=entities_list[i].entity_type,
-                                                                                      id_type1=entities_list[i].query_id_type,
-                                                                                      id_type2=entities_list[i-1].query_id_type,
-                                                                                      entities_set1=entities_list[i-1],
-                                                                                      entities_set2=entities_list[i]
-                                                                                    ))
+        for i in range(1, len(entities_list) - 1):
+            if not set(entities_list[i - 1].entities_fetched) == set(entities_list[i].entities_fetched):
+                problems.append(error_types.DiffEntitiesRetrievedFromSeqscapeByDiffIdTypesError(
+                    entity_type=entities_list[i].entity_type,
+                    id_type1=entities_list[i].query_id_type,
+                    id_type2=entities_list[i - 1].query_id_type,
+                    entities_set1=entities_list[i - 1].entities_fetched,
+                    entities_set2=entities_list[i].entities_fetched
+                ))
         return problems
 
-    def check_same_entity_sets_fetched_by_different_ids(self, seqscape_meta: SeqscapeRawFetchedMetadata) -> None:
+    @classmethod
+    def check_fetched_entity_set_by_entity_type(cls, seqscape_meta: SeqscapeRawFetchedMetadata) -> None:
         problems = []
-        for entity_type, entities_fetched_list in seqscape_meta.get_all_fetched_entities():
-            entity_type_pbs = self._compare_entity_sets(entities_fetched_list)
-            problems.extend(entity_type_pbs)
+        entity_types = seqscape_meta.get_all_fetched_entity_types()
+        for ent_type in entity_types:
+            entities_fetched = seqscape_meta.get_fetched_entities_by_type(ent_type)
+            entity_set_pbs = cls._compare_entity_sets(entities_fetched)
+            problems.extend(entity_set_pbs)
         return problems
+
+        # for entity_type, entities_fetched_list in seqscape_meta.get_all_fetched_entities().items():
+        #     entity_type_pbs = cls._compare_entity_sets(entities_fetched_list)
+        #     problems.extend(entity_type_pbs)
+        # return problems
+
+    @classmethod
+    def check_entities_fetched(cls, entities_fetched_list: List[SeqscapeEntitiesFetchedBasedOnIds]) -> None:
+        for entity_fetched in entities_fetched_list:
+            SeqscapeFetchedEntitiesChecks.check_all_ids_were_found(entity_fetched)
+            SeqscapeFetchedEntitiesChecks.check_no_duplicates_found(entity_fetched)
+
+    # @classmethod
+    # def check_all_fetched_entities_in_raw_metadata(cls, raw_meta: SeqscapeRawFetchedMetadata) -> None:
 
 
     def check_samples_belong_to_studies_given(self, seqscape_meta: SeqscapeRawFetchedMetadata) -> None:
         studies_by_samples = seqsc_q.query_for_studies_by_samples(seqscape_meta.samples)
 
 
-    # actual_studies_from_seqsc = seqsc.query_for_studies_by_samples(sample_ids)
-    # studies_by_name = [s.name for s in actual_studies_from_seqsc]
-    # if study_name not in studies_by_name:
-    #     return error_types.SamplesDontBelongToGivenStudy(sample_ids=sample_ids, actual_study=str(studies_by_name), desired_study=study_name)
-    #
+        # actual_studies_from_seqsc = seqsc.query_for_studies_by_samples(sample_ids)
+        # studies_by_name = [s.name for s in actual_studies_from_seqsc]
+        # if study_name not in studies_by_name:
+        # return error_types.SamplesDontBelongToGivenStudy(sample_ids=sample_ids, actual_study=str(studies_by_name), desired_study=study_name)
+        #
 
 
 
