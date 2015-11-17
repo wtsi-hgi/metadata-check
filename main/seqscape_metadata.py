@@ -98,12 +98,12 @@ class SeqscapeRawFetchedMetadata(object):
 
     def get_entities_without_duplicates_by_entity_type(self, entity_type: str) -> List[SeqscapeEntitiesFetchedBasedOnIds]:
         fetched_entities = self.get_fetched_entities_by_type(entity_type)
-        entities = []
+        all_fetched = set()
         for fetched_ent in fetched_entities:
-            all_fetched = []
-            all_fetched.extend(fetched_ent.entities_fetched)
-            entities.extend(all_fetched)
-        return entities
+            entities = set()
+            entities.update(fetched_ent.entities_fetched)
+            all_fetched.update(entities)
+        return list(all_fetched)
 
 
     def get_all_fetched_entity_types(self):
@@ -157,7 +157,7 @@ class SeqscapeMetadata:
         # self.samples_by_study = samples_by_study
         # self.studies_by_sample = studies_by_sample
 
-    def _extract_list_of_ids_from_entities(self, entities, id_type):
+    def _extract_list_of_ids_from_entities(self, entities: List, id_type):
         return [getattr(ent, id_type) for ent in entities if hasattr(ent, id_type)]
 
     def _group_entity_ids_by_id_type(self, entities):
