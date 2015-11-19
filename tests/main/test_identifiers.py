@@ -20,7 +20,7 @@ This file has been created on Jun 15, 2015.
 """
 
 import unittest
-from main import identifiers
+from metadata_types import identifiers
 
 class TestEntityIdentifier(unittest.TestCase):
 
