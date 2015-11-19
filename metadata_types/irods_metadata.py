@@ -20,26 +20,33 @@ This file has been created on Jun 23, 2015.
 """
 
 import re
+from collections import defaultdict
+from typing import List
+
 from main import error_types
 from main import metadata_utils
 from com import utils as common_utils
 from irods import constants as irods_consts
+from irods import data_types
 from metadata_types.identifiers import EntityIdentifier
 
 
 class IRODSRawFileMetadata:
-    def __init__(self, fname, dir_path, avus_list, md5_at_upload=None):
-        self.avus = avus_list
+    def __init__(self, fname: str, dir_path: str, avus_list: List[data_types.MetaAVU], md5_at_upload: str=None):
+        self.avus = IRODSRawFileMetadata.group_attributes(avus_list)
         self.fname = fname
         self.dir_path = dir_path
         self.md5_at_upload = md5_at_upload
 
-    def extract_values_for_attribute(self, attribute):
-        results = []
-        for avu in self.avus:
-            if avu.attribute == attribute:
-                results.append(avu.value)
-        return results
+    def get_values_for_attribute(self, attribute: str):
+        return self.avus[attribute]
+
+    @classmethod
+    def group_attributes(cls, avus):
+        avus_grouped = defaultdict(list)
+        for avu in avus:
+            avus_grouped[avu.attribute].append(avu.value)
+        return avus_grouped
 
     def __str__(self):
         return "Location: dir_path = " + str(self.dir_path) + ", fname = " + str(self.fname) + ", samples = " + str(
@@ -73,40 +80,38 @@ class IRODSFileMetadata(object):
         irods_metadata = IRODSFileMetadata()
         irods_metadata.fname = raw_metadata.fname
         irods_metadata.dir_path = raw_metadata.dir_path
+        irods_metadata.md5_at_upload = raw_metadata.md5_at_upload
 
         # Sample
-        irods_metadata.samples = {'name': raw_metadata.extract_values_for_attribute('sample'),
-                                  'accession_number': raw_metadata.extract_values_for_attribute(
+        irods_metadata.samples = {'name': raw_metadata.get_values_for_attribute('sample'),
+                                  'accession_number': raw_metadata.get_values_for_attribute(
                                       'sample_accession_number'),
-                                  'internal_id': raw_metadata.extract_values_for_attribute('sample_id')
+                                  'internal_id': raw_metadata.get_values_for_attribute('sample_id')
         }
 
         # Library: Hack to correct NPG mistakes (they submit under library names the actual library ids)
-        library_identifiers = raw_metadata.extract_values_for_attribute('library') + \
-                              raw_metadata.extract_values_for_attribute('library_id')
+        library_identifiers = raw_metadata.get_values_for_attribute('library') + \
+                              raw_metadata.get_values_for_attribute('library_id')
         irods_metadata.libraries = EntityIdentifier.separate_identifiers_by_type(library_identifiers)
 
         # Study:
-        irods_metadata.studies = {'name': raw_metadata.extract_values_for_attribute('study'),
-                                  'accession_number': raw_metadata.extract_values_for_attribute(
+        irods_metadata.studies = {'name': raw_metadata.get_values_for_attribute('study'),
+                                  'accession_number': raw_metadata.get_values_for_attribute(
                                       'study_accession_number'),
-                                  'internal_id': raw_metadata.extract_values_for_attribute('study_id')
+                                  'internal_id': raw_metadata.get_values_for_attribute('study_id')
         }
-
-        irods_metadata.md5_in_meta = raw_metadata.extract_values_for_attribute('md5')
-        irods_metadata.md5_at_upload = raw_metadata.md5_at_upload
-        irods_metadata.reference = raw_metadata.extract_values_for_attribute('reference')
-        irods_metadata.run_id = raw_metadata.extract_values_for_attribute('id_run')
-        irods_metadata.lane_id = raw_metadata.extract_values_for_attribute('lane')
-        irods_metadata.npg_qc = raw_metadata.extract_values_for_attribute('manual_qc')
-        irods_metadata.target = raw_metadata.extract_values_for_attribute('target')
-
+        irods_metadata.md5_in_meta = raw_metadata.get_values_for_attribute('md5')
+        irods_metadata.reference = raw_metadata.get_values_for_attribute('reference')
+        irods_metadata.run_id = raw_metadata.get_values_for_attribute('id_run')
+        irods_metadata.lane_id = raw_metadata.get_values_for_attribute('lane')
+        irods_metadata.npg_qc = raw_metadata.get_values_for_attribute('manual_qc')
+        irods_metadata.target = raw_metadata.get_values_for_attribute('target')
         return irods_metadata
 
 
     # @classmethod
     # def from_avus_to_irods_metadata(cls, avus, fpath):
-    #     '''
+    # '''
     #     :param avus: data_types.MetaAVU
     #     :param fpath:
     #     :return: an iRODSFileMetadata object
