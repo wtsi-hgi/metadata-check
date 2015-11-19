@@ -22,15 +22,90 @@ This file has been created on Nov 18, 2015.
 from main import metadata_utils
 from main import error_types
 from com import utils as common_utils
+from com.operators import Operators
 from irods import constants as irods_consts
+from metadata_types.attribute_count import AttributeCount, AttributeCountComparison
+from metadata_types.irods_metadata import IRODSFileMetadata, IRODSRawFileMetadata
+
 import re
+from typing import List
 
 
 # TODO: replace iRODSCMDUTILS with some other way of extracting values - probably in a AVU class or smth, depending on the implementation in Baton wrapper
 
-#class IRODSRawFileMetadataChecks:
+
+# class IRODSRawFileMetadata:
+#     def __init__(self, fname, dir_path, avus_list, md5_at_upload=None):
+#         self.avus = avus_list
+#         self.fname = fname
+#         self.dir_path = dir_path
+#         self.md5_at_upload = md5_at_upload
+
+# AVUCOunt
+#         self.attribute = attribute
+#         self.count = count
+#         self.operator = operator
+#
+
+class IRODSRawFileMetadataChecks:
+
+    def _is_true_comparison(self, left_operand: int, right_operand: int, operator: str):
+        if operator == Operators.EQUAL:
+            return left_operand == right_operand
+        elif operator == Operators.GREATER_THAN:
+            return left_operand > right_operand
+        elif operator == Operators.LESS_THAN:
+            return left_operand < right_operand
+
+
+    def check_attribute_count(self, raw_metadata: IRODSRawFileMetadata, avu_counts: List[AttributeCount]):
+        differences = []
+        for avu_count in avu_counts:
+            count = raw_metadata.get_values_for_attribute(avu_counts.attribute)
+            threshold = avu_count.count
+            if not self._is_true_comparison(count, threshold, avu_count.operator):
+                comparison = AttributeCountComparison(attribute=avu_count.attribute, threshold=threshold,
+                                      actual_count=count, operator=avu_count.operator)
+                differences.append(comparison)
+        # TODO: return or raise an error?!
+        return differences
+
 
 class IRODSFileMetadataChecks:
+
+
+    @classmethod
+    def run_field_sanity_checks_and_filter(file_metadata):
+        problems = []
+        if self.samples:
+            #self.samples, pbs = self._filter_out_non_entities(self.samples)
+            self.samples, pbs = metadata_utils.GeneralUtils.filter_out_non_entities(self.fpath, self.samples, 'sample')
+            pbs = [error_types.WrongIRODSMetadataValue(err.fpath, err.attribute, err.value) for err in pbs]
+            problems.extend(pbs)
+
+        if self.libraries:
+            self.libraries, pbs = metadata_utils.GeneralUtils.filter_out_non_entities(self.fpath, self.libraries, 'library')
+            pbs = [error_types.WrongIRODSMetadataValue(err.fpath, err.attribute, err.value) for err in pbs]
+            problems.extend(pbs)
+
+        if self.studies:
+            self.studies, pbs = metadata_utils.GeneralUtils.filter_out_non_entities(self.fpath, self.studies, 'study')
+            pbs = [error_types.WrongIRODSMetadataValue(err.fpath, err.attribute, err.value) for err in pbs]
+            problems.extend(pbs)
+
+        if self.md5 and not self.is_md5(self.md5):
+            problems.append(error_types.WrongMetadataValue(fpath=self.fpath, attribute='md5', value=self.md5))
+        if self.ichksum_md5 and not self.is_md5(self.ichksum_md5):
+            problems.append(error_types.WrongMetadataValue(fpath=self.fpath, attribute='ichcksum_md5', value=self.ichksum_md5))
+        if self.run_id and not self.is_run_id(self.run_id):
+            problems.append(error_types.WrongMetadataValue(fpath=self.fpath, attribute='run_id', value=self.run_id))
+        if self.lane_id and not self.is_lane_id(self.lane_id):
+            problems.append(error_types.WrongMetadataValue(fpath=self.fpath, attribute='lane_id', value=self.lane_id))
+        if self.npg_qc and not self.is_npg_qc(self.npg_qc):
+            problems.append(error_types.WrongMetadataValue(fpath=self.fpath, attribute='npg_qc', value=self.npg_qc))
+        if self.target and not self.is_target(self.target):
+            problems.append(error_types.WrongMetadataValue(fpath=self.fpath, attribute='target', value=self.target))
+        return problems
 
     @classmethod
     def run_avu_count_checks(cls, fpath, avus):
@@ -125,38 +200,6 @@ class IRODSFileMetadataChecks:
         fname = common_utils.extract_fname_without_ext(fpath)
         cls.check_is_lanelet_filename(fname)
 
-
-    def run_field_sanity_checks_and_filter(self):
-        problems = []
-        if self.samples:
-            #self.samples, pbs = self._filter_out_non_entities(self.samples)
-            self.samples, pbs = metadata_utils.GeneralUtils.filter_out_non_entities(self.fpath, self.samples, 'sample')
-            pbs = [error_types.WrongIRODSMetadataValue(err.fpath, err.attribute, err.value) for err in pbs]
-            problems.extend(pbs)
-
-        if self.libraries:
-            self.libraries, pbs = metadata_utils.GeneralUtils.filter_out_non_entities(self.fpath, self.libraries, 'library')
-            pbs = [error_types.WrongIRODSMetadataValue(err.fpath, err.attribute, err.value) for err in pbs]
-            problems.extend(pbs)
-
-        if self.studies:
-            self.studies, pbs = metadata_utils.GeneralUtils.filter_out_non_entities(self.fpath, self.studies, 'study')
-            pbs = [error_types.WrongIRODSMetadataValue(err.fpath, err.attribute, err.value) for err in pbs]
-            problems.extend(pbs)
-
-        if self.md5 and not self.is_md5(self.md5):
-            problems.append(error_types.WrongMetadataValue(fpath=self.fpath, attribute='md5', value=self.md5))
-        if self.ichksum_md5 and not self.is_md5(self.ichksum_md5):
-            problems.append(error_types.WrongMetadataValue(fpath=self.fpath, attribute='ichcksum_md5', value=self.ichksum_md5))
-        if self.run_id and not self.is_run_id(self.run_id):
-            problems.append(error_types.WrongMetadataValue(fpath=self.fpath, attribute='run_id', value=self.run_id))
-        if self.lane_id and not self.is_lane_id(self.lane_id):
-            problems.append(error_types.WrongMetadataValue(fpath=self.fpath, attribute='lane_id', value=self.lane_id))
-        if self.npg_qc and not self.is_npg_qc(self.npg_qc):
-            problems.append(error_types.WrongMetadataValue(fpath=self.fpath, attribute='npg_qc', value=self.npg_qc))
-        if self.target and not self.is_target(self.target):
-            problems.append(error_types.WrongMetadataValue(fpath=self.fpath, attribute='target', value=self.target))
-        return problems
 
 
 
