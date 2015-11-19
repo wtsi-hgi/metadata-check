@@ -21,7 +21,6 @@ this program. If not, see <http://www.gnu.org/licenses/>.
  
 """
 
-import os
 #from main import arg_parser
 #from meta_check.main import arg_parser
 
@@ -32,24 +31,22 @@ from main import metadata_utils
 from main import irods_metadata_consistency_checks as seq_consistency_checks
 from main import error_types
 from main import complete_irods_metadata_checks
-from main import irods_metadata_consistency_checks as irods_checks
-from main import irods_metadata as irods_meta_module
-from main import header_metadata as header_meta_module
 #from main.. import config
 import config
 from main import constants
 from collections import defaultdict
-from main.identifiers import EntityIdentifier, IdentifierMapper
 from irods_baton import baton_wrapper as baton
 import sys
 import os
 from com import utils
-from irods import icommands_wrapper
 
+from metadata_types.seqscape_metadata import SeqscapeMetadata
+from metadata_checks.seqsc_metadata_checks import SeqscapeRawMetadataChecks
+from metadata_provider.seqscape_meta_provider import SeqscapeRawMetadataProvider
 
-from seqscape.queries import query_study
 
 #BOTH_FILE_TYPES = 'both'
+from metadata_types import irods_metadata as irods_meta_module
 
 
 def check_irods_vs_header_metadata(irods_path, header_dict, irods_dict, entity_type):
@@ -232,19 +229,10 @@ def extract_meta_search_criteria(args):
     return search_criteria
 
 
-def get_files_and_metadata_by_metadata(search_criteria):
-    metaquery_results = baton.BatonAPI.query_by_metadata_and_get_results_as_json(search_criteria) # avu_tuple_list
-    fpaths_checksum_and_avus = metadata_utils.iRODSBatonUtils.from_metaquery_results_to_fpaths_and_avus(metaquery_results)  # this is a dict of key = fpath, value = dict({'avus':[], 'checksum':str})
-    print("NR OF FPATHS FOUND: " + str(len(fpaths_checksum_and_avus)))
-    return fpaths_checksum_and_avus
 
 
-def get_files_and_metadata_by_fpath(fpaths):
-    fpaths_checksum_and_avus = baton.BatonAPI.get_all_files_metadata(fpaths)
-    fpaths_checksum_and_avus = [_f for _f in fpaths_checksum_and_avus.split('\n') if _f]
-    #fpaths_checksum_and_avus = metadata_utils.iRODSBatonUtils.from_metaquery_results_to_fpaths_and_avus(fpaths_checksum_and_avus)  # this is a dict of key = fpath, value = dict({'avus':[], 'checksum':str})
-    fpaths_checksum_and_avus = metadata_utils.iRODSBatonUtils.from_multi_metaquery_results_to_fpaths_and_avus(fpaths_checksum_and_avus)
-    return fpaths_checksum_and_avus
+
+
 
 
 def is_input_given_by_path(args):
@@ -363,27 +351,6 @@ def main():
                 raise NotImplementedError
 
 
-        #if search_criteria:
-            # run baton to get the list of files by the search criteria...hmm, or add the sample filter on the top of the study filter?!
-
-        # if args.samples:
-        #     samples = args.samples
-        #     if args.fosn:
-        #         samples = read_file_into_list(args.fosn)
-        #
-        #     metaquery_results = []
-        #     if samples:
-        #         for sampl in args.samples:
-        #             std_id_type = EntityIdentifier.guess_identifier_type(sampl)
-        #             irods_id_type = IdentifierMapper.seqsc2irods(std_id_type, 'sample')
-        #             search_criteria_for_sample = search_criteria + [(irods_id_type, sampl)]
-        #
-        #             # WARNING! this might run the machine out of memory cause I am reading into memory all the metadata => if the search returns all the files in iRODS ever submitted...I'm done!
-        #             f_and_meta_irods = baton.BatonAPI.query_by_metadata_and_get_results_as_json(search_criteria_for_sample)
-        #             metaquery_results.append(f_and_meta_irods)
-
-        #print "FPATHS and avus: " + str(metaquery_results)
-
          ########################## TESTS #####################
         # PREPARING FOR THE TESTS
 
@@ -395,10 +362,10 @@ def main():
         for fpath, meta_dict in list(fpaths_checksum_and_avus.items()):
             tests_results = []
             problems = []
-            avu_issues = irods_meta_module.IrodsSeqFileMetadata.run_avu_count_checks(fpath, meta_dict['avus'])
+            avu_issues = irods_meta_module.IRODSFileMetadata.run_avu_count_checks(fpath, meta_dict['avus'])
             problems.extend(avu_issues)
 
-            i_meta = irods_meta_module.IrodsSeqFileMetadata.from_avus_to_irods_metadata(meta_dict['avus'], fpath)
+            i_meta = irods_meta_module.IRODSFileMetadata.from_avus_to_irods_metadata(meta_dict['avus'], fpath)
             i_meta.ichksum_md5 = meta_dict['checksum']
 
             # Check for sanity before starting the tests:
@@ -406,54 +373,18 @@ def main():
             problems.extend(sanity_issues)
 
 
-            # FETCH Seqscape metadata:
-            from main.seqscape_metadata import SeqscapeRawFetchedMetadata, SeqscapeMetadata, SeqscapeEntitiesFetchedBasedOnIds
-            from main.seqsc_metadata_checks import SeqscapeRawMetadataChecks
-            from metadata_provider.seqscape_meta_provider import SeqscapeRawMetadataProvider
-            #from sequencescape import connect_to_sequencescape, Sample, Study, Library, MultiplexedLibrary, Well, Model
-
-
+            # FETCH Seqscape raw metadata:
             raw_ss_meta = SeqscapeRawMetadataProvider.retrieve_raw_metadata(i_meta.samples, i_meta.libraries, i_meta.studies)
 
-            print("RAW METADATAAAAAAAAAAAAAA", raw_ss_meta)
-
             # RUN CHECKS:
-            SeqscapeRawMetadataChecks.check_entities_fetched(raw_ss_meta.get_fetched_entities_by_type('sample'))
-            SeqscapeRawMetadataChecks.check_entities_fetched(raw_ss_meta.get_fetched_entities_by_type('library'))
-            SeqscapeRawMetadataChecks.check_entities_fetched(raw_ss_meta.get_fetched_entities_by_type('study'))
+            SeqscapeRawMetadataChecks.check_raw_metadata(raw_ss_meta)
 
-
-            SeqscapeRawMetadataChecks.check_entities_fetched_by_different_id_types(raw_ss_meta.get_fetched_entities_by_type('sample'))
-            SeqscapeRawMetadataChecks.check_entities_fetched_by_different_id_types(raw_ss_meta.get_fetched_entities_by_type('library'))
-            SeqscapeRawMetadataChecks.check_entities_fetched_by_different_id_types(raw_ss_meta.get_fetched_entities_by_type('study'))
-
-
+            # Convert raw metadata to usable metadata:
             ss_meta = SeqscapeMetadata.from_raw_metadata(raw_ss_meta)
+
+
             print("SS metadata: ", ss_meta)
-
-            exit(0)
-            # entities_list = get_entities_from_seqscape(entity_type, ids_list, id_type)
-            # entities_fetched = SeqscapeEntitiesFetchedBasedOnIds(entities_fetched=entities_list, query_ids=ids_list,
-            #                                                      query_id_type=id_type, query_entity_type=entity_type,
-            #                                                      fetched_entity_type=entity_type)
-
-
-            # samples_fetched = seq_consistency_checks.fetch_entities_from_seqsc(i_meta.samples, 'sample')
-            # print("SS META FETCHED: ::::::::::::::::::: SAMPLES: " + str(samples_fetched))
-            #
-            # libraries_fetched = seq_consistency_checks.fetch_entities_from_seqsc(i_meta.libraries, 'library')
-            # print("SS META FETCHED: ::::::::::::::::::: LIBRARIES: " + str(libraries_fetched))
-            #
-            # studies_fetched = seq_consistency_checks.fetch_entities_from_seqsc(i_meta.studies, 'study')
-            # print("SS META FETCHED: ::::::::::::::::::: SAMPLES: " + str(studies_fetched))
-            #
-            #
-            # ss_raw_meta = SeqscapeRawFetchedMetadata()
-            # ss_raw_meta.add_fetched_entities(samples_fetched)
-            # ss_raw_meta.add_fetched_entities(libraries_fetched)
-            # ss_raw_meta.add_fetched_entities(studies_fetched)
-            #
-            # ss_meta = SeqscapeMetadata.from_raw_metadata(ss_raw_meta)
+            print("RAW METADATAAAAAAAAAAAAAA", raw_ss_meta)
 
 
             if header_meta_needed:
