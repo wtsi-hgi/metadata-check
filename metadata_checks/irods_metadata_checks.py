@@ -25,7 +25,7 @@ from com import utils as common_utils
 from com.operators import Operators
 from irods import constants as irods_consts
 from metadata_types.attribute_count import AttributeCount, AttributeCountComparison
-from metadata_types.irods_metadata import IRODSFileMetadata, IRODSRawFileMetadata
+from metadata_types.irods_metadata import IrodsFileMetadata, IrodsRawFileMetadata, IrodsACL, IrodsFileReplicasChecksum
 
 import re
 from typing import List
@@ -34,6 +34,29 @@ from typing import List
 # TODO: replace iRODSCMDUTILS with some other way of extracting values - probably in a AVU class or smth, depending on the implementation in Baton wrapper
 
 
+# class IRODSACL:
+#     def __init__(self, access_group: str, zone: str, permission: str):
+#         self.access_group = access_group
+#         self.zone = zone
+#         self.permission = permission
+
+class IrodsACLsChecks:
+
+    def check_non_public_acls(self, acls: List[IrodsACL]):
+        for acl in acls:
+            if acl.access_group == 'public':
+        #        raise PublicData!!!!
+                pass
+
+    def check_has_specific_group_permission(self, acls: List[IrodsACL], permission: str):
+        """
+        Check in the ACLs for permission for a specific access_group.
+        :param acls:
+        :return:
+        """
+        pass
+
+#TODO: make Enums with permissions and irods seq zones
 # class IRODSRawFileMetadata:
 #     def __init__(self, fname, dir_path, avus_list, md5_at_upload=None):
 #         self.avus = avus_list
@@ -58,7 +81,7 @@ class IRODSRawFileMetadataChecks:
             return left_operand < right_operand
 
 
-    def check_attribute_count(self, raw_metadata: IRODSRawFileMetadata, avu_counts: List[AttributeCount]):
+    def check_attribute_count(self, raw_metadata: IrodsRawFileMetadata, avu_counts: List[AttributeCount]):
         differences = []
         for avu_count in avu_counts:
             count = raw_metadata.get_values_for_attribute(avu_counts.attribute)
