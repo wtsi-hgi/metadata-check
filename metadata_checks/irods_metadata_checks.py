@@ -73,6 +73,17 @@ class IRODSRawFileMetadataChecks:
 
 class IRODSFileMetadataChecks:
 
+    # @classmethod
+    # def filter_out_non_entities(cls, fpath, entity_dict, entity_type):
+    #     filtered_entities = {}
+    #     problems = []
+    #     for id_type, ids_list in list(entity_dict.items()):
+    #         filtered_ids = cls.filter_out_non_ids(ids_list)
+    #         non_ids = set(ids_list).difference(set(filtered_ids))
+    #         problems.extend([error_types.WrongMetadataValue(fpath=fpath, attribute=str(entity_type)+'_'+str(id_type), value=id) for id in non_ids])
+    #         filtered_entities[id_type] = filtered_ids
+    #     return filtered_entities, problems
+
 
     @classmethod
     def run_field_sanity_checks_and_filter(file_metadata):
@@ -112,23 +123,23 @@ class IRODSFileMetadataChecks:
         problems = []
         md5_list = metadata_utils.iRODSiCmdsUtils.extract_values_for_key_from_irods_metadata(avus, 'md5')
         if len(md5_list) != 1:
-            problems.append(error_types.IrodsMetadataAttributeFrequencyError(fpath, 'md5', '1', str(len(md5_list))))
+            problems.append(error_types.MetadataAttributeCountError(fpath, 'md5', '1', str(len(md5_list))))
 
         ref_list = metadata_utils.iRODSiCmdsUtils.extract_values_for_key_from_irods_metadata(avus, 'reference')
         if len(ref_list) != 1:
-            problems.append(error_types.IrodsMetadataAttributeFrequencyError(fpath, 'reference', '1', str(len(ref_list))))
+            problems.append(error_types.MetadataAttributeCountError(fpath, 'reference', '1', str(len(ref_list))))
 
         run_id_list = metadata_utils.iRODSiCmdsUtils.extract_values_for_key_from_irods_metadata(avus, 'id_run')
         if len(run_id_list) != 1:
-            problems.append(error_types.IrodsMetadataAttributeFrequencyError(fpath, 'id_run', '1', str(len(run_id_list))))
+            problems.append(error_types.MetadataAttributeCountError(fpath, 'id_run', '1', str(len(run_id_list))))
 
         lane_id_list = metadata_utils.iRODSiCmdsUtils.extract_values_for_key_from_irods_metadata(avus, 'lane')
         if len(lane_id_list) != 1:
-            problems.append(error_types.IrodsMetadataAttributeFrequencyError(fpath, 'lane', '1', str(len(lane_id_list))))
+            problems.append(error_types.MetadataAttributeCountError(fpath, 'lane', '1', str(len(lane_id_list))))
 
         npg_qc_list = metadata_utils.iRODSiCmdsUtils.extract_values_for_key_from_irods_metadata(avus, 'manual_qc')
         if len(npg_qc_list) != 1:
-            problems.append(error_types.IrodsMetadataAttributeFrequencyError(fpath, 'manual_qc', '1', str(len(npg_qc_list))))
+            problems.append(error_types.MetadataAttributeCountError(fpath, 'manual_qc', '1', str(len(npg_qc_list))))
         return problems
 
 
