@@ -31,7 +31,7 @@ from irods import data_types
 from metadata_types.identifiers import EntityIdentifier
 
 
-class IRODSACL:
+class IrodsACL:
     def __init__(self, access_group: str, zone: str, permission: str):
         self.access_group = access_group
         self.zone = zone
@@ -52,7 +52,7 @@ class IRODSACL:
         return hash(self.access_group) + hash(self.zone) + hash(self.permission)
 
 
-class IRODSFileReplicasChecksum:
+class IrodsFileReplicasChecksum:
     def __init__(self, checksum: str, replica_nr: int):
         self.checksum = checksum
         self.replica_nr = replica_nr
@@ -70,10 +70,10 @@ class IRODSFileReplicasChecksum:
         return hash(self.checksum) + hash(self.replica_nr)
 
 
-class IRODSRawFileMetadata:
+class IrodsRawFileMetadata:
     def __init__(self, fname: str, dir_path: str, avus_list: List[data_types.MetaAVU],
-                 file_replicas: List[IRODSFileReplicasChecksum]=None, acls: List[IRODSACL]=None):
-        self.avus = IRODSRawFileMetadata.group_attributes(avus_list)
+                 file_replicas: List[IrodsFileReplicasChecksum]=None, acls: List[IrodsACL]=None):
+        self.avus = IrodsRawFileMetadata.group_attributes(avus_list)
         self.fname = fname
         self.dir_path = dir_path
         self.file_replicas = file_replicas
@@ -100,7 +100,7 @@ class IRODSRawFileMetadata:
         return self.__str__()
 
 
-class IRODSFileMetadata(object):
+class IrodsFileMetadata(object):
     def __init__(self, fpath: str=None, fname :str=None, samples=None, libraries=None, studies=None,
                  checksum_in_meta:str=None, checksum_at_upload:str=None, references:List[str]=None,
                  run_ids:List[str]=None, lane_ids:List[str]=None, npg_qc:str=None, target:str=None):
@@ -118,8 +118,8 @@ class IRODSFileMetadata(object):
         self._target_values = [target]
 
     @classmethod
-    def from_raw_metadata(cls, raw_metadata: IRODSRawFileMetadata):
-        irods_metadata = IRODSFileMetadata()
+    def from_raw_metadata(cls, raw_metadata: IrodsRawFileMetadata):
+        irods_metadata = IrodsFileMetadata()
         irods_metadata.fname = raw_metadata.fname
         irods_metadata.dir_path = raw_metadata.dir_path
         irods_metadata.checksum_at_upload = raw_metadata.file_replicas
