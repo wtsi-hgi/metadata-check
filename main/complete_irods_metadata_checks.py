@@ -65,7 +65,7 @@ def get_dict_differences(dict1, dict2):
 def from_tuples_to_exceptions(tuples_list):
     excs = []
     for attr_name, desired_freq, actual_freq in tuples_list:
-        excs.append(error_types.IrodsMetadataAttributeFrequencyError(fpath=None, attribute=attr_name, desired_occurances=desired_freq, actual_occurances=actual_freq))
+        excs.append(error_types.MetadataAttributeCountError(fpath=None, attribute=attr_name, desired_occurances=desired_freq, actual_occurances=actual_freq))
     return excs
 
 def check_irods_metadata_is_complete_for_file(fpath, config_path):

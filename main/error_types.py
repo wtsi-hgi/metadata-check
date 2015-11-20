@@ -63,9 +63,10 @@ class IrodsVsSeqscapeMetadataAttributeError(Exception):
 
     def __str__(self):
         if self.entity_type:
-            return "File: " + str(self.fpath) + "'s metadata for "+str(self.entity_type)+", attribute: " + str(self.attribute) + \
-               " is inconsistent between iRODS " + str(self.irods_value) + " and seqscape value: " + \
-               str(self.seqsc_value)
+            return "File: " + str(self.fpath) + "'s metadata for " + \
+                   str(self.entity_type)+", attribute: " + str(self.attribute) + \
+                    " is inconsistent between iRODS " + str(self.irods_value) + \
+                   " and seqscape value: " + str(self.seqsc_value)
         return "File: " + str(self.fpath) + "'s metadata attribute: " + str(self.attribute) + \
                " is inconsistent between iRODS " + str(self.irods_value) + " and seqscape value: " + \
                str(self.seqsc_value)
@@ -90,7 +91,7 @@ class IrodsMetadataAttributeVsFileNameError(Exception):
         return self.__str__()
 
 
-class IrodsMetadataAttributeFrequencyError(Exception):
+class MetadataAttributeCountError(Exception):
 
     def __init__(self, fpath, attribute, desired_occurances, actual_occurances):
         self.fpath = fpath
