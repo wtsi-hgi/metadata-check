@@ -31,12 +31,53 @@ from irods import data_types
 from metadata_types.identifiers import EntityIdentifier
 
 
+class IRODSACL:
+    def __init__(self, access_group: str, zone: str, permission: str):
+        self.access_group = access_group
+        self.zone = zone
+        self.permission = permission
+
+    def __eq__(self, other):
+        return self.access_group == other.access_group and self.zone == other.zone and \
+               self.permission == other.permission
+
+    def __str__(self):
+        return "Access group = " + str(self.access_group) + ", zone: " + \
+               str(self.zone) + ", permission = " + str(self.permission)
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __hash__(self):
+        return hash(self.access_group) + hash(self.zone) + hash(self.permission)
+
+
+class IRODSFileReplicasChecksum:
+    def __init__(self, checksum: str, replica_nr: int):
+        self.checksum = checksum
+        self.replica_nr = replica_nr
+
+    def __eq__(self, other):
+        return self.checksum == other.checksum and self.replica_nr == other.replica_nr
+
+    def __str__(self):
+        return "Replica nr =  " + str(self.replica_nr) + ", checksum = " + str(self.checksum)
+
+    def __repr__(self):
+        return self.__repr__()
+
+    def __hash__(self):
+        return hash(self.checksum) + hash(self.replica_nr)
+
+
 class IRODSRawFileMetadata:
-    def __init__(self, fname: str, dir_path: str, avus_list: List[data_types.MetaAVU], md5_at_upload: str=None):
+    def __init__(self, fname: str, dir_path: str, avus_list: List[data_types.MetaAVU],
+                 file_replicas: List[IRODSFileReplicasChecksum]=None, acls: List[IRODSACL]=None):
         self.avus = IRODSRawFileMetadata.group_attributes(avus_list)
         self.fname = fname
         self.dir_path = dir_path
-        self.md5_at_upload = md5_at_upload
+        self.file_replicas = file_replicas
+        self.acls = acls
 
     def get_values_for_attribute(self, attribute: str):
         return self.avus[attribute]
@@ -49,38 +90,39 @@ class IRODSRawFileMetadata:
         return avus_grouped
 
     def __str__(self):
-        return "Location: dir_path = " + str(self.dir_path) + ", fname = " + str(self.fname) + ", samples = " + str(
-            self.samples) + \
-               ", libraries = " + str(self.libraries) + ", studies = " + str(self.studies) + ", md5_in_meta = " + str(
-            self.md5_in_meta) \
-               + ", md5_at_upload = " + str(self.md5_on_server) + ", reference = " + str(self.reference)
+        return "Location: dir_path = " + str(self.dir_path) + ", fname = " + str(self.fname) + ", samples = " +\
+               str(self.samples) + \
+               ", libraries = " + str(self.libraries) + ", studies = " + str(self.studies) + ", md5_in_meta = " + \
+               str(self.md5_in_meta) \
+               + ", md5_at_upload = " + str(self.file_replicas) + ", reference = " + str(self.reference)
 
     def __repr__(self):
         return self.__str__()
 
 
 class IRODSFileMetadata(object):
-    def __init__(self, fpath=None, fname=None, samples=None, libraries=None, studies=None, md5_in_meta=None,
-                 md5_at_upload=None, reference=None, run_id=None, lane_id=None, npg_qc=None, target=None):
+    def __init__(self, fpath: str=None, fname :str=None, samples=None, libraries=None, studies=None,
+                 checksum_in_meta:str=None, checksum_at_upload:str=None, references:List[str]=None,
+                 run_ids:List[str]=None, lane_ids:List[str]=None, npg_qc:str=None, target:str=None):
         self.fname = fname
         self.fpath = fpath
         self.samples = samples
         self.libraries = libraries
         self.studies = studies
-        self.md5_in_meta = md5_in_meta
-        self.md5_at_upload = md5_at_upload
-        self.reference = reference
-        self.run_id = run_id
-        self.lane_id = lane_id
-        self.npg_qc = npg_qc
-        self.target = target
+        self.checksum_in_meta = checksum_in_meta
+        self.checksum_at_upload = checksum_at_upload
+        self._references = references
+        self.run_ids = run_ids
+        self.lane_ids = lane_ids
+        self._npg_qc_values = [npg_qc]
+        self._target_values = [target]
 
     @classmethod
     def from_raw_metadata(cls, raw_metadata: IRODSRawFileMetadata):
         irods_metadata = IRODSFileMetadata()
         irods_metadata.fname = raw_metadata.fname
         irods_metadata.dir_path = raw_metadata.dir_path
-        irods_metadata.md5_at_upload = raw_metadata.md5_at_upload
+        irods_metadata.checksum_at_upload = raw_metadata.file_replicas
 
         # Sample
         irods_metadata.samples = {'name': raw_metadata.get_values_for_attribute('sample'),
@@ -100,20 +142,47 @@ class IRODSFileMetadata(object):
                                       'study_accession_number'),
                                   'internal_id': raw_metadata.get_values_for_attribute('study_id')
         }
-        irods_metadata.md5_in_meta = raw_metadata.get_values_for_attribute('md5')
-        irods_metadata.reference = raw_metadata.get_values_for_attribute('reference')
-        irods_metadata.run_id = raw_metadata.get_values_for_attribute('id_run')
-        irods_metadata.lane_id = raw_metadata.get_values_for_attribute('lane')
-        irods_metadata.npg_qc = raw_metadata.get_values_for_attribute('manual_qc')
-        irods_metadata.target = raw_metadata.get_values_for_attribute('target')
+
+        irods_metadata.checksum_in_meta = raw_metadata.get_values_for_attribute('md5')
+        irods_metadata.run_ids = raw_metadata.get_values_for_attribute('id_run')
+        irods_metadata.lane_ids = raw_metadata.get_values_for_attribute('lane')
+        irods_metadata._references = raw_metadata.get_values_for_attribute('reference')
+        irods_metadata._npg_qc_values = raw_metadata.get_values_for_attribute('manual_qc')
+        irods_metadata._target_values = raw_metadata.get_values_for_attribute('target')
         return irods_metadata
+
+    def get_run_ids(self):
+        return self.run_ids
+
+    def get_lane_ids(self):
+        return self.lane_ids
+
+    def get_reference(self):
+        if len(self._references) != 1:
+            raise error_types.MetadataAttributeCountError(self.fpath, attribute='reference', desired_occurances='1',
+                                                               actual_occurances=len(self._references))
+        return self._references[0]
+
+    def get_npg_qc(self):
+        if len(self._npg_qc_values) != 1:
+            raise error_types.MetadataAttributeCountError(self.fpath, attribute='npg_qc', desired_occurances='1',
+                                                               actual_occurances=len(self._npg_qc_values))
+        return self._npg_qc_values[0]
+
+    def get_target(self):
+        if len(self._target_values) != 1:
+            raise error_types.MetadataAttributeCountError(self.fpath, attribute='target', desired_occurances='1',
+                                                               actual_occurances=len(self._target_values))
+
+        return self._target_values[0]
+
 
 
     # @classmethod
     # def from_avus_to_irods_metadata(cls, avus, fpath):
     # '''
-    #     :param avus: data_types.MetaAVU
-    #     :param fpath:
+    # :param avus: data_types.MetaAVU
+    # :param fpath:
     #     :return: an iRODSFileMetadata object
     #     WARNING: this assumes that a file has metadata as the data objects in seq zone - ie assumes there should be
     #     exactly 1 md5, 1 lane id, 1 run id, 1 manual_qc field => won't work for more complex metadata schemes
