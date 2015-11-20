@@ -48,24 +48,6 @@ class GeneralUtils:
         return problems
 
 
-    @classmethod
-    def filter_out_non_ids(cls, ids_list):
-        return [id for id in ids_list if id not in ['N/A', 'undefined', 'unspecified']]
-
-    # ugly method - these things should be separated (filtering out, reporting errors, and putting together the right error to be returned directly to the user)
-    # plus I silently access the fpath field from this object, dirty!!!
-    @classmethod
-    def filter_out_non_entities(cls, fpath, entity_dict, entity_type):
-        filtered_entities = {}
-        problems = []
-        for id_type, ids_list in list(entity_dict.items()):
-            filtered_ids = cls.filter_out_non_ids(ids_list)
-            non_ids = set(ids_list).difference(set(filtered_ids))
-            problems.extend([error_types.WrongMetadataValue(fpath=fpath, attribute=str(entity_type)+'_'+str(id_type), value=id) for id in non_ids])
-            filtered_entities[id_type] = filtered_ids
-        return filtered_entities, problems
-
-
 
 class HeaderUtils:
 
