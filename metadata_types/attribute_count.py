@@ -21,7 +21,9 @@ This file has been created on Nov 19, 2015.
 
 
 class AttributeCount:
-
+    """
+    This class is for keeping track of how many attributes with different values are there within a type of metadata.
+    """
     def __init__(self, attribute: str, count: int, operator: str):
         self.attribute = attribute
         self.count = count
