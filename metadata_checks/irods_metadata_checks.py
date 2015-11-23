@@ -25,7 +25,7 @@ from com import utils as common_utils
 from com.operators import Operators
 from irods import constants as irods_consts
 from metadata_types.attribute_count import AttributeCount, AttributeCountComparison
-from metadata_types.irods_metadata import IrodsFileMetadata, IrodsRawFileMetadata, IrodsACL, IrodsFileReplicasChecksum
+from metadata_types.irods_metadata import IrodsFileMetadata, IrodsRawFileMetadata, IrodsACL, IrodsFileReplica
 
 import re
 from typing import List
@@ -40,21 +40,40 @@ from typing import List
 #         self.zone = zone
 #         self.permission = permission
 
-class IrodsACLsChecks:
+class IrodsACLChecks:
 
-    def check_non_public_acls(self, acls: List[IrodsACL]):
-        for acl in acls:
-            if acl.access_group == 'public':
-        #        raise PublicData!!!!
-                pass
-
-    def check_has_specific_group_permission(self, acls: List[IrodsACL], permission: str):
+    @classmethod
+    def check_non_public_acls(cls, acls: List[IrodsACL]):
         """
-        Check in the ACLs for permission for a specific access_group.
+        Checks that the iRODS object doesn't have associated an ACL giving public access to users to it.
         :param acls:
         :return:
         """
-        pass
+        for acl in acls:
+            if acl.provides_public_access():
+                raise error_types.WrongACLWarning( message="ACL for public access found " + str(acl))
+
+
+    @classmethod
+    def check_has_read_permission_ss_group(cls, acls: List[IrodsACL]):
+        """
+        Checks if any of the ACLs is for an ss group.
+        :param acls:
+        :param permission:
+        :return:
+        """
+        found_ss_gr_acl = False
+        for acl in acls:
+            if acl.provides_access_for_ss_group():
+                found_ss_gr_acl = True
+                if not acl.provides_read_permission():
+                    raise error_types.WrongACLWarning(message="ACL provides user/group: "+ str(acl.access_group) +
+                                                                  " permission="+str(acl.permission))
+                break
+        if not found_ss_gr_acl:
+            raise error_types.MissingACLWarning("There is no ACL for an ss_* group, probably nobody "
+                                                "outside of NPG can access this file")
+
 
 #TODO: make Enums with permissions and irods seq zones
 # class IRODSRawFileMetadata:
@@ -70,9 +89,27 @@ class IrodsACLsChecks:
 #         self.operator = operator
 #
 
+# class IrodsFileReplicaChecksum:
+#     def __init__(self, checksum: str, replica_nr: int):
+#         self.checksum = checksum
+#         self.replica_nr = replica_nr
+
+class IrodsFileReplicaChecks:
+
+    @classmethod
+    def check_all_replicas_have_same_checksum(cls, replicas: List[IrodsFileReplica]):
+        if not replicas:
+            return
+        first_replica = replicas[0]
+        for replica in replicas:
+            if not replica.checksum == first_replica.checksum:
+                raise error_types.DifferentFileReplicasWarning(message="Replicas different ",
+                                                               replicas=[str(first_replica), str(replica)])
+
 class IRODSRawFileMetadataChecks:
 
-    def _is_true_comparison(self, left_operand: int, right_operand: int, operator: str):
+    @classmethod
+    def _is_true_comparison(cls, left_operand: int, right_operand: int, operator: str):
         if operator == Operators.EQUAL:
             return left_operand == right_operand
         elif operator == Operators.GREATER_THAN:
@@ -80,13 +117,13 @@ class IRODSRawFileMetadataChecks:
         elif operator == Operators.LESS_THAN:
             return left_operand < right_operand
 
-
-    def check_attribute_count(self, raw_metadata: IrodsRawFileMetadata, avu_counts: List[AttributeCount]):
+    @classmethod
+    def check_attribute_count(cls, raw_metadata: IrodsRawFileMetadata, avu_counts: List[AttributeCount]):
         differences = []
         for avu_count in avu_counts:
             count = raw_metadata.get_values_for_attribute(avu_counts.attribute)
             threshold = avu_count.count
-            if not self._is_true_comparison(count, threshold, avu_count.operator):
+            if not cls._is_true_comparison(count, threshold, avu_count.operator):
                 comparison = AttributeCountComparison(attribute=avu_count.attribute, threshold=threshold,
                                       actual_count=count, operator=avu_count.operator)
                 differences.append(comparison)
