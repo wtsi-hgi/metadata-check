@@ -18,6 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 This file has been created on Jun 26, 2015.
 """
+from enum import Enum
 
 LANLET_NAME_REGEX = '^(?P<run_id>[0-9]{4,5})_(?P<lane_id>[0-9]{1})((?:#(?P<tag_id>[0-9]{1,2}))|$|\.)'
 IRODS_SEQ_LANELET_PATH_REGEX = '^/seq/(?P<run_id>[0-9]{4,5})/(?P=run_id)_(?P<lane_id>[0-9]{1})(?:#?(?P<tag_id>[0-9]{1,2})?)\.'
@@ -29,11 +30,17 @@ TARGET_REGEX = '^0|1$'
 
 ######################## CONSTANTS ###############################
 
-IRODS_HUMGEN_ZONE = 'humgen'
-IRODS_SEQ_ZONE = 'seq'
+class IRODS_ZONES(Enum):
+    SEQ = 'seq'
+    HUMGEN = 'humgen'
+    SANGER1 = 'Sanger1'
 
-iRODS_READ_PERMISSION = "read"
-iRODS_MODIFY_PERMISSION = "write"
-iRODS_OWN_PERMISSION = "own"
-iRODS_NULL_PERMISSION = "null"
+class IRODS_PERMISSIONS(Enum):
+    READ = 'read'
+    WRITE = 'write'
+    OWN = 'own'
+    NULL = 'null'
 
+class IRODS_GROUPS(Enum):
+    PUBLIC = 'public'   # 'public#seq'
+    SS_GROUP_REGEX = 'ss_[0-9]'   # 'ss_1234#seq'
