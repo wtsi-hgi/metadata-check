@@ -27,7 +27,7 @@ This file has been created on Jun 12, 2015.
 # WrongMD5Error = namedtuple('WrongMD5Error', ['fpath', 'imeta_value', 'ichksum_value'])
 #
 
-
+from typing import  List
 
 class HeaderVsIrodsMetadataAttributeError(Exception):
 
@@ -124,6 +124,7 @@ class WrongReferenceError(Exception):
         return self.__str__()
 
 
+# TODO: needs refactoring - rename imeta_value and ichksum_value
 class WrongMD5Error(Exception):
 
     def __init__(self, fpath, imeta_value, ichksum_value):
@@ -272,7 +273,12 @@ class DifferentFilesRetrievedByDiffStudyIdsOfSameStudy(Exception):
         return self.__str__()
 
 
-class MissingFileFormatsFromIRODSError(Exception):
+
+class Warning(Exception):
+    pass
+
+
+class MissingFileFormatsFromIRODSError(Warning):
 
     def __init__(self, fname, missing_formats):
         self.fname = fname
@@ -285,4 +291,34 @@ class MissingFileFormatsFromIRODSError(Exception):
         return self.__str__()
 
 
+class WrongACLWarning(Warning):
 
+    def __init__(self, message):
+        self.message = message
+
+    def __str__(self):
+        return "WARNING - " + str(self.message)
+
+    def __repr__(self):
+        return self.__str__()
+
+
+class MissingACLWarning(Warning):
+
+    def __init__(self, message):
+        self.message = message
+
+    def __str__(self):
+        return str(self.message)
+
+    def __repr__(self):
+        return self.__str__()
+
+class DifferentFileReplicasWarning(Warning):
+
+    def __init__(self, replicas: List[str]=None, message:str=None):
+        self.replicas = replicas
+        self.message = message
+
+    def __str__(self):
+        return str(self.message) + " " + str(self.replicas)
