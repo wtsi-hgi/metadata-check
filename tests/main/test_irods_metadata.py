@@ -489,7 +489,7 @@ class TestIrodsSeqFileMetadata(unittest.TestCase):
 
     def test_test_md5_calculated_vs_metadata2(self):
         irods_metadata = IrodsFileMetadata(fpath='/seq/1234/1234_5#6.bam',fname='1234_5#6.bam', md5='123abc123', ichksum_md5='123abc') # fname, fpath, samples, libraries, studies, md5, ichksum_md5, reference, run_id, lane_id, npg_qc):
-        self.assertRaises(error_types.WrongMD5Error, irods_metadata.test_md5_calculated_vs_metadata)
+        self.assertRaises(error_types.WrongChecksumError, irods_metadata.test_md5_calculated_vs_metadata)
 
     def test_test_md5_calculated_vs_metadata3(self):
         irods_metadata = IrodsFileMetadata(fpath='/seq/1234/1234_5#6.bam', fname='1234_5#6.bam', md5='123abc') # fname, fpath, samples, libraries, studies, md5, ichksum_md5, reference, run_id, lane_id, npg_qc):
