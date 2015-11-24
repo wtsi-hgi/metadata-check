@@ -125,7 +125,7 @@ class WrongReferenceError(Exception):
 
 
 # TODO: needs refactoring - rename imeta_value and ichksum_value
-class WrongMD5Error(Exception):
+class WrongChecksumError(Exception):
 
     def __init__(self, fpath, imeta_value, ichksum_value):
         self.fpath = fpath
@@ -196,7 +196,7 @@ class DiffEntitiesRetrievedFromSeqscapeByDiffIdTypesError(Exception):
 
 class WrongMetadataValue(Exception):
 
-    def __init__(self, fpath, attribute, value):    # , correct_range=None
+    def __init__(self, fpath=None, attribute=None, value=None):    # , correct_range=None
         self.fpath = fpath
         self.attribute = attribute
         self.value = value
