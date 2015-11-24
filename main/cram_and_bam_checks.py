@@ -403,8 +403,8 @@ def main():
             if args.test_md5 or args.all_tests:
                 test_name = 'check_md5_in_irods_meta_vs_ichcksum'
                 try:
-                    i_meta.test_md5_calculated_vs_metadata()
-                except error_types.WrongMD5Error as e:
+                    i_meta.test_checksum_calculated_vs_metadata()
+                except error_types.WrongChecksumError as e:
                     problems.append(e)
                     tests_results.append(TestResult(test_name=test_name, result='FAIL', reason=str(e)))
                 except error_types.TestImpossibleToRunError as e:
