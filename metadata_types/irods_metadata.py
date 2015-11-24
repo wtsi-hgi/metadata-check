@@ -23,12 +23,36 @@ import re
 from collections import defaultdict
 from typing import List
 
+
 from main import error_types
-from main import metadata_utils
 from com import utils as common_utils
 from irods import constants as irods_consts
 from irods import data_types
 from metadata_types.identifiers import EntityIdentifier
+
+# PUBLIC:
+# jq -n '{collection: "/seq/10001", data_object: "10001_1#30_phix.bai"}' | /software/gapi/pkg/baton/0.15.0/bin/baton-list
+# --acl --checksum --replicate{"collection": "/seq/10001", "data_object": "10001_1#30_phix.bai",
+# "replicate": [{"checksum": "2b84f847c8418e5d1ccb26e8e5633c53", "number": 0, "valid": true},
+# {"checksum": "2b84f847c8418e5d1ccb26e8e5633c53", "number": 1, "valid": true}],
+# "checksum": "2b84f847c8418e5d1ccb26e8e5633c53",
+# "access": [{"owner": "trace", "zone": "Sanger1", "level": "read"},
+# {"owner": "srpipe", "zone": "Sanger1", "level": "own"},
+# {"owner": "rodsBoot", "zone": "seq", "level": "own"},
+# {"owner": "irods-g1", "zone": "seq", "level": "own"},
+# {"owner": "public", "zone": "seq", "level": "read"},
+# {"owner": "psdpipe", "zone": "Sanger1", "level": "read"}]}
+
+
+# OWNED:
+#{"collection": "/seq/10080", "data_object": "10080_8#64.bam",
+# "replicate": [{"checksum": "dd6163040f095c571f714169e079f50d", "number": 0, "valid": true},
+# {"checksum": "dd6163040f095c571f714169e079f50d", "number": 1, "valid": true}],
+# "checksum": "dd6163040f095c571f714169e079f50d",
+# "access": [{"owner": "trace", "zone": "Sanger1", "level": "read"},
+# {"owner": "ss_2034", "zone": "seq", "level": "read"}, {"owner": "srpipe", "zone": "Sanger1", "level": "own"},
+# {"owner": "rodsBoot", "zone": "seq", "level": "own"}, {"owner": "irods-g1", "zone": "seq", "level": "own"},
+# {"owner": "psdpipe", "zone": "Sanger1", "level": "read"}]}
 
 
 class IrodsACL:
@@ -51,8 +75,29 @@ class IrodsACL:
     def __hash__(self):
         return hash(self.access_group) + hash(self.zone) + hash(self.permission)
 
+    def provides_public_access(self):
+        r = re.compile(irods_consts.IRODS_GROUPS.PUBLIC)
+        if r.match(self.access_group):
+            return True
+        return False
 
-class IrodsFileReplicasChecksum:
+    def provides_access_for_ss_group(self):
+        r = re.compile(irods_consts.IRODS_GROUPS.SS_GROUP_REGEX)
+        if r.match(self.access_group):
+            return True
+        return False
+
+    def provides_read_permission(self):
+        return self.permission == irods_consts.IRODS_PERMISSIONS.READ
+
+    def provides_write_permission(self):
+        return self.permission == irods_consts.IRODS_PERMISSIONS.WRITE
+
+    def provides_own_permission(self):
+        return self.permission == irods_consts.IRODS_PERMISSIONS.OWN
+
+
+class IrodsFileReplica:
     def __init__(self, checksum: str, replica_nr: int):
         self.checksum = checksum
         self.replica_nr = replica_nr
@@ -72,7 +117,7 @@ class IrodsFileReplicasChecksum:
 
 class IrodsRawFileMetadata:
     def __init__(self, fname: str, dir_path: str, avus_list: List[data_types.MetaAVU],
-                 file_replicas: List[IrodsFileReplicasChecksum]=None, acls: List[IrodsACL]=None):
+                 file_replicas: List[IrodsFileReplica]=None, acls: List[IrodsACL]=None):
         self.avus = IrodsRawFileMetadata.group_attributes(avus_list)
         self.fname = fname
         self.dir_path = dir_path
@@ -111,7 +156,7 @@ class IrodsFileMetadata(object):
         self.studies = studies
         self.checksum_in_meta = checksum_in_meta
         self.checksum_at_upload = checksum_at_upload
-        self._references = references
+        self._reference_paths = references
         self.run_ids = run_ids
         self.lane_ids = lane_ids
         self._npg_qc_values = [npg_qc]
@@ -146,7 +191,7 @@ class IrodsFileMetadata(object):
         irods_metadata.checksum_in_meta = raw_metadata.get_values_for_attribute('md5')
         irods_metadata.run_ids = raw_metadata.get_values_for_attribute('id_run')
         irods_metadata.lane_ids = raw_metadata.get_values_for_attribute('lane')
-        irods_metadata._references = raw_metadata.get_values_for_attribute('reference')
+        irods_metadata._reference_paths = raw_metadata.get_values_for_attribute('reference')
         irods_metadata._npg_qc_values = raw_metadata.get_values_for_attribute('manual_qc')
         irods_metadata._target_values = raw_metadata.get_values_for_attribute('target')
         return irods_metadata
@@ -157,11 +202,14 @@ class IrodsFileMetadata(object):
     def get_lane_ids(self):
         return self.lane_ids
 
-    def get_reference(self):
-        if len(self._references) != 1:
+    def get_reference_paths(self):
+        if len(self._reference_paths) != 1:
             raise error_types.MetadataAttributeCountError(self.fpath, attribute='reference', desired_occurances='1',
-                                                               actual_occurances=len(self._references))
-        return self._references[0]
+                                                               actual_occurances=len(self._reference_paths))
+        return self._reference_paths[0]
+
+    def get_references(self):
+        return [self.extract_reference_name_from_ref_path(ref) for ref in self._reference_paths]
 
     def get_npg_qc(self):
         if len(self._npg_qc_values) != 1:
