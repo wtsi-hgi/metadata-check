@@ -21,7 +21,7 @@ This file has been created on Jun 23, 2015.
 
 import re
 from collections import defaultdict
-from typing import List
+from typing import List, Dict
 
 
 from main import error_types
@@ -116,16 +116,21 @@ class IrodsFileReplica:
 
 
 class IrodsRawFileMetadata:
-    def __init__(self, fname: str, dir_path: str, avus_list: List[data_types.MetaAVU],
-                 file_replicas: List[IrodsFileReplica]=None, acls: List[IrodsACL]=None):
-        self.avus = IrodsRawFileMetadata.group_attributes(avus_list)
+    def __init__(self, fname: str, dir_path: str, file_replicas: List[IrodsFileReplica]=None, acls: List[IrodsACL]=None):
         self.fname = fname
         self.dir_path = dir_path
         self.file_replicas = file_replicas
         self.acls = acls
+        self._avus = {}
+
+    def set_attributes_from_avus(self, avus_list: List[data_types.MetaAVU]):
+        self._avus = IrodsRawFileMetadata.group_attributes(avus_list)
+
+    def set_attributes_from_dict(self, avus_dict: Dict[str, List[str]]):
+        self._avus = avus_dict
 
     def get_values_for_attribute(self, attribute: str):
-        return self.avus[attribute]
+        return self._avus[attribute]
 
     @classmethod
     def group_attributes(cls, avus):
@@ -135,11 +140,8 @@ class IrodsRawFileMetadata:
         return avus_grouped
 
     def __str__(self):
-        return "Location: dir_path = " + str(self.dir_path) + ", fname = " + str(self.fname) + ", samples = " +\
-               str(self.samples) + \
-               ", libraries = " + str(self.libraries) + ", studies = " + str(self.studies) + ", md5_in_meta = " + \
-               str(self.md5_in_meta) \
-               + ", md5_at_upload = " + str(self.file_replicas) + ", reference = " + str(self.reference)
+        return "Location: dir_path = " + str(self.dir_path) + ", fname = " + str(self.fname) + ", AVUS: " + self._avus\
+               + ", md5_at_upload = " + str(self.file_replicas)
 
     def __repr__(self):
         return self.__str__()
@@ -223,52 +225,6 @@ class IrodsFileMetadata(object):
                                                                actual_occurances=len(self._target_values))
 
         return self._target_values[0]
-
-
-
-    # @classmethod
-    # def from_avus_to_irods_metadata(cls, avus, fpath):
-    # '''
-    # :param avus: data_types.MetaAVU
-    # :param fpath:
-    #     :return: an iRODSFileMetadata object
-    #     WARNING: this assumes that a file has metadata as the data objects in seq zone - ie assumes there should be
-    #     exactly 1 md5, 1 lane id, 1 run id, 1 manual_qc field => won't work for more complex metadata schemes
-    #     => ignores avu frequency errors => this should be checked beforehands...somewhere...
-    #     '''
-    #     fname = common_utils.extract_fname(fpath)
-    #     samples = metadata_utils.iRODSUtils.extract_samples_from_irods_metadata(avus)
-    #     libraries = metadata_utils.iRODSUtils.extract_libraries_from_irods_metadata(avus)
-    #     studies = metadata_utils.iRODSUtils.extract_studies_from_irods_metadata(avus)
-    #
-    #     md5_list = metadata_utils.iRODSUtils.extract_values_for_key_from_irods_metadata(avus, 'md5')
-    #     md5 = md5_list[0] if len(md5_list) == 1 else None
-    #
-    #     # TODO: actually this is not according to the method's name, it doesn't build up metadata from avus but also queries irods independently
-    #     # ichksum_md5 = icommands_wrapper.iRODSChecksumOperations.get_checksum(fpath)
-    #
-    #     ref_list = metadata_utils.iRODSiCmdsUtils.extract_values_for_key_from_irods_metadata(avus, 'reference')
-    #     ref = ref_list[0] if len(ref_list) == 1 else None
-    #
-    #     # TODO: I don't deal with the exception thrown from extract_reference_name.. if the ref doesn't look like a ref
-    #     if ref:
-    #         ref = cls.extract_reference_name_from_ref_path(ref)
-    #
-    #     run_id_list = metadata_utils.iRODSiCmdsUtils.extract_values_for_key_from_irods_metadata(avus, 'id_run')
-    #     run_id = run_id_list[0] if len(run_id_list) == 1 else None
-    #
-    #     lane_id_list = metadata_utils.iRODSiCmdsUtils.extract_values_for_key_from_irods_metadata(avus, 'lane')
-    #     lane_id = lane_id_list[0] if len(lane_id_list) == 1 else None
-    #
-    #     npg_qc_list = metadata_utils.iRODSiCmdsUtils.extract_values_for_key_from_irods_metadata(avus, 'manual_qc')
-    #     npg_qc = npg_qc_list[0] if len(npg_qc_list) == 1 else None
-    #
-    #     target_list = metadata_utils.iRODSiCmdsUtils.extract_values_for_key_from_irods_metadata(avus, 'target')
-    #     target = target_list[0] if len(target_list) == 1 else None
-    #
-    #     return IRODSFileMetadata(fpath=fpath, fname=fname, samples=samples, libraries=libraries,
-    #                              studies=studies, md5=md5, reference=ref, run_id=run_id,
-    #                              lane_id=lane_id, npg_qc=npg_qc, target=target)
 
 
     @classmethod
