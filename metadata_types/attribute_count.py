@@ -30,10 +30,10 @@ class AttributeCount:
         self.operator = operator
 
 
-class AttributeCountComparison:
-
-    def __init__(self, attribute: str, actual_count: int, threshold: int, operator: str, ):
-        self.attribute = attribute
-        self.actual_count = actual_count
-        self.threshold = threshold
-        self.operator = operator
+# class AttributeCountComparison:
+#
+#     def __init__(self, attribute: str, actual_count: int, threshold: int, operator: str, ):
+#         self.attribute = attribute
+#         self.actual_count = actual_count
+#         self.threshold = threshold
+#         self.operator = operator
