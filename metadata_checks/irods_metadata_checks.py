@@ -31,14 +31,9 @@ import re
 from typing import List
 
 
-# TODO: replace iRODSCMDUTILS with some other way of extracting values - probably in a AVU class or smth, depending on the implementation in Baton wrapper
+# TODO: replace iRODSCMDUTILS with some other way of extracting values -
+# TODO: probably in a AVU class or smth, depending on the implementation in Baton wrapper
 
-
-# class IRODSACL:
-#     def __init__(self, access_group: str, zone: str, permission: str):
-#         self.access_group = access_group
-#         self.zone = zone
-#         self.permission = permission
 
 class IrodsACLChecks:
 
@@ -49,9 +44,11 @@ class IrodsACLChecks:
         :param acls:
         :return:
         """
+        problems = []
         for acl in acls:
             if acl.provides_public_access():
-                raise error_types.WrongACLWarning( message="ACL for public access found " + str(acl))
+                problems.append(error_types.WrongACLWarning(message="ACL for public access found " + str(acl)))
+        return problems
 
 
     @classmethod
@@ -62,37 +59,20 @@ class IrodsACLChecks:
         :param permission:
         :return:
         """
+        problems = []
         found_ss_gr_acl = False
         for acl in acls:
             if acl.provides_access_for_ss_group():
                 found_ss_gr_acl = True
                 if not acl.provides_read_permission():
-                    raise error_types.WrongACLWarning(message="ACL provides user/group: "+ str(acl.access_group) +
-                                                                  " permission="+str(acl.permission))
+                    problems.append(error_types.WrongACLWarning(message="ACL provides user/group: "+ str(acl.access_group) +
+                                                                  " permission="+str(acl.permission)))
                 break
         if not found_ss_gr_acl:
-            raise error_types.MissingACLWarning("There is no ACL for an ss_* group, probably nobody "
-                                                "outside of NPG can access this file")
+            problems.append(error_types.MissingACLWarning("There is no ACL for an ss_* group, probably nobody "
+                                                "outside of NPG can access this file"))
+        return problems
 
-
-#TODO: make Enums with permissions and irods seq zones
-# class IRODSRawFileMetadata:
-#     def __init__(self, fname, dir_path, avus_list, md5_at_upload=None):
-#         self.avus = avus_list
-#         self.fname = fname
-#         self.dir_path = dir_path
-#         self.md5_at_upload = md5_at_upload
-
-# AVUCOunt
-#         self.attribute = attribute
-#         self.count = count
-#         self.operator = operator
-#
-
-# class IrodsFileReplicaChecksum:
-#     def __init__(self, checksum: str, replica_nr: int):
-#         self.checksum = checksum
-#         self.replica_nr = replica_nr
 
 class IrodsFileReplicaChecks:
 
@@ -100,11 +80,13 @@ class IrodsFileReplicaChecks:
     def check_all_replicas_have_same_checksum(cls, replicas: List[IrodsFileReplica]):
         if not replicas:
             return
+        problems = []
         first_replica = replicas[0]
         for replica in replicas:
             if not replica.checksum == first_replica.checksum:
-                raise error_types.DifferentFileReplicasWarning(message="Replicas different ",
-                                                               replicas=[str(first_replica), str(replica)])
+                problems.append(error_types.DifferentFileReplicasWarning(message="Replicas different ",
+                                                               replicas=[str(first_replica), str(replica)]))
+        return problems
 
 class IRODSRawFileMetadataChecks:
 
@@ -119,17 +101,16 @@ class IRODSRawFileMetadataChecks:
 
     @classmethod
     def check_attribute_count(cls, raw_metadata: IrodsRawFileMetadata, avu_counts: List[AttributeCount]):
-        differences = []
+        problems = []
         for avu_count in avu_counts:
             count = raw_metadata.get_values_for_attribute(avu_counts.attribute)
             threshold = avu_count.count
             if not cls._is_true_comparison(count, threshold, avu_count.operator):
-                comparison = AttributeCountComparison(attribute=avu_count.attribute, threshold=threshold,
-                                      actual_count=count, operator=avu_count.operator)
-                differences.append(comparison)
-        # TODO: return or raise an error?!
-        return differences
-
+                problems.append(error_types.MetadataAttributeCountError(attribute=avu_count.attribute,
+                                                                        desired_occurances=threshold,
+                                                                        actual_occurances=count,
+                                                                        operator=avu_count.operator))
+        return problems
 
 # class IrodsFileMetadata(object):
 #     def __init__(self, fpath: str=None, fname :str=None, samples=None, libraries=None, studies=None,
@@ -173,6 +154,7 @@ class IRODSFileMetadataChecks:
 
         if not cls.is_target(file_metadata.get_target()):
             problems.append(error_types.WrongMetadataValue(attribute='target', value=file_metadata.get_target()))
+        return problems
 
     @classmethod
     def check_file_metadata(cls, file_metadata: IrodsFileMetadata, desired_reference: str):
@@ -210,6 +192,7 @@ class IRODSFileMetadataChecks:
         except error_types.TestImpossibleToRunError as e:
             pass
 
+        return problems
 
     @classmethod
     def is_checksum(cls, checksum):
@@ -283,8 +266,8 @@ class IRODSFileMetadataChecks:
         if file_metadata.checksum_in_meta and file_metadata.checksum_at_upload:
             if file_metadata.checksum_in_meta != file_metadata.checksum_at_upload:
                 raise error_types.WrongChecksumError(fpath=file_metadata.fpath,
-                                                     imeta_value=file_metadata.checksum_at_upload,
-                                                     ichksum_value=file_metadata.checksum_in_meta)
+                                                     checksum_in_meta=file_metadata.checksum_at_upload,
+                                                     chksum_at_upload=file_metadata.checksum_in_meta)
         else:
             if not file_metadata.checksum_in_meta:
                 raise error_types.TestImpossibleToRunError(fpath=file_metadata.fpath, test_name='Test md5',
