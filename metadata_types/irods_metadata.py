@@ -55,6 +55,7 @@ from metadata_types.identifiers import EntityIdentifier
 # {"owner": "psdpipe", "zone": "Sanger1", "level": "read"}]}
 
 
+
 class IrodsACL:
     def __init__(self, access_group: str, zone: str, permission: str):
         self.access_group = access_group
@@ -74,6 +75,18 @@ class IrodsACL:
 
     def __hash__(self):
         return hash(self.access_group) + hash(self.zone) + hash(self.permission)
+
+    @classmethod
+    def is_permission(cls, permission):
+        if not type(permission) is str:
+            raise TypeError("This permission is not a string, it is a: " + str(type(permission)))
+        return permission in irods_consts.IRODS_PERMISSIONS
+
+    @classmethod
+    def is_irods_zone(cls, zone):
+        if not type(zone) is str:
+            raise TypeError("This zone is not a string, it is a: " + str(type(zone)))
+        return zone in irods_consts.IRODS_ZONES
 
     def provides_public_access(self):
         r = re.compile(irods_consts.IRODS_GROUPS.PUBLIC)
@@ -114,6 +127,21 @@ class IrodsFileReplica:
     def __hash__(self):
         return hash(self.checksum) + hash(self.replica_nr)
 
+    @classmethod
+    def is_replica_nr(cls, replica_nr):
+        if not replica_nr.isdigit():
+            raise TypeError("WRONG type of parameter: replica_nr should be a digit and is: " + str(replica_nr))
+        if int(replica_nr) >= 0:
+            return True
+        return False
+
+    @classmethod
+    def is_checksum(cls, checksum):
+        if not type(checksum) is str:
+            raise TypeError("WRONG TYPE: the checksum must be a string, and is: " + str(type(checksum)))
+        r = re.compile(irods_consts.MD5_REGEX)
+        return True if r.match(checksum) else False
+
 
 class IrodsRawFileMetadata:
     def __init__(self, fname: str, dir_path: str, file_replicas: List[IrodsFileReplica]=None, acls: List[IrodsACL]=None):
@@ -130,7 +158,7 @@ class IrodsRawFileMetadata:
         self._avus = avus_dict
 
     def get_values_for_attribute(self, attribute: str):
-        return self._avus[attribute]
+        return self._avus[attribute] if self._avus.has_key(attribute) else None
 
     @classmethod
     def group_attributes(cls, avus):
