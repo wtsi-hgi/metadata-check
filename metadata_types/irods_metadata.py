@@ -23,7 +23,7 @@ import re
 from collections import defaultdict
 from typing import List, Dict
 
-
+from com.operators import Operators
 from main import error_types
 from com import utils as common_utils
 from irods import constants as irods_consts
@@ -45,7 +45,7 @@ from metadata_types.identifiers import EntityIdentifier
 
 
 # OWNED:
-#{"collection": "/seq/10080", "data_object": "10080_8#64.bam",
+# {"collection": "/seq/10080", "data_object": "10080_8#64.bam",
 # "replicate": [{"checksum": "dd6163040f095c571f714169e079f50d", "number": 0, "valid": true},
 # {"checksum": "dd6163040f095c571f714169e079f50d", "number": 1, "valid": true}],
 # "checksum": "dd6163040f095c571f714169e079f50d",
@@ -76,18 +76,6 @@ class IrodsACL:
     def __hash__(self):
         return hash(self.access_group) + hash(self.zone) + hash(self.permission)
 
-    @classmethod
-    def is_permission(cls, permission):
-        if not type(permission) is str:
-            raise TypeError("This permission is not a string, it is a: " + str(type(permission)))
-        return permission in irods_consts.IRODS_PERMISSIONS
-
-    @classmethod
-    def is_irods_zone(cls, zone):
-        if not type(zone) is str:
-            raise TypeError("This zone is not a string, it is a: " + str(type(zone)))
-        return zone in irods_consts.IRODS_ZONES
-
     def provides_public_access(self):
         r = re.compile(irods_consts.IRODS_GROUPS.PUBLIC)
         if r.match(self.access_group):
@@ -109,6 +97,26 @@ class IrodsACL:
     def provides_own_permission(self):
         return self.permission == irods_consts.IRODS_PERMISSIONS.OWN
 
+    @staticmethod
+    def _validate_permission(permission):
+        if not type(permission) is str:
+            raise TypeError("This permission is not a string, it is a: " + str(type(permission)))
+        return permission in irods_consts.IRODS_PERMISSIONS
+
+    @staticmethod
+    def _validate_irods_zone(zone):
+        if not type(zone) is str:
+            raise TypeError("This zone is not a string, it is a: " + str(type(zone)))
+        return zone in irods_consts.IRODS_ZONES
+
+    def validate(self):
+        problems = []
+        if not self._validate_irods_zone():
+            problems.append(ValueError("This ACL doesn't contain a valid iRODS zone: " + str(self.zone)))
+        if not self._validate_permission(self.permission):
+            problems.append(ValueError("This ACL doesn't contain a valid iRODS permission: " + str(self.permission)))
+        return problems
+
 
 class IrodsFileReplica:
     def __init__(self, checksum: str, replica_nr: int):
@@ -127,24 +135,33 @@ class IrodsFileReplica:
     def __hash__(self):
         return hash(self.checksum) + hash(self.replica_nr)
 
-    @classmethod
-    def is_replica_nr(cls, replica_nr):
+    @staticmethod
+    def _validate_replica_nr(replica_nr):
         if not replica_nr.isdigit():
             raise TypeError("WRONG type of parameter: replica_nr should be a digit and is: " + str(replica_nr))
         if int(replica_nr) >= 0:
             return True
         return False
 
-    @classmethod
-    def is_checksum(cls, checksum):
+    @staticmethod
+    def _validate_checksum(checksum):
         if not type(checksum) is str:
             raise TypeError("WRONG TYPE: the checksum must be a string, and is: " + str(type(checksum)))
         r = re.compile(irods_consts.MD5_REGEX)
         return True if r.match(checksum) else False
 
+    def validate(self):
+        problems = []
+        if not self._validate_checksum():
+            problems.append(ValueError("Replica's checksum doesn't look like a checksum: " + str(self.checksum)))
+        if not self._validate_replica_nr():
+            problems.append(ValueError("Replica's number(id) doesn't look like an id: " + str(self.replica_nr)))
+        return problems
+
 
 class IrodsRawFileMetadata:
-    def __init__(self, fname: str, dir_path: str, file_replicas: List[IrodsFileReplica]=None, acls: List[IrodsACL]=None):
+    def __init__(self, fname: str, dir_path: str, file_replicas: List[IrodsFileReplica]=None,
+                 acls: List[IrodsACL]=None):
         self.fname = fname
         self.dir_path = dir_path
         self.file_replicas = file_replicas
@@ -167,16 +184,95 @@ class IrodsRawFileMetadata:
             avus_grouped[avu.attribute].append(avu.value)
         return avus_grouped
 
+    def validate(self):
+        problems = []
+        for replica in self.replicas:
+            problems.extend(replica.validate())
+        for acl in self.acls:
+            problems.extend(acl.validate())
+        return problems
+
     def __str__(self):
-        return "Location: dir_path = " + str(self.dir_path) + ", fname = " + str(self.fname) + ", AVUS: " + self._avus\
+        return "Location: dir_path = " + str(self.dir_path) + ", fname = " + str(self.fname) + ", AVUS: " + self._avus \
                + ", md5_at_upload = " + str(self.file_replicas)
 
     def __repr__(self):
         return self.__str__()
 
+    def _is_true_comparison(self, left_operand: int, right_operand: int, operator: str):
+        if operator == Operators.EQUAL:
+            return left_operand == right_operand
+        elif operator == Operators.GREATER_THAN:
+            return left_operand > right_operand
+        elif operator == Operators.LESS_THAN:
+            return left_operand < right_operand
+
+    def check_attribute_count(self, avu_counts: List[AttributeCount]):
+        problems = []
+        for avu_count in avu_counts:
+            count = self.get_values_for_attribute(avu_counts.attribute)
+            threshold = avu_count.count
+            if not self._is_true_comparison(count, threshold, avu_count.operator):
+                problems.append(error_types.MetadataAttributeCountError(attribute=avu_count.attribute,
+                                                                        desired_occurances=threshold,
+                                                                        actual_occurances=count,
+                                                                        operator=avu_count.operator))
+        return problems
+
+    def check_all_replicas_have_same_checksum(self):
+        if not self.replicas:
+            return []
+        problems = []
+        first_replica = self.replicas[0]
+        for replica in self.replicas:
+            if not replica.checksum == first_replica.checksum:
+                problems.append(error_types.DifferentFileReplicasWarning(message="Replicas different ",
+                                                                         replicas=[str(first_replica), str(replica)]))
+        return problems
+
+
+    def check_more_than_one_replicas(self):
+        if len(self.replicas) <= 1:
+            return [ValueError("Too few replicas for this file: " + str(len(self.replicas)))]
+
+
+    def check_non_public_acls(self):
+        """
+        Checks that the iRODS object doesn't have associated an ACL giving public access to users to it.
+        :param acls:
+        :return:
+        """
+        problems = []
+        for acl in self.acls:
+            if acl.provides_public_access():
+                problems.append(error_types.WrongACLWarning(message="ACL for public access found " + str(acl)))
+        return problems
+
+
+    def check_has_read_permission_ss_group(self):
+        """
+        Checks if any of the ACLs is for an ss group.
+        :param acls:
+        :return:
+        """
+        problems = []
+        found_ss_gr_acl = False
+        for acl in self.acls:
+            if acl.provides_access_for_ss_group():
+                found_ss_gr_acl = True
+                if not acl.provides_read_permission():
+                    problems.append(
+                        error_types.WrongACLWarning(message="ACL provides user/group: " + str(acl.access_group) +
+                                                            " permission=" + str(acl.permission)))
+                break
+        if not found_ss_gr_acl:
+            problems.append(error_types.MissingACLWarning("There is no ACL for an ss_* group, probably nobody "
+                                                          "outside of NPG can access this file"))
+        return problems
+
 
 class IrodsFileMetadata(object):
-    def __init__(self, fpath: str=None, fname :str=None, samples=None, libraries=None, studies=None,
+    def __init__(self, fpath: str=None, fname:str=None, samples=None, libraries=None, studies=None,
                  checksum_in_meta:str=None, checksum_at_upload:str=None, references:List[str]=None,
                  run_ids:List[str]=None, lane_ids:List[str]=None, npg_qc:str=None, target:str=None):
         self.fname = fname
@@ -235,7 +331,7 @@ class IrodsFileMetadata(object):
     def get_reference_paths(self):
         if len(self._reference_paths) != 1:
             raise error_types.MetadataAttributeCountError(self.fpath, attribute='reference', desired_occurances='1',
-                                                               actual_occurances=len(self._reference_paths))
+                                                          actual_occurances=len(self._reference_paths))
         return self._reference_paths[0]
 
     def get_references(self):
@@ -244,13 +340,13 @@ class IrodsFileMetadata(object):
     def get_npg_qc(self):
         if len(self._npg_qc_values) != 1:
             raise error_types.MetadataAttributeCountError(self.fpath, attribute='npg_qc', desired_occurances='1',
-                                                               actual_occurances=len(self._npg_qc_values))
+                                                          actual_occurances=len(self._npg_qc_values))
         return self._npg_qc_values[0]
 
     def get_target(self):
         if len(self._target_values) != 1:
             raise error_types.MetadataAttributeCountError(self.fpath, attribute='target', desired_occurances='1',
-                                                               actual_occurances=len(self._target_values))
+                                                          actual_occurances=len(self._target_values))
 
         return self._target_values[0]
 
@@ -321,3 +417,198 @@ class IrodsFileMetadata(object):
 
     def __repr__(self):
         return self.__str__()
+
+    def run_field_sanity_checks(self):
+        problems = []
+        if not self.is_checksum(self.checksum_in_meta):
+            problems.append(
+                error_types.WrongMetadataValue(attribute='Checksum_in_metadata', value=self.checksum_in_meta))
+
+        if not self.is_checksum(self.checksum_at_upload):
+            problems.append(
+                error_types.WrongMetadataValue(attribute='Checksum_at_upload', value=self.checksum_at_upload))
+
+        for lane in self.lane_ids:
+            if not self.is_lane_id(lane):
+                problems.append(error_types.WrongMetadataValue(attribute='lane'), value=lane)
+
+        for run in self.run_ids:
+            if not self.is_run_id(run):
+                problems.append(error_types.WrongMetadataValue(attribute='run_id'), value=run)
+
+        if not self.is_npg_qc(self.get_npg_qc()):
+            problems.append(error_types.WrongMetadataValue(attribute='npg_qc'), value=self.get_npg_qc())
+
+        if not self.is_target(self.get_target()):
+            problems.append(error_types.WrongMetadataValue(attribute='target', value=self.get_target()))
+        return problems
+
+    def check_file_metadata(self, desired_reference: str):
+        problems = []
+        try:
+            self.test_checksum_calculated_vs_metadata()
+        except error_types.TestImpossibleToRunError:
+            pass
+            # TODO: think what to do in this case...
+        except error_types.WrongChecksumError as e:
+            problems.append(e)
+
+        try:
+            self.test_lane_from_fname_vs_metadata(self)
+        except error_types.TestImpossibleToRunError as e:
+            # problems.append(e)
+            pass
+            # TODO: not sure
+        except error_types.IrodsMetadataAttributeVsFileNameError as e:
+            problems.append(e)
+
+        try:
+            self.test_run_id_from_fname_vs_metadata(self)
+        except error_types.TestImpossibleToRunError as e:
+            #problems.append(e)
+            #TODO: not sure where to save these...
+            pass
+        except error_types.IrodsMetadataAttributeVsFileNameError as e:
+            problems.append(e)
+
+        try:
+            self.test_reference(self, desired_reference)
+        except error_types.WrongReferenceError as e:
+            problems.append(e)
+        except error_types.TestImpossibleToRunError as e:
+            pass
+
+        return problems
+
+    @staticmethod
+    def _validate_checksum(checksum):
+        if not type(checksum) is str:
+            raise TypeError("WRONG TYPE: the checksum must be a string, and is: " + str(type(checksum)))
+        r = re.compile(irods_consts.MD5_REGEX)
+        return True if r.match(checksum) else False
+
+    @staticmethod
+    def _validate_run_id(run_id):
+        if not type(run_id) in [str, int]:
+            raise TypeError("WRONG TYPE: the run_id must be a string or int and is: " + str(type(run_id)))
+        r = re.compile(irods_consts.RUN_ID_REGEX)
+        return True if r.match(str(run_id)) else False
+
+    @staticmethod
+    def _validate_lane_id(lane_id):
+        if not type(lane_id) in [str, int]:
+            raise TypeError("WRONG TYPE: the lane_id must be either string or int and is: " + str(type(lane_id)))
+        r = re.compile(irods_consts.LANE_ID_REGEX)
+        return True if r.match(str(lane_id)) else False
+
+    @staticmethod
+    def _validate_npg_qc(npg_qc):
+        if not type(npg_qc) in [str, int]:
+            raise TypeError("WRONG TYPE: the npg_qc must be either string or int and is: " + str(npg_qc))
+        r = re.compile(irods_consts.NPG_QC_REGEX)
+        return True if r.match(str(npg_qc)) else False
+
+
+    @staticmethod
+    def is_target(target):
+        if not type(target) in [str, int]:
+            raise TypeError("WRONG TYPE: the target must be either string or int and is: " + str(target))
+        r = re.compile(irods_consts.TARGET_REGEX)
+        return True if r.match(str(target)) else False
+
+
+    # @staticmethod
+    # def check_is_irods_seq_fpath(fpath):
+    #     r = re.compile(irods_consts.IRODS_SEQ_LANELET_PATH_REGEX)
+    #     if not r.match(fpath):
+    #         raise ValueError("Not an iRODS seq path: " + str(fpath))
+
+
+    # @staticmethod
+    # def check_is_lanelet_filename(fname):
+    #     """
+    #     Checks if a filename looks like: 1234_5.* or 1234_5#6.*
+    #     :param fname: file name
+    #     :return: bool
+    #     """
+    #     r = re.compile(irods_consts.LANLET_NAME_REGEX)
+    #     if not r.match(fname):
+    #         raise ValueError("Not a lanelet filename: " + str(fname))
+
+
+    # @staticmethod
+    # def check_is_irods_lanelet_fpath(fpath):
+    #     """
+    #     Checks if a given file path is an irods seq path and that it is a lanelet. e.g. 1234_5.bam, 1234_5#6.cram
+    #     :param fpath:
+    #     :return:
+    #     """
+    #     cls.check_is_irods_seq_fpath(fpath)
+    #     fname = common_utils.extract_fname_without_ext(fpath)
+    #     cls.check_is_lanelet_filename(fname)
+
+    def test_checksum_calculated_vs_metadata(self):
+        if self.checksum_in_meta and self.checksum_at_upload:
+            if self.checksum_in_meta != self.checksum_at_upload:
+                raise error_types.WrongChecksumError(fpath=self.fpath,
+                                                     checksum_in_meta=self.checksum_at_upload,
+                                                     chksum_at_upload=self.checksum_in_meta)
+        else:
+            if not self.checksum_in_meta:
+                raise error_types.TestImpossibleToRunError(fpath=self.fpath, test_name='Test md5',
+                                                           reason='The md5 returned by ichksum is missing')
+            if not self.checksum_at_upload:
+                raise error_types.TestImpossibleToRunError(fpath=self.fpath, test_name='Test md5',
+                                                           reason='The md5 in iRODS metadata is either missing or more than 1.')
+
+    def test_run_id_from_fname_vs_metadata(self):
+        """
+        This test assumes that all the files in iRODS have exactly 1 run (=LANELETS)
+        """
+        if not self.run_id:
+            raise error_types.TestImpossibleToRunError(fpath=self.fpath,
+                                                       reason='The run_id in iRODS metadata is either missing or more than 1.',
+                                                       test_name='Check run_id from filename vs. iRODS metadata.')
+        try:
+            run_id_from_fname = self.get_run_from_irods_fname(self.fname)
+        except ValueError as e:
+            raise error_types.TestImpossibleToRunError(fpath=self.fpath, reason=str(e),
+                                                       test_name='Check run_id from filename vs. run_id from iRODS metadata')  # 'Cant extract the run id from file name. Not a sequencing file?'
+        else:
+            if str(self.run_id) != str(run_id_from_fname):
+                raise error_types.IrodsMetadataAttributeVsFileNameError(fpath=self.fpath, attribute='run_id',
+                                                                        irods_value=self.run_id,
+                                                                        filename_value=run_id_from_fname)
+
+
+    # TODO: actually the user can't know exactly the name of the files - this needs refactoring, in order to associate the name of the ref file with the name of the ref
+
+    def test_reference(self, desired_ref):
+        if not self.reference:
+            raise error_types.TestImpossibleToRunError(fpath=self.fpath, test_name='Check reference',
+                                                       reason='The reference from iRODS metadata is either missing or more than 1.')
+        if not desired_ref:
+            raise error_types.TestImpossibleToRunError(fpath=self.fpath, test_name='Check_reference',
+                                                       reason='Missing desired reference parameter.')
+        if self.reference.find(desired_ref) == -1:
+            raise error_types.WrongReferenceError(fpath=self.fpath, desired_ref=desired_ref,
+                                                  header_ref='not implemented', irods_ref=self.reference)
+
+
+    def test_lane_from_fname_vs_metadata(self):
+        if not self.lane_id:
+            raise error_types.TestImpossibleToRunError(fpath=self.fpath,
+                                                       reason='The lane id in the iRODS metadata is either missing or more than 1 ',
+                                                       test_name='Check lane id from filename vs iRODS metadata')
+        try:
+            lane_from_fname = self.get_lane_from_irods_fname(self.fname)
+        except ValueError as e:
+            raise error_types.TestImpossibleToRunError(fpath=self.fpath,
+                                                       reason=str(e),
+                                                       test_name='Check lane id from filename vs iRODS metadata')
+        else:
+            if str(lane_from_fname) != str(self.lane_id):
+                raise error_types.IrodsMetadataAttributeVsFileNameError(fpath=self.fpath, attribute='lane',
+                                                                        irods_value=self.lane_id,
+                                                                        filename_value=lane_from_fname)
+
