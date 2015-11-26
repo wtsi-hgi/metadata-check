@@ -34,62 +34,55 @@ from typing import List
 # TODO: replace iRODSCMDUTILS with some other way of extracting values -
 # TODO: probably in a AVU class or smth, depending on the implementation in Baton wrapper
 
+class AttributeChecks:
+
+    @classmethod
+    def is_replica_nr(cls, replica_nr):
+        if not replica_nr.isdigit():
+            raise TypeError("WRONG type of parameter: replica_nr should be a digit and is: " + str(replica_nr))
+        if int(replica_nr) >= 0:
+            return True
+        return False
+
+    @classmethod
+    def is_checksum(cls, checksum):
+        if not type(checksum) is str:
+            raise TypeError("WRONG TYPE: the checksum must be a string, and is: " + str(type(checksum)))
+        r = re.compile(irods_consts.MD5_REGEX)
+        return True if r.match(checksum) else False
+
 
 class IrodsACLChecks:
 
     @classmethod
-    def check_non_public_acls(cls, acls: List[IrodsACL]):
-        """
-        Checks that the iRODS object doesn't have associated an ACL giving public access to users to it.
-        :param acls:
-        :return:
-        """
+    def check_on_field_contents(cls, acl: IrodsACL):
         problems = []
-        for acl in acls:
-            if acl.provides_public_access():
-                problems.append(error_types.WrongACLWarning(message="ACL for public access found " + str(acl)))
-        return problems
-
-
-    @classmethod
-    def check_has_read_permission_ss_group(cls, acls: List[IrodsACL]):
-        """
-        Checks if any of the ACLs is for an ss group.
-        :param acls:
-        :param permission:
-        :return:
-        """
-        problems = []
-        found_ss_gr_acl = False
-        for acl in acls:
-            if acl.provides_access_for_ss_group():
-                found_ss_gr_acl = True
-                if not acl.provides_read_permission():
-                    problems.append(error_types.WrongACLWarning(message="ACL provides user/group: "+ str(acl.access_group) +
-                                                                  " permission="+str(acl.permission)))
-                break
-        if not found_ss_gr_acl:
-            problems.append(error_types.MissingACLWarning("There is no ACL for an ss_* group, probably nobody "
-                                                "outside of NPG can access this file"))
+        if not IrodsACL.is_irods_zone(acl.zone):
+            problems.append(ValueError("This ACL doesn't contain a valid iRODS zone: " + str(acl.zone)))
+        if not IrodsACL.is_permission(acl.permission):
+            problems.append(ValueError("This ACL doesn't contain a valid iRODS permission: " + str(acl.permission)))
         return problems
 
 
 class IrodsFileReplicaChecks:
 
     @classmethod
-    def check_all_replicas_have_same_checksum(cls, replicas: List[IrodsFileReplica]):
-        if not replicas:
-            return
+    def check_on_field_types(cls, replica: IrodsFileReplica):
         problems = []
-        first_replica = replicas[0]
-        for replica in replicas:
-            if not replica.checksum == first_replica.checksum:
-                problems.append(error_types.DifferentFileReplicasWarning(message="Replicas different ",
-                                                               replicas=[str(first_replica), str(replica)]))
+        if not IrodsFileReplica.is_checksum(replica.checksum):
+            problems.append(ValueError("Replica's checksum doesn't look like a checksum: " + str(replica.checksum)))
+        if not IrodsFileReplica.is_replica_nr(replica.replica_nr):
+            problems.append(ValueError("Replica's number(id) doesn't look like an id: " + str(replica.replica_nr)))
         return problems
+
 
 class IRODSRawFileMetadataChecks:
 
+ #        self.fname = fname
+ #        self.dir_path = dir_path
+ #        self.file_replicas = file_replicas
+ #        self.acls = acls
+ #        self._avus = {}
     @classmethod
     def _is_true_comparison(cls, left_operand: int, right_operand: int, operator: str):
         if operator == Operators.EQUAL:
@@ -110,6 +103,58 @@ class IRODSRawFileMetadataChecks:
                                                                         desired_occurances=threshold,
                                                                         actual_occurances=count,
                                                                         operator=avu_count.operator))
+        return problems
+
+    @classmethod
+    def check_all_replicas_have_same_checksum(cls, replicas: List[IrodsFileReplica]):
+        if not replicas:
+            return
+        problems = []
+        first_replica = replicas[0]
+        for replica in replicas:
+            if not replica.checksum == first_replica.checksum:
+                problems.append(error_types.DifferentFileReplicasWarning(message="Replicas different ",
+                                                               replicas=[str(first_replica), str(replica)]))
+        return problems
+
+    @classmethod
+    def check_more_than_one_replicas(cls, replicas: List[IrodsFileReplica]):
+        if len(replicas) <= 1:
+            return [ValueError("Too few replicas for this file: " + str(len(replicas)))]
+
+    @classmethod
+    def check_non_public_acls(cls, acls: List[IrodsACL]):
+        """
+        Checks that the iRODS object doesn't have associated an ACL giving public access to users to it.
+        :param acls:
+        :return:
+        """
+        problems = []
+        for acl in acls:
+            if acl.provides_public_access():
+                problems.append(error_types.WrongACLWarning(message="ACL for public access found " + str(acl)))
+        return problems
+
+
+    @classmethod
+    def check_has_read_permission_ss_group(cls, acls: List[IrodsACL]):
+        """
+        Checks if any of the ACLs is for an ss group.
+        :param acls:
+        :return:
+        """
+        problems = []
+        found_ss_gr_acl = False
+        for acl in acls:
+            if acl.provides_access_for_ss_group():
+                found_ss_gr_acl = True
+                if not acl.provides_read_permission():
+                    problems.append(error_types.WrongACLWarning(message="ACL provides user/group: "+ str(acl.access_group) +
+                                                                  " permission="+str(acl.permission)))
+                break
+        if not found_ss_gr_acl:
+            problems.append(error_types.MissingACLWarning("There is no ACL for an ss_* group, probably nobody "
+                                                             "outside of NPG can access this file"))
         return problems
 
 # class IrodsFileMetadata(object):
