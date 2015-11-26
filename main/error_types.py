@@ -29,6 +29,12 @@ This file has been created on Jun 12, 2015.
 
 from typing import  List
 
+# TODO: change these exceptions which shouldn't really be exceptions, into some sort of CheckReport type containing:
+# each checking function returns the same type of namedtuple/whatnot with:
+# -error severity, or error type, or error group, or something like that
+# -the source (for sorting?)
+# -the actual human readable error message string
+
 class HeaderVsIrodsMetadataAttributeError(Exception):
 
     def __init__(self, fpath, attribute, header_value, irods_value, entity_type=None):
@@ -93,16 +99,17 @@ class IrodsMetadataAttributeVsFileNameError(Exception):
 
 class MetadataAttributeCountError(Exception):
 
-    def __init__(self, fpath, attribute, desired_occurances, actual_occurances):
+    def __init__(self, fpath, attribute, desired_occurances, actual_occurances, operator='='):
         self.fpath = fpath
         self.attribute = attribute
         self.desired_occurances = desired_occurances
         self.actual_occurances = actual_occurances
+        self.operator = operator
 
     def __str__(self):
         return "In file: " + str(self.fpath) + " metadata attribute: " + str(self.attribute) + " appears " + \
-               str(self.actual_occurances) + " times, while it should appear " + str(self.desired_occurances) + \
-               " according to the config you've given."
+               str(self.actual_occurances) + " times, while it should appear "+str(self.operator) +" " \
+               + str(self.desired_occurances) + " according to the config you've given."
 
     def __repr__(self):
         return self.__str__()
@@ -127,14 +134,14 @@ class WrongReferenceError(Exception):
 # TODO: needs refactoring - rename imeta_value and ichksum_value
 class WrongChecksumError(Exception):
 
-    def __init__(self, fpath, imeta_value, ichksum_value):
+    def __init__(self, fpath, checksum_in_meta, checksum_at_upload):
         self.fpath = fpath
-        self.imeta_value = imeta_value
-        self.ichksum_value = ichksum_value
+        self.checksum_in_meta = checksum_in_meta
+        self.checksum_at_upload = checksum_at_upload
 
     def __str__(self):
-        return "File: " + str(self.fpath) + " has different MD5 checksum in iRODS metadata: " + str(self.imeta_value) +\
-               " compared to the value returned by ichksum: " + str(self.ichksum_value)
+        return "File: " + str(self.fpath) + " has different MD5 checksum in iRODS metadata: " + str(self.checksum_in_meta) +\
+               " compared to the value returned by ichksum: " + str(self.checksum_at_upload)
 
     def __repr__(self):
         return self.__str__()
@@ -274,11 +281,11 @@ class DifferentFilesRetrievedByDiffStudyIdsOfSameStudy(Exception):
 
 
 
-class Warning(Exception):
+class MetaWarning(Exception):
     pass
 
 
-class MissingFileFormatsFromIRODSError(Warning):
+class MissingFileFormatsFromIRODSError(MetaWarning):
 
     def __init__(self, fname, missing_formats):
         self.fname = fname
@@ -291,7 +298,7 @@ class MissingFileFormatsFromIRODSError(Warning):
         return self.__str__()
 
 
-class WrongACLWarning(Warning):
+class WrongACLWarning(MetaWarning):
 
     def __init__(self, message):
         self.message = message
@@ -303,7 +310,7 @@ class WrongACLWarning(Warning):
         return self.__str__()
 
 
-class MissingACLWarning(Warning):
+class MissingACLWarning(MetaWarning):
 
     def __init__(self, message):
         self.message = message
@@ -314,7 +321,7 @@ class MissingACLWarning(Warning):
     def __repr__(self):
         return self.__str__()
 
-class DifferentFileReplicasWarning(Warning):
+class DifferentFileReplicasWarning(MetaWarning):
 
     def __init__(self, replicas: List[str]=None, message:str=None):
         self.replicas = replicas
