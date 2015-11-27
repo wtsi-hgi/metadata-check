@@ -229,12 +229,6 @@ def extract_meta_search_criteria(args):
     return search_criteria
 
 
-
-
-
-
-
-
 def is_input_given_by_path(args):
     if args.fpaths_irods or args.fofn:
         return True
@@ -362,10 +356,10 @@ def main():
         for fpath, meta_dict in list(fpaths_checksum_and_avus.items()):
             tests_results = []
             problems = []
-            avu_issues = irods_meta_module.IrodsFileMetadata.run_avu_count_checks(fpath, meta_dict['avus'])
+            avu_issues = irods_meta_module.IrodsSeqFileMetadata.run_avu_count_checks(fpath, meta_dict['avus'])
             problems.extend(avu_issues)
 
-            i_meta = irods_meta_module.IrodsFileMetadata.from_avus_to_irods_metadata(meta_dict['avus'], fpath)
+            i_meta = irods_meta_module.IrodsSeqFileMetadata.from_avus_to_irods_metadata(meta_dict['avus'], fpath)
             i_meta.ichksum_md5 = meta_dict['checksum']
 
             # Check for sanity before starting the tests:
