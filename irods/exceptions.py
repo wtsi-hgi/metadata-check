@@ -95,7 +95,7 @@ class iMkDirException(iRODSException):
     
         
 class iChksumException(iRODSException):
-    ''' Exception raised when running ichksum and the checksum of the file in irods != md5 stored.'''
+    ''' Exception raised when running ichksum and the checksum of the file in irods_metadata != md5 stored.'''
     def __init__(self, error, output, cmd=None, msg=None, extra_info=None):
         super(iChksumException, self).__init__(error, output, cmd, msg, extra_info)
         
