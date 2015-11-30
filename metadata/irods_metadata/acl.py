@@ -45,41 +45,38 @@ class IrodsACL:
         return hash(self.access_group) + hash(self.zone) + hash(self.permission)
 
     def provides_public_access(self):
-        r = re.compile(irods_consts.IRODS_GROUPS.PUBLIC)
-        if r.match(self.access_group):
-            return True
-        return False
+        return self.access_group.startswith(irods_consts.IRODS_GROUPS.PUBLIC.value)
 
     def provides_access_for_ss_group(self):
-        r = re.compile(irods_consts.IRODS_GROUPS.SS_GROUP_REGEX)
+        r = re.compile(irods_consts.IRODS_GROUPS.SS_GROUP_REGEX.value)
         if r.match(self.access_group):
             return True
         return False
 
     def provides_read_permission(self):
-        return self.permission == irods_consts.IRODS_PERMISSIONS.READ
+        return self.permission == irods_consts.IRODS_PERMISSIONS.READ.value
 
     def provides_write_permission(self):
-        return self.permission == irods_consts.IRODS_PERMISSIONS.WRITE
+        return self.permission == irods_consts.IRODS_PERMISSIONS.WRITE.value
 
     def provides_own_permission(self):
-        return self.permission == irods_consts.IRODS_PERMISSIONS.OWN
+        return self.permission == irods_consts.IRODS_PERMISSIONS.OWN.value
 
     @staticmethod
     def _is_permission_valid(permission):
         if not type(permission) is str:
             raise TypeError("This permission is not a string, it is a: " + str(type(permission)))
-        return permission in irods_consts.IRODS_PERMISSIONS
+        return permission in irods_consts.IRODS_PERMISSIONS.enumerate_values()
 
     @staticmethod
     def _is_irods_zone_valid(zone):
         if not type(zone) is str:
             raise TypeError("This zone is not a string, it is a: " + str(type(zone)))
-        return zone in irods_consts.IRODS_ZONES
+        return zone in irods_consts.IRODS_ZONES.enumerate_values()
 
     def validate_fields(self):
         problems = []
-        if not self._is_irods_zone_valid():
+        if not self._is_irods_zone_valid(self.zone):
             problems.append(CheckResult(check_name="Check that iRODS zone is valid ", severity=SEVERITY.WARNING,
                                         error_message="The iRODS zone seems wrong: " + str(self.zone)))
         if not self._is_permission_valid(self.permission):
