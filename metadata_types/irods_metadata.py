@@ -266,7 +266,6 @@ class IrodsRawFileMetadata:
             if acl.provides_public_access():
                 problems.append(CheckResult(check_name="Check there are no public ACLS",
                                             error_message="The following ACL was found: " + str(acl)))
-                # problems.append(error_types.WrongACLWarning(message="ACL for public access found " + str(acl)))
         return problems
 
 
@@ -284,14 +283,9 @@ class IrodsRawFileMetadata:
                 if not acl.provides_read_permission():
                     problems.append(CheckResult(check_name="Check that the permission for ss_<id> group is READ",
                                                 error_message="ACL found: " + str(acl)))
-                    # problems.append(
-                    # error_types.WrongACLWarning(message="ACL provides user/group: " + str(acl.access_group) +
-                    #                                         " permission=" + str(acl.permission)))
                 break
         if not found_ss_gr_acl:
             problems.append(CheckResult(check_name="Check there is at least one ss_<id> group that has access to data"))
-            # problems.append(error_types.MissingACLWarning("There is no ACL for an ss_* group, probably nobody "
-            # "outside of NPG can access this file"))
         return problems
 
 
@@ -427,7 +421,6 @@ class IrodsSeqFileMetadata(object):
         problems = []
         if not self._is_checksum_valid(self.checksum_in_meta):
             problems.append(
-                # error_types.WrongMetadataValue(attribute='Checksum_in_metadata', value=self.checksum_in_meta))
                 CheckResult(check_name="Check that checksum in metadata is valid",
                             error_message="The checksum looks invalid: " +
                                           str(self.checksum_in_meta)))
@@ -436,27 +429,22 @@ class IrodsSeqFileMetadata(object):
             problems.append(
                 CheckResult(check_name="Check that checksum at upload is valid",
                             error_message="The checksum looks invalid: " + str(self.checksum_at_upload)))
-            # error_types.WrongMetadataValue(attribute='Checksum_at_upload', value=self.checksum_at_upload))
 
         for lane in self.lane_ids:
             if not self._is_lane_id_valid(lane):
-                # problems.append(error_types.WrongMetadataValue(attribute='lane'), value=lane)
                 problems.append(CheckResult(check_name="Check that the lane is valid",
                                             error_message="This lane id looks invalid: " + str(lane)))
 
         for run in self.run_ids:
             if not self._is_run_id_valid(run):
-                # problems.append(error_types.WrongMetadataValue(attribute='run_id'), value=run)
                 problems.append(CheckResult(check_name="Check that the run id is valid",
                                             error_message="This run_id looks invalid: " + str(run)))
 
         if not self._is_npg_qc_valid(self.get_npg_qc()):
             problems.append(CheckResult(check_name="Check that the NPG QC field is valid",
                                         error_message="This npg_qc field looks invalid: " + str(self.get_npg_qc())))
-            # problems.append(error_types.WrongMetadataValue(attribute='npg_qc'), value=self.get_npg_qc())
 
         if not self._is_target_valid(self.get_target()):
-            # problems.append(error_types.WrongMetadataValue(attribute='target', value=self.get_target()))
             problems.append(CheckResult(check_name="Check that the target field is valid",
                                         error_message="The target field looks invalid: " + str(self.get_target())))
         return problems
@@ -471,22 +459,15 @@ class IrodsSeqFileMetadata(object):
                                             error_message="The checksum in metadata = %s different than checksum at "
                                                           "upload = %s" % (
                                                               self.checksum_at_upload, self.checksum_in_meta)))
-                # raise error_types.WrongChecksumError(fpath=self.fpath,
-                # checksum_in_meta=self.checksum_at_upload,
-                #                                      chksum_at_upload=self.checksum_in_meta)
         else:
             if not self.checksum_in_meta:
                 problems.append(CheckResult(check_name=check_name,
                                             executed=False, result=None,
                                             error_message="The checksum in metadata is missing"))
-                # raise error_types.TestImpossibleToRunError(fpath=self.fpath, test_name='Test md5',
-                #                                            reason='The md5 returned by ichksum is missing')
             if not self.checksum_at_upload:
                 problems.append((CheckResult(check_name=check_name,
                                              executed=False, result=None,
                                              error_message="The checksum at upload is missing")))
-                # raise error_types.TestImpossibleToRunError(fpath=self.fpath, test_name='Test md5',
-                #                         reason='The md5 in iRODS metadata is either missing or more than 1.')
         return problems
 
 
@@ -496,21 +477,15 @@ class IrodsSeqFileMetadata(object):
         if not self.get_references():
             problems.append(CheckResult(check_name=check_name, executed=False, result=None,
                                         error_message="There is no reference for this file in the metadata"))
-            # raise error_types.TestImpossibleToRunError(fpath=self.fpath, test_name='Check reference',
-            #                           reason='The reference from iRODS metadata is either missing or more than 1.')
         if not desired_ref:
             problems.append(CheckResult(check_name=check_name, executed=False, result=None,
                                         error_message="The desired reference wasn't provided in order "
                                                       "to compare it with the reference in metadata."))
-            # raise error_types.TestImpossibleToRunError(fpath=self.fpath, test_name='Check_reference',
-            #                                            reason='Missing desired reference parameter.')
         for ref in self.get_references():
             if ref.find(desired_ref) == -1:
                 problems.append(CheckResult(check_name=check_name,
                                             error_message="The desired reference is: %s is different thant the metadata "
                                                           "reference: %s" % (desired_ref, ref) ))
-            # raise error_types.WrongReferenceError(fpath=self.fpath, desired_ref=desired_ref,
-            #                                       header_ref='not implemented', irods_ref=self.reference)
         return problems
 
     def check_file_metadata(self, desired_reference: str) -> List[CheckResult, None]:
