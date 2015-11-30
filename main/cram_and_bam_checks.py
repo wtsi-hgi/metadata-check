@@ -397,7 +397,7 @@ def main():
             if args.test_md5 or args.all_tests:
                 test_name = 'check_md5_in_irods_meta_vs_ichcksum'
                 try:
-                    i_meta.test_checksum_calculated_vs_metadata()
+                    i_meta.check_checksum_calculated_vs_metadata()
                 except error_types.WrongChecksumError as e:
                     problems.append(e)
                     tests_results.append(TestResult(test_name=test_name, result='FAIL', reason=str(e)))
@@ -409,7 +409,7 @@ def main():
             if args.desired_reference or args.all_tests:
                 test_name = 'check_reference_in_irods_vs_param'
                 try:
-                    i_meta.test_reference(args.desired_reference)
+                    i_meta.check_reference(args.desired_reference)
                 except error_types.WrongReferenceError as e:
                     problems.append(e)
                     tests_results.append(TestResult(test_name=test_name, result='FAIL', reason=str(e)))
