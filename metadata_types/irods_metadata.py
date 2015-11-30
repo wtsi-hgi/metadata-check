@@ -26,6 +26,7 @@ from typing import List, Dict, Union
 from com.operators import Operators
 from main import error_types
 from com import utils as common_utils
+from com import wrappers
 from irods import constants as irods_consts
 from irods import data_types
 from metadata_types.identifiers import EntityIdentifier
@@ -158,12 +159,10 @@ class IrodsFileReplica:
     def validate_fields(self):
         problems = []
         if not self._is_checksum_valid():
-            # problems.append(ValueError("Replica's checksum doesn't look like a checksum: " + str(self.checksum)))
             problems.append(
                 CheckResult(check_name="Check that the replica checksum field is valid", severity=SEVERITY.IMPORTANT,
                             error_message="The checksum looks invalid: " + str(self.checksum)))
         if not self._is_replica_nr_valid():
-            # problems.append(ValueError("Replica's number(id) doesn't look like an id: " + str(self.replica_nr)))
             problems.append(CheckResult(check_name="Check that the replica nr is valid", severity=SEVERITY.WARNING,
                                         error_message="The replica number looks invalid: " + str(self.replica_nr)))
         return problems
@@ -191,13 +190,13 @@ class IrodsRawFileMetadata:
         return len(self._attributes[attribute])
 
     @staticmethod
-    def _group_avus_per_attribute(avus: List[data_types.MetaAVU]) -> Dict:
+    def _group_avus_per_attribute(avus: List[data_types.MetaAVU]) -> Dict[str, List[str]]:
         avus_grouped = defaultdict(list)
         for avu in avus:
             avus_grouped[avu.attribute].append(avu.value)
         return avus_grouped
 
-    def validate_fields(self) -> List:
+    def validate_fields(self) -> List[CheckResult]:
         problems = []
         for replica in self.replicas:
             problems.extend(replica.validate_fields())
@@ -214,48 +213,39 @@ class IrodsRawFileMetadata:
         elif operator == Operators.LESS_THAN:
             return left_operand < right_operand
 
-    def check_attribute_count(self, avu_counts: List[AttributeCount]) -> List:
+    def check_attribute_count(self, avu_counts: List[AttributeCount]) -> List[CheckResult]:
         problems = []
         for avu_count in avu_counts:
             actual_count = self.get_values_count_for_attribute(avu_counts.attribute)
             threshold = avu_count.count
             if not self._is_true_comparison(actual_count, threshold, avu_count.operator):
-                # problems.append(error_types.MetadataAttributeCountError(attribute=avu_count.attribute,
-                # desired_occurances=threshold,
-                # actual_occurances=actual_count,
-                #                                                         operator=avu_count.operator))
                 error_msg = "Attribute: " + str(avu_count.attribute) + " appears: " + str(actual_count) + \
                             " and should appear: " + str(avu_count.operator) + " " + str(threshold)
                 problems.append(CheckResult(check_name="Check attribute count is as configured",
                                             severity=SEVERITY.IMPORTANT, error_message=error_msg))
         return problems
 
-    def check_all_replicas_have_same_checksum(self) -> List:
+    def check_all_replicas_have_same_checksum(self) -> List[CheckResult]:
         if not self.replicas:
             return []
         problems = []
         first_replica = self.replicas[0]
         for replica in self.replicas:
             if not replica.checksum == first_replica.checksum:
-                # problems.append(error_types.DifferentFileReplicasWarning(message="Replicas different ",
-                # replicas=[str(first_replica), str(replica)]))
                 problems.append(CheckResult(check_name="Check all replicas have the same checksum",
                                             error_message="Replica: " + str(replica) +
                                                           " has different checksum than replica: " + str(
                                                 first_replica)))
         return problems
 
-
-    def check_more_than_one_replicas(self) -> List:
+    def check_more_than_one_replicas(self) -> List[CheckResult]:
         problems = []
         if len(self.replicas) <= 1:
-            # return [ValueError("Too few replicas for this file: " + str(len(self.replicas)))]
             problems.append(CheckResult(check_name="Check that file has more than 1 replica", error_message="File has "
-                                                                                                            + str(
-                len(self.replicas)) + " replicas"))
+                                                                            + str(len(self.replicas)) + " replicas"))
         return problems
 
-    def check_non_public_acls(self) -> List:
+    def check_non_public_acls(self) -> List[CheckResult]:
         """
         Checks that the iRODS object doesn't have associated an ACL giving public access to users to it.
         :param acls:
@@ -269,7 +259,7 @@ class IrodsRawFileMetadata:
         return problems
 
 
-    def check_has_read_permission_ss_group(self) -> List:
+    def check_has_read_permission_ss_group(self) -> List[CheckResult]:
         """
         Checks if any of the ACLs is for an ss group.
         :param acls:
@@ -308,9 +298,9 @@ class IrodsSeqFileMetadata(object):
         self.studies = studies
         self.checksum_in_meta = checksum_in_meta
         self.checksum_at_upload = checksum_at_upload
-        self._reference_paths = references
-        self.run_ids = run_ids
-        self.lane_ids = lane_ids
+        self._reference_paths = references if references else []
+        self.run_ids = run_ids if run_ids else []
+        self.lane_ids = lane_ids if lane_ids else []
         self._npg_qc_values = [npg_qc]
         self._target_values = [target]
 
@@ -354,7 +344,7 @@ class IrodsSeqFileMetadata(object):
     def get_lane_ids(self) -> List[str]:
         return self.lane_ids
 
-    def get_reference_paths(self) -> List[str, None]:
+    def get_reference_paths(self) -> List[str]:
         if len(self._reference_paths) != 1:
             return []
         return self._reference_paths[0]
@@ -383,6 +373,7 @@ class IrodsSeqFileMetadata(object):
 
 
     @staticmethod
+    @wrappers.check_args_not_none
     def _is_checksum_valid(checksum):
         if not type(checksum) is str:
             raise TypeError("WRONG TYPE: the checksum must be a string, and is: " + str(type(checksum)))
@@ -390,6 +381,7 @@ class IrodsSeqFileMetadata(object):
         return True if r.match(checksum) else False
 
     @staticmethod
+    @wrappers.check_args_not_none
     def _is_run_id_valid(run_id):
         if not type(run_id) in [str, int]:
             raise TypeError("WRONG TYPE: the run_id must be a string or int and is: " + str(type(run_id)))
@@ -397,6 +389,7 @@ class IrodsSeqFileMetadata(object):
         return True if r.match(str(run_id)) else False
 
     @staticmethod
+    @wrappers.check_args_not_none
     def _is_lane_id_valid(lane_id):
         if not type(lane_id) in [str, int]:
             raise TypeError("WRONG TYPE: the lane_id must be either string or int and is: " + str(type(lane_id)))
@@ -404,6 +397,7 @@ class IrodsSeqFileMetadata(object):
         return True if r.match(str(lane_id)) else False
 
     @staticmethod
+    @wrappers.check_args_not_none
     def _is_npg_qc_valid(npg_qc):
         if not type(npg_qc) in [str, int]:
             raise TypeError("WRONG TYPE: the npg_qc must be either string or int and is: " + str(npg_qc))
@@ -411,6 +405,7 @@ class IrodsSeqFileMetadata(object):
         return True if r.match(str(npg_qc)) else False
 
     @staticmethod
+    @wrappers.check_args_not_none
     def _is_target_valid(target):
         if not type(target) in [str, int]:
             raise TypeError("WRONG TYPE: the target must be either string or int and is: " + str(target))
@@ -419,32 +414,33 @@ class IrodsSeqFileMetadata(object):
 
     def validate_fields(self) -> List:
         problems = []
-        if not self._is_checksum_valid(self.checksum_in_meta):
+        if self.checksum_in_meta and not self._is_checksum_valid(self.checksum_in_meta):
             problems.append(
                 CheckResult(check_name="Check that checksum in metadata is valid",
                             error_message="The checksum looks invalid: " +
                                           str(self.checksum_in_meta)))
 
-        if not self._is_checksum_valid(self.checksum_at_upload):
+        if self.checksum_at_upload and not self._is_checksum_valid(self.checksum_at_upload):
             problems.append(
                 CheckResult(check_name="Check that checksum at upload is valid",
                             error_message="The checksum looks invalid: " + str(self.checksum_at_upload)))
+        if self.lane_ids:
+            for lane in self.lane_ids:
+                if lane and not self._is_lane_id_valid(lane):
+                    problems.append(CheckResult(check_name="Check that the lane is valid",
+                                                error_message="This lane id looks invalid: " + str(lane)))
 
-        for lane in self.lane_ids:
-            if not self._is_lane_id_valid(lane):
-                problems.append(CheckResult(check_name="Check that the lane is valid",
-                                            error_message="This lane id looks invalid: " + str(lane)))
+        if self.run_ids:
+            for run in self.run_ids:
+                if run and not self._is_run_id_valid(run):
+                    problems.append(CheckResult(check_name="Check that the run id is valid",
+                                                error_message="This run_id looks invalid: " + str(run)))
 
-        for run in self.run_ids:
-            if not self._is_run_id_valid(run):
-                problems.append(CheckResult(check_name="Check that the run id is valid",
-                                            error_message="This run_id looks invalid: " + str(run)))
-
-        if not self._is_npg_qc_valid(self.get_npg_qc()):
+        if not self.get_npg_qc() is None and not self._is_npg_qc_valid(self.get_npg_qc()):
             problems.append(CheckResult(check_name="Check that the NPG QC field is valid",
                                         error_message="This npg_qc field looks invalid: " + str(self.get_npg_qc())))
 
-        if not self._is_target_valid(self.get_target()):
+        if not self.get_target() is None and not self._is_target_valid(self.get_target()):
             problems.append(CheckResult(check_name="Check that the target field is valid",
                                         error_message="The target field looks invalid: " + str(self.get_target())))
         return problems
@@ -471,24 +467,24 @@ class IrodsSeqFileMetadata(object):
         return problems
 
 
-    def check_reference(self, desired_ref: str) -> List[CheckResult, None]:
+    def check_reference(self, desired_ref_name: str) -> List[CheckResult]:
         problems = []
         check_name = "Check that the reference for this file is the one desired"
         if not self.get_references():
             problems.append(CheckResult(check_name=check_name, executed=False, result=None,
                                         error_message="There is no reference for this file in the metadata"))
-        if not desired_ref:
+        if not desired_ref_name:
             problems.append(CheckResult(check_name=check_name, executed=False, result=None,
                                         error_message="The desired reference wasn't provided in order "
                                                       "to compare it with the reference in metadata."))
         for ref in self.get_references():
-            if ref.find(desired_ref) == -1:
+            if ref.find(desired_ref_name) == -1:
                 problems.append(CheckResult(check_name=check_name,
                                             error_message="The desired reference is: %s is different thant the metadata "
-                                                          "reference: %s" % (desired_ref, ref) ))
+                                                          "reference: %s" % (desired_ref_name, ref)))
         return problems
 
-    def check_file_metadata(self, desired_reference: str) -> List[CheckResult, None]:
+    def check_file_metadata(self, desired_reference: str=None) -> List[CheckResult]:
         problems = []
         problems.extend(self.check_checksum_calculated_vs_metadata())
         problems.extend(self.check_reference(self, desired_reference))
