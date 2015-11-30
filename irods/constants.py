@@ -35,11 +35,35 @@ class IRODS_ZONES(Enum):
     HUMGEN = 'humgen'
     SANGER1 = 'Sanger1'
 
+    @classmethod
+    def enumerate_keys(cls):
+        return cls.__members__.keys()
+
+    @classmethod
+    def enumerate_values(cls):
+        vals = []
+        for _, v in cls.__members__.items():
+            vals.append(v.value)
+        return vals
+
+
 class IRODS_PERMISSIONS(Enum):
     READ = 'read'
     WRITE = 'write'
     OWN = 'own'
     NULL = 'null'
+
+    @classmethod
+    def enumerate_keys(cls):
+        return cls.__members__.keys()
+
+    @classmethod
+    def enumerate_values(cls):
+        vals = []
+        for _, v in cls.__members__.items():
+            vals.append(v.value)
+        return vals
+
 
 class IRODS_GROUPS(Enum):
     PUBLIC = 'public'   # 'public#seq'
