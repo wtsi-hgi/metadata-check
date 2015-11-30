@@ -280,7 +280,7 @@ def check_all_keys_have_the_same_value(my_dict, my_value=None):
 # 
 # def build_irods_file_staging_path(submission_id, file_path_client):
 #     ''' 
-#         This function puts together the path where a file is stored in irods staging area.
+#         This function puts together the path where a file is stored in irods_metadata staging area.
 #     '''
 #     (_, fname) = os.path.split(file_path_client)
 #     return os.path.join(configs.IRODS_STAGING_AREA, submission_id, fname)
