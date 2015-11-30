@@ -29,19 +29,22 @@ This file has been created on Nov 27, 2015.
 # the collecting part just has to understand how to present all those to the user
 
 
-from results.constants import SEVERITY
+from results.constants import SEVERITY, RESULT
 
 class CheckResult:
 
-    def __init__(self, severity=SEVERITY.IMPORTANT, error_message=None, source=None):
+    def __init__(self, check_name, executed=True, result=RESULT.FAILURE, severity=SEVERITY.IMPORTANT, error_message=None):
+        self.check_name = check_name
         self.severity = severity
         self.error_message = error_message
-        self.source = source
+        self.executed = executed
+        self.result = result        # Can be: FAILURE, SUCCESSFUL, NONE - if the test wasn't executed
 
     def __str__(self):
-        msg = "Severity = " + self.severity + ", "
-        msg = (msg + " source: " + self.source + ", ") if self.source else msg
-        msg = (msg + " error message: " + self.error_message + ", ") if self.error_message else msg
+        msg = "Check name: " + self.check_name + ", severity = " + self.severity + ", "
+        msg = msg + " executed: " + self.executed + ", "
+        msg = msg + self.result
+        msg = (msg + " error message: " + self.error_message) if self.error_message else msg
         return msg
 
     def __repr__(self):
