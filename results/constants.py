@@ -27,3 +27,8 @@ class SEVERITY(Enum):
     WARNING = 'warning'
     IMPORTANT = 'important'
     CRITICAL = 'critical'
+
+
+class RESULT(Enum):
+    SUCCESS = 'success'
+    FAILURE = 'failure'
