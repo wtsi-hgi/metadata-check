@@ -22,7 +22,6 @@ This file has been created on Nov 30, 2015.
 
 import unittest
 from metadata.irods_metadata.acl import IrodsACL
-from irods.constants import IRODS_PERMISSIONS
 
 class TestIrodsACL(unittest.TestCase):
 
