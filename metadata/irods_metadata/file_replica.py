@@ -44,8 +44,11 @@ class IrodsFileReplica:
 
     @staticmethod
     def _is_replica_nr_valid(replica_nr):
-        if not replica_nr.isdigit():
+        if not type(replica_nr) in [str, int]:
             raise TypeError("WRONG type of parameter: replica_nr should be a digit and is: " + str(replica_nr))
+        if type(replica_nr) is str:
+            if not replica_nr.isdigit():
+                return False
         if int(replica_nr) >= 0:
             return True
         return False
@@ -59,12 +62,12 @@ class IrodsFileReplica:
 
     def validate_fields(self):
         problems = []
-        if not self._is_checksum_valid():
+        if not self._is_checksum_valid(self.checksum):
             problems.append(
-                CheckResult(check_name="Check that the replica checksum field is valid", severity=SEVERITY.IMPORTANT,
+                CheckResult(check_name="Check that the replica checksum field is valid", severity=SEVERITY.IMPORTANT.value,
                             error_message="The checksum looks invalid: " + str(self.checksum)))
-        if not self._is_replica_nr_valid():
-            problems.append(CheckResult(check_name="Check that the replica nr is valid", severity=SEVERITY.WARNING,
+        if not self._is_replica_nr_valid(self.replica_nr):
+            problems.append(CheckResult(check_name="Check that the replica nr is valid", severity=SEVERITY.WARNING.value,
                                         error_message="The replica number looks invalid: " + str(self.replica_nr)))
         return problems
 
