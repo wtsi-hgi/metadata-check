@@ -33,7 +33,7 @@ from results.constants import SEVERITY, RESULT
 
 class CheckResult:
 
-    def __init__(self, check_name, executed=True, result=RESULT.FAILURE, severity=SEVERITY.IMPORTANT, error_message=None):
+    def __init__(self, check_name, executed=True, result=RESULT.FAILURE.value, severity=SEVERITY.IMPORTANT.value, error_message=None):
         self.check_name = check_name
         self.severity = severity
         self.error_message = error_message
@@ -41,9 +41,9 @@ class CheckResult:
         self.result = result        # Can be: FAILURE, SUCCESSFUL, NONE - if the test wasn't executed
 
     def __str__(self):
-        msg = "Check name: " + self.check_name + ", severity = " + self.severity + ", "
-        msg = msg + " executed: " + self.executed + ", "
-        msg = msg + self.result
+        msg = "Check name: " + str(self.check_name) + ", severity = " + str(self.severity) + ", "
+        msg = msg + " executed: " + str(self.executed) + ", "
+        msg = msg + str(self.result)
         msg = (msg + " error message: " + self.error_message) if self.error_message else msg
         return msg
 
