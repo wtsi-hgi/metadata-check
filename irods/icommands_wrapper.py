@@ -71,7 +71,7 @@ class iRODSOperations(object):
         child_proc = subprocess.Popen(cmd_args, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
         (out, err) = child_proc.communicate()
         if err:
-            print("ERROR ILS serapis_staging!!!! ")
+            print("ERROR running icommand!!!! ")
             raise exceptions.iRODSException(err, out, cmd=str(cmd_args))
         return out
     
