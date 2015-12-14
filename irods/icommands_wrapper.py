@@ -276,7 +276,7 @@ class iRODSChecksumOperations(iRODSOperations):
 class iRODSMetaQueryOperations(iRODSOperations):
     
     @classmethod
-    def _run_imeta_qu(cls, avu_dict, zone=constants.IRODS_ZONES.SEQ, operator='='):
+    def _run_imeta_qu(cls, avu_dict, zone=constants.IrodsZones.SEQ, operator='='):
         """
             Queries iRODS for all the data objects matching the avus given as parameter.
             WARNING! The default operator for all avus is "=". TO be changed, if not sufficient.
@@ -342,7 +342,7 @@ class iRODSMetaQueryOperations(iRODSOperations):
 
 
     @classmethod
-    def query_by_metadata(cls, avu_dict, zone=constants.IRODS_ZONES.SEQ, operator='='):
+    def query_by_metadata(cls, avu_dict, zone=constants.IrodsZones.SEQ, operator='='):
         """
             Queries iRODS by metadata and returns a list of full paths of the files
             matching the metadata querying criteria.
