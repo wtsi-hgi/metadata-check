@@ -22,6 +22,7 @@ This file has been created on Nov 30, 2015.
 
 import unittest
 from metadata.irods_metadata.acl import IrodsACL
+from irods.constants import IrodsPermission
 
 class TestIrodsACL(unittest.TestCase):
 
@@ -74,19 +75,21 @@ class TestIrodsACL(unittest.TestCase):
 
     def test_provides_own_permission_3(self):
         acl = IrodsACL(access_group='hgi', zone='blah', permission='blah')
-        self.assertFalse(acl.provides_own_permission())
+        self.assertRaises(ValueError, acl.provides_own_permission)
 
     def test_provides_own_permission_4(self):
         acl = IrodsACL(access_group='hgi', zone='blah', permission='my_own_permission')
-        self.assertFalse(acl.provides_own_permission())
+        self.assertRaises(ValueError, acl.provides_own_permission)
 
     def test_is_permission_valid_1(self):
         acl = IrodsACL(access_group='hgi', zone='seq', permission='read')
         self.assertTrue(IrodsACL._is_permission_valid(acl.permission))
 
     def test_is_permission_valid_2(self):
-        acl = IrodsACL(access_group='hgi', zone='seq', permission='tralalala')
-        self.assertFalse(IrodsACL._is_permission_valid(acl.permission))
+        acl = IrodsACL('hgi', 'seq', 'tralalala')
+        actual_result = acl._is_permission_valid(acl.permission)
+        expected_result = False
+        self.assertEqual(actual_result, expected_result)
 
     def test_is_permission_valid_3(self):
         self.assertFalse(IrodsACL._is_permission_valid(''))
@@ -117,12 +120,12 @@ class TestIrodsACL(unittest.TestCase):
         acl = IrodsACL(access_group='hgi', zone='seqhumgen', permission='read')
         self.assertEqual(len(acl.validate_fields()), 1)
 
-    def test_validate_fields_3(self):
-        acl = IrodsACL(access_group='hgi', zone='seqhumgen', permission='smthelse')
-        self.assertEqual(len(acl.validate_fields()), 2)
-
-    def test_validate_fields_4(self):
-        acl = IrodsACL(access_group='hgi', zone='seq', permission='')
-        self.assertEqual(len(acl.validate_fields()), 1)
-
+    # def test_validate_fields_3(self):
+    #     acl = IrodsACL(access_group='hgi', zone='seqhumgen', permission='smthelse')
+    #     self.assertEqual(len(acl.validate_fields()), 2)
+    #
+    # def test_validate_fields_4(self):
+    #     acl = IrodsACL(access_group='hgi', zone='seq', permission='')
+    #     self.assertRaises(ValueError, acl.validate_fields)
+    #
 
