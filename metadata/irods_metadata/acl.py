@@ -24,11 +24,19 @@ import irods.constants as irods_consts
 from results.checks_results import  CheckResult
 from results.constants import SEVERITY
 
+from enum import Enum
+
 class IrodsACL:
     def __init__(self, access_group: str, zone: str, permission: str):
         self.access_group = access_group
         self.zone = zone
         self.permission = permission
+        # TODO: this should be self._is_permission_valid()
+        # try:
+        #     print("PERMISSION before except : %s " % permission)
+        #     self.permission = irods_consts.IrodsPermission(permission)
+        # except KeyError:
+        #     raise ValueError("The permission is not right: %s " % permission)
 
     def __eq__(self, other):
         return self.access_group == other.access_group and self.zone == other.zone and \
@@ -45,34 +53,46 @@ class IrodsACL:
         return hash(self.access_group) + hash(self.zone) + hash(self.permission)
 
     def provides_public_access(self):
-        return self.access_group.startswith(irods_consts.IRODS_GROUPS.PUBLIC.value)
+        return self.access_group.startswith(irods_consts.IrodsGroups.PUBLIC.value)
 
     def provides_access_for_ss_group(self):
-        r = re.compile(irods_consts.IRODS_GROUPS.SS_GROUP_REGEX.value)
+        r = re.compile(irods_consts.IrodsGroups.SS_GROUP_REGEX.value)
         if r.match(self.access_group):
             return True
         return False
 
     def provides_read_permission(self):
-        return self.permission == irods_consts.IRODS_PERMISSIONS.READ.value
+        return irods_consts.IrodsPermission(self.permission) == irods_consts.IrodsPermission.READ
 
     def provides_write_permission(self):
-        return self.permission == irods_consts.IRODS_PERMISSIONS.WRITE.value
+        return irods_consts.IrodsPermission(self.permission) == irods_consts.IrodsPermission.WRITE
 
     def provides_own_permission(self):
-        return self.permission == irods_consts.IRODS_PERMISSIONS.OWN.value
+        return irods_consts.IrodsPermission(self.permission) == irods_consts.IrodsPermission.OWN
 
     @staticmethod
-    def _is_permission_valid(permission):
+    def _is_permission_valid(permission: str):
         if not type(permission) is str:
-            raise TypeError("This permission is not a string, it is a: " + str(type(permission)))
-        return permission in irods_consts.IRODS_PERMISSIONS.enumerate_values()
+            raise TypeError("This permission is not a string, it is a %s" % str(type(permission)))
+        try:
+            irods_consts.IrodsPermission(permission)
+        except KeyError:
+            raise TypeError("This permission is not correct: " + str(permission))
+        except ValueError:
+            return False
+        else:
+            return True
 
     @staticmethod
     def _is_irods_zone_valid(zone):
         if not type(zone) is str:
-            raise TypeError("This zone is not a string, it is a: " + str(type(zone)))
-        return zone in irods_consts.IRODS_ZONES.enumerate_values()
+            raise TypeError("This zone is not a string, it is a: %s " % str(type(zone)))
+        try:
+            irods_consts.IrodsZones(zone)
+        except ValueError:
+            return False
+        else:
+            return True
 
     def validate_fields(self):
         problems = []

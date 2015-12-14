@@ -30,41 +30,43 @@ TARGET_REGEX = '^0|1$'
 
 ######################## CONSTANTS ###############################
 
-class IRODS_ZONES(Enum):
+class IrodsZones(Enum):
     SEQ = 'seq'
     HUMGEN = 'humgen'
     SANGER1 = 'Sanger1'
 
-    @classmethod
-    def enumerate_keys(cls):
-        return cls.__members__.keys()
+    # @classmethod
+    # def enumerate_keys(cls):
+    #     return cls.__members__.keys()
+    #
+    # @classmethod
+    # def enumerate_values(cls):
+    #     vals = []
+    #     for _, v in cls.__members__.items():
+    #         vals.append(v.value)
+    #     return vals
 
-    @classmethod
-    def enumerate_values(cls):
-        vals = []
-        for _, v in cls.__members__.items():
-            vals.append(v.value)
-        return vals
 
-
-class IRODS_PERMISSIONS(Enum):
+#IrodsPermission = Enum('IrodsPermission', ['read', 'write', 'own', 'null'])
+class IrodsPermission(Enum):
     READ = 'read'
     WRITE = 'write'
     OWN = 'own'
     NULL = 'null'
 
-    @classmethod
-    def enumerate_keys(cls):
-        return cls.__members__.keys()
 
-    @classmethod
-    def enumerate_values(cls):
-        vals = []
-        for _, v in cls.__members__.items():
-            vals.append(v.value)
-        return vals
+    # @classmethod
+    # def enumerate_keys(cls):
+    #     return cls.__members__.keys()
+    #
+    # @classmethod
+    # def enumerate_values(cls):
+    #     vals = []
+    #     for _, v in cls.__members__.items():
+    #         vals.append(v.value)
+    #     return vals
 
 
-class IRODS_GROUPS(Enum):
+class IrodsGroups(Enum):
     PUBLIC = 'public'   # 'public#seq'
     SS_GROUP_REGEX = 'ss_[0-9]'   # 'ss_1234#seq'
