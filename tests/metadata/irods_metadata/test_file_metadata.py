@@ -20,10 +20,145 @@ This file has been created on Jun 26, 2015.
 """
 
 import unittest
-
-from metadata.irods_metadata.file_metadata import IrodsSeqFileMetadata
-#from main import error_types
+from irods.data_types import MetaAVU
+from metadata.irods_metadata.file_metadata import IrodsSeqFileMetadata, IrodsRawFileMetadata
+from metadata.irods_metadata.file_replica import IrodsFileReplica
 from results.constants import RESULT
+
+class TestIrodsRawFileMetadata(unittest.TestCase):
+
+    def test_group_avus_per_attribute_1(self):
+        avus_list = [MetaAVU(attribute='sample', value='ABCSample'), MetaAVU(attribute='sample', value='DEFGSample')]
+        expected_result = {'sample': ['ABCSample', 'DEFGSample']}
+        actual_result = IrodsRawFileMetadata._group_avus_per_attribute(avus_list)
+        self.assertDictEqual(expected_result, actual_result)
+
+    def test_group_avus_per_attribute_2(self):
+        avus_list = [MetaAVU(attribute='sample', value='ABCSample'), MetaAVU(attribute='library', value='lib')]
+        expected_result = {'sample': ['ABCSample'], 'library': ['lib']}
+        actual_result = IrodsRawFileMetadata._group_avus_per_attribute(avus_list)
+        self.assertDictEqual(expected_result, actual_result)
+
+    def test_group_avus_per_attribute_3(self):
+        avus_list = [MetaAVU(attribute='sample', value='ABCSample'), MetaAVU(attribute='library', value='lib'),
+                     MetaAVU(attribute='sample', value='XYZSample')]
+        expected_result = {'sample': ['ABCSample', 'XYZSample'], 'library': ['lib']}
+        actual_result = IrodsRawFileMetadata._group_avus_per_attribute(avus_list)
+        self.assertDictEqual(expected_result, actual_result)
+
+
+    def test_set_attributes_from_avus_1(self):
+        raw_meta = IrodsRawFileMetadata(fname='123.bam', dir_path='/seq/123')
+        raw_meta.set_attributes_from_avus([MetaAVU(attribute='sample', value='ABCSample'),
+                                           MetaAVU(attribute='library', value='lib')])
+        expected_result = {'sample': ['ABCSample'], 'library': ['lib']}
+        self.assertDictEqual(raw_meta._attributes, expected_result)
+
+
+
+    def test_get_values_for_attribute_1(self):
+        raw_meta = IrodsRawFileMetadata(fname='123.bam', dir_path='/seq/123')
+        raw_meta.set_attributes_from_avus([MetaAVU(attribute='sample', value='ABCSample'),
+                                           MetaAVU(attribute='library', value='lib')])
+        expected_result = ['ABCSample']
+        actual_result = raw_meta.get_values_for_attribute('sample')
+        self.assertListEqual(actual_result, expected_result)
+
+    def test_get_values_for_attribute_2(self):
+        raw_meta = IrodsRawFileMetadata(fname='123.bam', dir_path='/seq/123')
+        raw_meta.set_attributes_from_avus([MetaAVU(attribute='sample', value='ABCSample'),
+                                           MetaAVU(attribute='sample', value='123')])
+        expected_result = ['ABCSample', '123']
+        actual_result = raw_meta.get_values_for_attribute('sample')
+        self.assertListEqual(actual_result, expected_result)
+
+    def test_get_values_for_attribute_3(self):
+        raw_meta = IrodsRawFileMetadata(fname='123.bam', dir_path='/seq/123')
+        raw_meta.set_attributes_from_avus([MetaAVU(attribute='sample', value='ABCSample'),
+                                           MetaAVU(attribute='library', value='lib')])
+        expected_result = []
+        actual_result = raw_meta.get_values_for_attribute('study')
+        self.assertListEqual(actual_result, expected_result)
+
+
+
+    def test_get_values_count_for_attribute_1(self):
+        raw_meta = IrodsRawFileMetadata(fname='123.bam', dir_path='/seq/123')
+        raw_meta.set_attributes_from_avus([MetaAVU(attribute='sample', value='ABCSample')])
+        expected_result = 1
+        actual_result = raw_meta.get_values_count_for_attribute('sample')
+        self.assertEqual(expected_result, actual_result)
+
+    def test_get_values_count_for_attribute_2(self):
+        raw_meta = IrodsRawFileMetadata(fname='123.bam', dir_path='/seq/123')
+        expected_result = 0
+        actual_result = raw_meta.get_values_count_for_attribute('sample')
+        self.assertEqual(expected_result, actual_result)
+
+
+
+    def test_check_all_replicas_have_same_checksum_1(self):
+        replica1 = IrodsFileReplica(checksum='abc', replica_nr=1)
+        replica2 = IrodsFileReplica(checksum='abc', replica_nr=2)
+        raw_metadata = IrodsRawFileMetadata(fname='123.bam', dir_path='/seq/123', file_replicas=[replica1, replica2])
+        actual_result = raw_metadata.check_all_replicas_have_same_checksum()
+        expected_result = []
+        self.assertEqual(actual_result, expected_result)
+
+    def test_check_all_replicas_have_same_checksum_2(self):
+        replica1 = IrodsFileReplica(checksum='abc', replica_nr=1)
+        replica2 = IrodsFileReplica(checksum='abcabc', replica_nr=2)
+        raw_metadata = IrodsRawFileMetadata(fname='123.bam', dir_path='/seq/123', file_replicas=[replica1, replica2])
+        actual_result = raw_metadata.check_all_replicas_have_same_checksum()
+        self.assertEqual(len(actual_result), 1)
+
+
+
+#MetaAVU = namedtuple('MetaAVU', ['attribute', 'value'])    # list of attribute-value tuples
+
+# class IrodsRawFileMetadata:
+#     def __init__(self, fname: str, dir_path: str, file_replicas: List[IrodsFileReplica]=None,
+#                  acls: List[IrodsACL]=None):
+#         self.fname = fname
+#         self.dir_path = dir_path
+#         self.file_replicas = file_replicas
+#         self.acls = acls
+#         self._attributes = {}
+#
+
+    # def validate_fields(self) -> List[CheckResult]:
+    #     problems = []
+    #     for replica in self.replicas:
+    #         problems.extend(replica.validate_fields())
+    #     for acl in self.acls:
+    #         problems.extend(acl.validate_fields())
+    #     return problems
+
+    # def check_attribute_count(self, avu_counts: List[AttributeCount]) -> List[CheckResult]:
+    #     problems = []
+    #     for avu_count in avu_counts:
+    #         actual_count = self.get_values_count_for_attribute(avu_counts.attribute)
+    #         threshold = avu_count.count
+    #         if not self._is_true_comparison(actual_count, threshold, avu_count.operator):
+    #             error_msg = "Attribute: " + str(avu_count.attribute) + " appears: " + str(actual_count) + \
+    #                         " and should appear: " + str(avu_count.operator) + " " + str(threshold)
+    #             problems.append(CheckResult(check_name="Check attribute count is as configured",
+    #                                         severity=SEVERITY.IMPORTANT, error_message=error_msg))
+    #     return problems
+    #
+    # def check_all_replicas_have_same_checksum(self) -> List[CheckResult]:
+    #     if not self.replicas:
+    #         return []
+    #     problems = []
+    #     first_replica = self.replicas[0]
+    #     for replica in self.replicas:
+    #         if not replica.checksum == first_replica.checksum:
+    #             problems.append(CheckResult(check_name="Check all replicas have the same checksum",
+    #                                         error_message="Replica: " + str(replica) +
+    #                                                       " has different checksum than replica: " + str(
+    #                                             first_replica)))
+    #     return problems
+
 
 
 class TestIrodsSeqFileMetadata(unittest.TestCase):
@@ -192,7 +327,7 @@ class TestIrodsSeqFileMetadata(unittest.TestCase):
         irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam',fname='1234_5#6.bam', checksum_in_meta='123abc123', checksum_at_upload='123abc')
         result = irods_metadata.check_checksum_calculated_vs_metadata()
         self.assertEqual(len(result), 1)
-        self.assertEqual(result[0].result, RESULT.FAILURE)
+        self.assertEqual(result[0].result, RESULT.FAILURE.value)
 
     def test_check_checksum_calculated_vs_metadata_3(self):
         irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam', fname='1234_5#6.bam', checksum_in_meta='123abc')
