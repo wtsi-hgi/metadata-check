@@ -52,13 +52,17 @@ class IrodsRawFileMetadata:
         self._attributes = IrodsRawFileMetadata._group_avus_per_attribute(avus_list)
 
     def set_attributes_from_dict(self, avus_dict: Dict[str, List[str]]) -> None:
+        if not type(avus_dict):
+            raise TypeError("The avus_dict parameter of set_attributes_from_dict must be a dict, and is a {0}".format(
+                str(type(avus_dict))))
         self._attributes = avus_dict
 
     def get_values_for_attribute(self, attribute: str) -> list:
-        return self._attributes[attribute] if self._attributes.has_key(attribute) else None
+        found = self._attributes.get(attribute)
+        return found if found else []
 
     def get_values_count_for_attribute(self, attribute: str) -> int:
-        return len(self._attributes[attribute])
+        return len(self.get_values_for_attribute(attribute))
 
     @staticmethod
     def _group_avus_per_attribute(avus: List[data_types.MetaAVU]) -> Dict[str, List[str]]:
@@ -97,11 +101,11 @@ class IrodsRawFileMetadata:
         return problems
 
     def check_all_replicas_have_same_checksum(self) -> List[CheckResult]:
-        if not self.replicas:
+        if not self.file_replicas:
             return []
         problems = []
-        first_replica = self.replicas[0]
-        for replica in self.replicas:
+        first_replica = self.file_replicas[0]
+        for replica in self.file_replicas:
             if not replica.checksum == first_replica.checksum:
                 problems.append(CheckResult(check_name="Check all replicas have the same checksum",
                                             error_message="Replica: " + str(replica) +
