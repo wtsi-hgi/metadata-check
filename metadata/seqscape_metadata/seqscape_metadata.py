@@ -21,10 +21,29 @@ This file has been created on Nov 09, 2015.
 
 from collections import defaultdict
 from typing import List
+import collections
+
+from results.checks_results import CheckResult
+from results.constants import SEVERITY
 
 
+# class CheckResult:
+#
+# def __init__(self, check_name, executed=True, result=RESULT.FAILURE.value, severity=SEVERITY.IMPORTANT.value, error_message=None):
+# self.check_name = check_name
+# self.severity = severity
+# self.error_message = error_message
+# self.executed = executed
+#         self.result = result        # Can be: FAILURE, SUCCESSFUL, NONE - if the test wasn't executed
+
+# example of usage:
+# if not self._is_true_comparison(actual_count, threshold, avu_count.operator):
+#                 error_msg = "Attribute: " + str(avu_count.attribute) + " appears: " + str(actual_count) + \
+#                             " and should appear: " + str(avu_count.operator) + " " + str(threshold)
+#                 problems.append(CheckResult(check_name="Check attribute count is as configured",
+#                                             severity=SEVERITY.IMPORTANT, error_message=error_msg))
+#
 class SeqscapeEntitiesFetched:
-
     def __init__(self, entities_fetched, query_ids, query_id_type, query_entity_type, fetched_entity_type):
         """
         This is a class used to store data retrieved from Sequencescape DB.
@@ -40,8 +59,39 @@ class SeqscapeEntitiesFetched:
         self.query_entity_type = query_entity_type
         self.fetched_entity_type = fetched_entity_type
 
+    def _find_missing_ids(self):
+        ids_found = [str(getattr(ent, self.query_id_type)) for ent in self.entities_fetched]
+        ids_missing = set(ids_found).difference(set(self.query_ids))
+        return ids_missing
+
+    def _find_duplicated_ids(self):
+        ids_found = [getattr(ent, self.query_id_type) for ent in self.entities_fetched]
+        ids_duplicated = [item for item, count in collections.Counter(ids_found).items() if count > 1]
+        return ids_duplicated
+
+    def check_all_ids_were_found(self):
+        problems = []
+        ids_missing = self._find_missing_ids()
+        if ids_missing:
+            problems.append(CheckResult(check_name="Check all ids were found",
+                                        error_message="The following ids weren't found in SequencescapeDB: %s " %
+                                                      ids_missing))
+        return problems
+
+    def check_no_duplicates_found(self):
+        problems = []
+        ids_dupl = self._find_duplicated_ids()
+        if ids_dupl:
+            entities_dupl = [ent for ent in self.entities_fetched if getattr(ent, self.query_id_type) in ids_dupl]
+            problems.append(CheckResult("Check for duplicated ids",
+                                        error_message="The following ids: %s are duplicated - entities: %s" % (
+                                            ids_dupl, entities_dupl)))
+        return problems
+
+
     def __str__(self):
-        return str(self.query_entity_type) + " ID TYPE: " + str(self.query_id_type) + ", query_ids =  " + str(self.query_ids) + ", fetched entities: " + str(self.entities_fetched)
+        return str(self.query_entity_type) + " ID TYPE: " + str(self.query_id_type) + ", query_ids =  " + \
+               str(self.query_ids) + ", fetched entities: " + str(self.entities_fetched)
 
     def __repr__(self):
         return self.__str__()
@@ -58,6 +108,7 @@ class SeqscapeRawMetadata(object):
     """
     This class holds the metadata fetched from sequencescapeDB before being tested for sanity on its own.
     """
+
     def __init__(self):
         """
         Constructor - initializez the internal field keeping all the entities by entity type.
@@ -66,7 +117,7 @@ class SeqscapeRawMetadata(object):
         :return:
         """
         self._entities_dict_by_type = defaultdict(list)
-        self._entities_fetched_by_association = defaultdict(list)
+        self._entities_fetched_by_association = defaultdict(list)   # key: tuple(entity_queried_type, entity_fetched_type)
 
     def add_fetched_entities(self, entities_fetched: SeqscapeEntitiesFetched):
         """
@@ -121,9 +172,113 @@ class SeqscapeRawMetadata(object):
     def get_fetched_entities_by_association(self):
         return self._entities_fetched_by_association
 
+    def get_fetched_entities_by_association_by_type(self, query_entity_type, fetched_entity_type):
+        return self._entities_fetched_by_association[(query_entity_type, fetched_entity_type)]
+
+
+    # @classmethod
+    # def _compare_entity_sets(cls, entities_list: List[SeqscapeEntitiesFetched]) -> List[CheckResult]:
+    #     problems = []
+    #     for i in range(1, len(entities_list) - 1):
+    #         if not set(entities_list[i - 1].entities_fetched) == set(entities_list[i].entities_fetched):
+    #             problems.append(CheckResult(check_name="C"))
+    #             # problems.append(error_types.DiffEntitiesRetrievedFromSeqscapeByDiffIdTypesError(
+    #             #     entity_type=entities_list[i].entity_type,
+    #             #     id_type1=entities_list[i].query_id_type,
+    #             #     id_type2=entities_list[i - 1].query_id_type,
+    #             #     entities_set1=entities_list[i - 1].entities_fetched,
+    #             #     entities_set2=entities_list[i].entities_fetched
+    #             # ))
+    #     return problems
+
+
+    @classmethod
+    def _check_by_comparison_entities_fetched_by_different_id_types(cls, entities_list):
+        problems = []
+        for i in range(1, len(entities_list) - 1):
+            entities_1 = entities_list[i - 1].entities_fetched
+            entities_2 = entities_list[i].entities_fetched
+            if not set(entities_1) == set(entities_2):
+                id_type_1 = entities_1.query_id_type
+                id_type_2 = entities_2.query_id_type
+                diff_1 = set(entities_1).difference(set(entities_2))
+                diff_2 = set(entities_2).difference(set(entities_1))
+
+                error_message = ""
+                if diff_1:
+                    error_message = "Extra %s found when querying by %s compared to %s: %s." % (
+                        entities_1.query_entity_type, id_type_1, id_type_2, diff_1)
+                if diff_2:
+                    error_message += "Extra %s found when querying by %s compared to %s: %s." % (
+                        entities_2.query_entity_type, id_type_2, id_type_1, diff_2)
+                if not diff_2 and not diff_1:
+                    raise ValueError("Somehow the entity sets are different, but I can't detect any difference.")
+
+                problems.append(CheckResult(check_name="Check entities fetched by different types of ids",
+                                            error_message=error_message))
+        return problems
+
+    @classmethod
+    def _check_entities_fetched(cls, entities_fetched_list: List[SeqscapeEntitiesFetched]) -> None:
+        problems = []
+        for entity_fetched in entities_fetched_list:
+            problems.extend(entity_fetched.check_all_ids_were_found(entity_fetched))
+            problems.extend(entity_fetched.check_no_duplicates_found)
+        return problems
+
+    def check_samples_fetched_by_study(self):
+        problems = []
+        samples = self.get_fetched_entities_by_association_by_type('sample', 'study')
+        studies = self.get_fetched_entities_by_type('study')
+        if not set(samples).issubset(set(studies)):
+            diff = set(samples).difference(set(studies))
+            error_msg = "Samples that don't appear in the metadata but are associated with the study(s) from metadata: %s that aren't part of metadata: %s" % diff
+            problems.append(CheckResult(check_name="Check the samples returned by querying by study(s)", error_message=error_msg, severity=SEVERITY.WARNING))
+        return problems
+
+
+    def check_studies_fetched_by_samples(self):
+        problems = []
+        studies = self.get_fetched_entities_by_association_by_type('study', 'sample')
+        samples = self.get_fetched_entities_by_type('sample')
+        if not set(studies).issubset(set(samples)):
+            diff = set(studies).issubset(set(samples))
+            error_msg = "Studies that don't appear in the metadata but are associated with samples from metadata: %s " % diff
+            problems.append(CheckResult(check_name="Check the studies returned by querying by sample(s)", error_message=error_msg, severity=SEVERITY.CRITICAL))
+        return problems
+
+    # def check_associated_entities(self):
+    #     problems = []
+    #     for entity_type_tuple, entities_fetched_list in self._entities_fetched_by_association.items():
+    #         entity_type_query_by = entity_type_tuple[0]
+    #         entity_type_fetched = entity_type_tuple[1]
+    #         entities = self.get_fetched_entities_by_type(entity_type_fetched)
+    #         if not set(entities_fetched_list).issubset(set(entities)):
+    #             diff = set(entities_fetched_list).difference(set(entities))
+    #             error_msg = "%s associated with %s that aren't part of metadata so far: %s" % (entity_type_fetched, entity_type_query_by, diff)
+    #             problems.append(CheckResult(check_name="Check the %s returned by querying by %s" % (entity_type_fetched, entity_type_query_by), error_message=error_msg, severity=SEVERITY.WARNING))
+
+
+    def check_raw_metadata(self):#, raw_metadata: SeqscapeRawMetadata) -> None:
+        """
+        Checks the raw metadata and throws exceptions if any problem is found
+        :param raw_metadata:
+        :return:
+        """
+        problems = []
+        entity_types = self.get_all_fetched_entity_types()
+        for entity_type in entity_types:
+            entities_fetched = self.get_fetched_entities_by_type(entity_type)
+            problems.extend(self._check_entities_fetched(entities_fetched))
+            problems.extend(self._check_by_comparison_entities_fetched_by_different_id_types(entities_fetched))
+            problems.extend(self.check_samples_fetched_by_study())
+            problems.extend(self.check_studies_fetched_by_samples())
+        return problems
+
 
     def __str__(self):
-        return "ENTITIES FETCHED: " + str(self._entities_dict_by_type) + " and ASSOCIATED ENTITIED: " + str(self._entities_fetched_by_association)
+        return "ENTITIES FETCHED: " + str(self._entities_dict_by_type) + " and ASSOCIATED ENTITIED: " + str(
+            self._entities_fetched_by_association)
 
     def __repr__(self):
         return self.__str__()
@@ -132,7 +287,8 @@ class SeqscapeRawMetadata(object):
         return type(self) is type(other) and self._entities_dict_by_type == other._entities_dict_by_type
 
     def __hash__(self):
-        return hash(frozenset(self._entities_dict_by_type)) # + hash(frozenset(self.libraries)) + hash(frozenset(self.studies))
+        return hash(
+            frozenset(self._entities_dict_by_type))  # + hash(frozenset(self.libraries)) + hash(frozenset(self.studies))
 
 
 class SeqscapeMetadata:
@@ -164,7 +320,7 @@ class SeqscapeMetadata:
         return {'name': self._extract_list_of_ids_from_entities(entities, 'name'),
                 'accession_number': self._extract_list_of_ids_from_entities(entities, 'accession_number'),
                 'internal_id': self._extract_list_of_ids_from_entities(entities, 'internal_id')
-                }
+        }
 
 
     @staticmethod
@@ -188,7 +344,8 @@ class SeqscapeMetadata:
 
 
     def __str__(self):
-        return "SAMPLE: " + str(self.samples) + ", LIBRARIES: " + str(self.libraries) + ", STUDIES: " + str(self.studies)
+        return "SAMPLE: " + str(self.samples) + ", LIBRARIES: " + str(self.libraries) + ", STUDIES: " + str(
+            self.studies)
 
     def __repr__(self):
         return self.__str__()
