@@ -19,16 +19,16 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 This file has been created on Nov 27, 2015.
 """
 
-from enum import Enum
+#from enum import Enum
 
 
-class SEVERITY(Enum):
+class SEVERITY:
     INFO = 'info'
     WARNING = 'warning'
     IMPORTANT = 'important'
     CRITICAL = 'critical'
 
 
-class RESULT(Enum):
+class RESULT:
     SUCCESS = 'success'
     FAILURE = 'failure'
