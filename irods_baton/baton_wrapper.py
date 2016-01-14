@@ -89,7 +89,7 @@ class BatonAPI:
 
 
     @classmethod
-    def query_by_metadata_and_get_results_as_json(cls, avu_tuple_list, zone=constants.IrodsZones.SEQ, operator='='):
+    def query_by_metadata_and_get_results_as_json(cls, avu_tuple_list, zone=constants.IrodsZones.SEQ.value, operator='='):
         """
         THis method is querying iRODS using BATON in order to get the metadata for the files (data objects) that match the search criteria.
         The information is returned as a dict of collection, data_object and avus. It can be filtered afterwards for leaving in only the info of interest.

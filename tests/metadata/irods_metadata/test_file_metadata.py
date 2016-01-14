@@ -21,7 +21,7 @@ This file has been created on Jun 26, 2015.
 
 import unittest
 from irods.data_types import MetaAVU
-from metadata.irods_metadata.file_metadata import IrodsSeqFileMetadata, IrodsRawFileMetadata
+from metadata.irods_metadata.irods_file_metadata import IrodsSeqFileMetadata, IrodsRawFileMetadata
 from metadata.irods_metadata.file_replica import IrodsFileReplica
 from results.constants import RESULT
 

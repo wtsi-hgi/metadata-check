@@ -41,7 +41,7 @@ import os
 from com import utils
 
 from metadata_types.seqscape_metadata import SeqscapeMetadata
-from metadata_checks.seqsc_metadata_checks import SeqscapeRawMetadataChecks
+from metadata_comparisons.seqsc_metadata_checks import SeqscapeRawMetadataChecks
 from metadata_provider.seqscape_meta_provider import SeqscapeRawMetadataProvider
 
 
