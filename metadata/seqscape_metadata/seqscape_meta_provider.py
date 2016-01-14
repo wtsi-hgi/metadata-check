@@ -21,7 +21,8 @@ This file has been created on Nov 16, 2015.
 
 from metadata.seqscape_metadata.seqscape_metadata import SeqscapeRawMetadata, SeqscapeEntitiesFetched
 
-from sequencescape.api import connect_to_sequencescape
+from sequencescape import connect_to_sequencescape, Sample, Study, Library
+
 
 class SeqscapeRawMetadataProvider:
 
