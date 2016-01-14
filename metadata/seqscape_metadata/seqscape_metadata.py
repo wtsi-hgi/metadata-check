@@ -27,22 +27,6 @@ from results.checks_results import CheckResult
 from results.constants import SEVERITY
 
 
-# class CheckResult:
-#
-# def __init__(self, check_name, executed=True, result=RESULT.FAILURE.value, severity=SEVERITY.IMPORTANT.value, error_message=None):
-# self.check_name = check_name
-# self.severity = severity
-# self.error_message = error_message
-# self.executed = executed
-#         self.result = result        # Can be: FAILURE, SUCCESSFUL, NONE - if the test wasn't executed
-
-# example of usage:
-# if not self._is_true_comparison(actual_count, threshold, avu_count.operator):
-#                 error_msg = "Attribute: " + str(avu_count.attribute) + " appears: " + str(actual_count) + \
-#                             " and should appear: " + str(avu_count.operator) + " " + str(threshold)
-#                 problems.append(CheckResult(check_name="Check attribute count is as configured",
-#                                             severity=SEVERITY.IMPORTANT, error_message=error_msg))
-#
 class SeqscapeEntitiesFetched:
     def __init__(self, entities_fetched, query_ids, query_id_type, query_entity_type, fetched_entity_type):
         """
@@ -176,22 +160,6 @@ class SeqscapeRawMetadata(object):
         return self._entities_fetched_by_association[(query_entity_type, fetched_entity_type)]
 
 
-    # @classmethod
-    # def _compare_entity_sets(cls, entities_list: List[SeqscapeEntitiesFetched]) -> List[CheckResult]:
-    #     problems = []
-    #     for i in range(1, len(entities_list) - 1):
-    #         if not set(entities_list[i - 1].entities_fetched) == set(entities_list[i].entities_fetched):
-    #             problems.append(CheckResult(check_name="C"))
-    #             # problems.append(error_types.DiffEntitiesRetrievedFromSeqscapeByDiffIdTypesError(
-    #             #     entity_type=entities_list[i].entity_type,
-    #             #     id_type1=entities_list[i].query_id_type,
-    #             #     id_type2=entities_list[i - 1].query_id_type,
-    #             #     entities_set1=entities_list[i - 1].entities_fetched,
-    #             #     entities_set2=entities_list[i].entities_fetched
-    #             # ))
-    #     return problems
-
-
     @classmethod
     def _check_by_comparison_entities_fetched_by_different_id_types(cls, entities_list):
         problems = []
@@ -246,17 +214,6 @@ class SeqscapeRawMetadata(object):
             error_msg = "Studies that don't appear in the metadata but are associated with samples from metadata: %s " % diff
             problems.append(CheckResult(check_name="Check the studies returned by querying by sample(s)", error_message=error_msg, severity=SEVERITY.CRITICAL))
         return problems
-
-    # def check_associated_entities(self):
-    #     problems = []
-    #     for entity_type_tuple, entities_fetched_list in self._entities_fetched_by_association.items():
-    #         entity_type_query_by = entity_type_tuple[0]
-    #         entity_type_fetched = entity_type_tuple[1]
-    #         entities = self.get_fetched_entities_by_type(entity_type_fetched)
-    #         if not set(entities_fetched_list).issubset(set(entities)):
-    #             diff = set(entities_fetched_list).difference(set(entities))
-    #             error_msg = "%s associated with %s that aren't part of metadata so far: %s" % (entity_type_fetched, entity_type_query_by, diff)
-    #             problems.append(CheckResult(check_name="Check the %s returned by querying by %s" % (entity_type_fetched, entity_type_query_by), error_message=error_msg, severity=SEVERITY.WARNING))
 
 
     def check_raw_metadata(self):#, raw_metadata: SeqscapeRawMetadata) -> None:
