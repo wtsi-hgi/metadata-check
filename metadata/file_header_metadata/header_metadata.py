@@ -19,12 +19,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 This file has been created on Jun 30, 2015.
 """
 
-from . import metadata_utils
 from com import utils as common_utils
-from . import error_types
+#from . import error_types
+import typing
+from results.checks_results import CheckResult
 
-
-class HeaderSAMFileMetadata(object):
+class SAMFileHeaderMetadata(object):
+    INVALID_IDS = ['N/A', 'undefined', 'unspecified', -1]
 
     def __init__(self, fpath, fname, samples=[], libraries=[], studies=[], lanelets=None, reference=None):
         self.fname = fname
@@ -37,54 +38,38 @@ class HeaderSAMFileMetadata(object):
 
 
     @classmethod
-    def from_header_to_metadata(cls, header, fpath):
-        """
+    def _is_id_valid(cls, id: str) -> bool:
+        return id not in cls.INVALID_IDS
 
-        :param header: of type BAMHeader = namedtuple('BAMHeader', ['rg', 'pg', 'hd', 'sq'])
-        :return:
-        """
-        header_rg = header.rg
-        samples = metadata_utils.HeaderUtils.sort_entities_by_guessing_id_type(header_rg.samples)
-        libraries = metadata_utils.HeaderUtils.sort_entities_by_guessing_id_type(header_rg.libraries)
-        fname = common_utils.extract_fname(fpath)
-        return HeaderSAMFileMetadata(fpath=fpath, fname=fname, samples=samples, libraries=libraries, lanelets=header_rg.lanelets)
+    @classmethod
+    def _filter_out_invalid_ids(cls, ids_list: typing.Sequence):
+        return [id for id in ids_list if not cls._is_id_valid(id)]
 
-            # from previous impl:
-            # header_samples = metadata_utils.HeaderUtils.sort_entities_by_guessing_id_type(header_metadata.samples)
-            # try:
-            #     check_irods_vs_header_metadata(irods_fpath, header_samples, irods_samples, 'sample')
-            # except error_types.HeaderVsIrodsMetadataAttributeError as e:
-            #
+    @classmethod
+    def _check_for_invalid_ids(cls, multi_ids_dict: typing.Dict, entity_type: str):
+        errors = []
+        for k, values in multi_ids_dict.items():
+            wrong_ids = [id for id in values if not cls._is_id_valid(id)]
+            check_name = "Test the validity of " + str(k)
+            error_msg = "Invalid " + str(k) + "(s) for " + str(entity_type) + ": " + str(wrong_ids)
+            errors.append(CheckResult(check_name=check_name, error_message=error_msg))
+        return errors
 
-#         BAMHeaderRG = namedtuple('BAMHeaderRG', [
-    #     'seq_centers',
-    #     'seq_dates',
-    #     'lanelets',
-    #     'platforms',
-    #     'libraries',
-    #     'samples',
-    # ])
+    def check_metadata(self):
+        errors = []
+        errors.extend(self._check_for_invalid_ids(self.samples, 'sample'))
+        errors.extend(self._check_for_invalid_ids(self.libraries, 'library'))
+        return errors
 
+    def fix_metadata(self):
+        for id_type, values in self.samples.items():
+            fixed_values = self._filter_out_invalid_ids(values)
+            self.samples[id_type] = fixed_values
 
-    def run_field_sanity_checks_and_filter(self):
-        problems = []
-        if self.samples:
-            #self.samples, pbs = self._filter_out_non_entities(self.samples)
-            self.samples, pbs = metadata_utils.GeneralUtils.filter_out_non_entities(self.fpath, self.samples, 'sample')
-            pbs = [error_types.WrongHeaderMetadataValue(err.fpath, err.attribute, err.value) for err in pbs]
-            problems.extend(pbs)
-
-        if self.libraries:
-            self.libraries, pbs = metadata_utils.GeneralUtils.filter_out_non_entities(self.fpath, self.libraries, 'library')
-            pbs = [error_types.WrongHeaderMetadataValue(err.fpath, err.attribute, err.value) for err in pbs]
-            problems.extend(pbs)
-
-        if self.studies:
-            self.studies, pbs = metadata_utils.GeneralUtils.filter_out_non_entities(self.fpath, self.studies, 'study')
-            pbs = [error_types.WrongHeaderMetadataValue(err.fpath, err.attribute, err.value) for err in pbs]
-            problems.extend(pbs)
-        return problems
-
+        for id_type, values in self.libraries.items():
+            fixed_values = self._filter_out_invalid_ids(values)
+            self.libraries[id_type] = fixed_values
+        return
 
     def __str__(self):
         return "Fpath = " + str(self.fpath) + ", fname = "+ str(self.fname) + ", samples = " + str(self.samples) + \
