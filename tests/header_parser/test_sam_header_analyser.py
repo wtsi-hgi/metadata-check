@@ -18,11 +18,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 """
 
-
 import os
-from hamcrest import *
 import unittest
+
+from hamcrest import *
 import config
+
 
 # from Celery_Django_Prj import configs
 # from serapis.com import constants
@@ -31,7 +32,7 @@ import config
 # from serapis.seqscape import data_access
 # from serapis.worker.logic.header_parser import BAMHeaderParser, BAMHeader, VCFHeaderParser, VCFHeader, MetadataHandling
 
-from header_parser.sam_header_analyser import BAMHeaderAnalyser, _RGTagAnalyser
+from header_parser.sam.header_analyser import BAMHeaderAnalyser, _RGTagAnalyser
 #from header_parser.sam_header_parser import BAMHeaderParser
 
 class Test_RGTagAnalyser(unittest.TestCase):

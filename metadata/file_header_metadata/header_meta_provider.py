@@ -22,8 +22,8 @@ This file has been created on Nov 16, 2015.
 import com.utils as common_utils
 from metadata.common.identifiers import EntityIdentifier
 from metadata.file_header_metadata.header_metadata import SAMFileHeaderMetadata
-from header_parser.sam_header_extractor import IrodsSamFileHeaderExtractor, LustreSamFileHeaderExtractor
-from header_parser.sam_header_parser import SAMFileHeaderParser, SAMFileRGTagParser
+from header_parser.sam.header_extractor import IrodsSamFileHeaderExtractor, LustreSamFileHeaderExtractor
+from header_parser.sam.header_parser import SAMFileHeaderParser, SAMFileRGTagParser
 
 
 class SAMFileHeaderMetadataProvider:
