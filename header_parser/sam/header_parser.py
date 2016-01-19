@@ -22,10 +22,10 @@ This file has been created on Nov 3, 2014.
 """
 
 import re
-import abc
 import typing
+
 from com import wrappers
-from header_parser.sam_file_header import SAMFileHeader
+from header_parser.sam.file_header import SAMFileHeader
 
 
 class SAMFileHeaderParser:
