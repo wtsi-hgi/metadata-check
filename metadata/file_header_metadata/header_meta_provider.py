@@ -18,3 +18,30 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 This file has been created on Nov 16, 2015.
 """
+
+import com.utils as common_utils
+from metadata.common.identifiers import EntityIdentifier
+from metadata.file_header_metadata.header_metadata import SAMFileHeaderMetadata
+from header_parser.sam_header_extractor import IrodsSamFileHeaderExtractor, LustreSamFileHeaderExtractor
+from header_parser.sam_header_parser import SAMFileHeaderParser, SAMFileRGTagParser
+
+
+class SAMFileHeaderMetadataProvider:
+
+    @classmethod
+    def fetch(cls, fpath, irods=False):
+        if irods:
+            header_as_text = IrodsSamFileHeaderExtractor.extract(fpath)
+        else:
+            header_as_text = LustreSamFileHeaderExtractor.extract(fpath)
+        raw_header = SAMFileHeaderParser.parse(header_as_text)
+        rg_tags_parsed = SAMFileRGTagParser.parse(raw_header.rg_tags)
+
+        samples = EntityIdentifier.separate_identifiers_by_type(rg_tags_parsed.samples)
+        libraries = EntityIdentifier.separate_identifiers_by_type(rg_tags_parsed.libraries)
+        fname = common_utils.extract_fname(fpath)
+        return SAMFileHeaderMetadata(fpath=fpath, samples=samples, libraries=libraries, fname=fname)
+
+
+
+
