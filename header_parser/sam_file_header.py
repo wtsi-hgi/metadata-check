@@ -23,28 +23,22 @@ This file has been created on Jan 12, 2016.
 
 class SAMFileHeader:
     def __init__(self, rg_tag=None, sq_tag=None, hd_tag=None, pg_tag=None):
-        self.rg_tag = rg_tag
-        self.sq_tag = sq_tag
-        self.hd_tag = hd_tag
-        self.pg_tag = pg_tag
+        self.rg_tags = rg_tag
+        self.sq_tags = sq_tag
+        self.hd_tags = hd_tag
+        self.pg_tags = pg_tag
 
     class RGTag:
-        def __init__(self, seq_centers=None, seq_dates=None, lanelets=None, platforms=None, libraries=None, samples=None):
+        def __init__(self, seq_centers=None, seq_dates=None, lanelets=None, platforms=None,
+                     libraries=None, samples=None, platform_units=None):
             self.seq_centers = seq_centers
             self.seq_dates = seq_dates
             self.lanelets = lanelets
             self.platforms = platforms
             self.libraries = libraries
             self.samples = samples
+            self.platform_units = platform_units
 
-    class PGTag:
-        pass
-
-    class SQTag:
-        pass
-
-    class HDTag:
-        pass
 
 
 
