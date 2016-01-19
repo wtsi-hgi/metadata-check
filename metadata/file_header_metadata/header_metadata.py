@@ -25,7 +25,7 @@ import typing
 from results.checks_results import CheckResult
 
 class SAMFileHeaderMetadata(object):
-    INVALID_IDS = ['N/A', 'undefined', 'unspecified', -1]
+    INVALID_IDS = ['N/A', 'undefined', 'unspecified', -1, '', None]
 
     def __init__(self, fpath, fname, samples=[], libraries=[], studies=[], lanelets=None, reference=None):
         self.fname = fname
@@ -43,16 +43,17 @@ class SAMFileHeaderMetadata(object):
 
     @classmethod
     def _filter_out_invalid_ids(cls, ids_list: typing.Sequence):
-        return [id for id in ids_list if not cls._is_id_valid(id)]
+        return [id for id in ids_list if cls._is_id_valid(id)]
 
     @classmethod
     def _check_for_invalid_ids(cls, multi_ids_dict: typing.Dict, entity_type: str):
         errors = []
         for k, values in multi_ids_dict.items():
             wrong_ids = [id for id in values if not cls._is_id_valid(id)]
-            check_name = "Test the validity of " + str(k)
-            error_msg = "Invalid " + str(k) + "(s) for " + str(entity_type) + ": " + str(wrong_ids)
-            errors.append(CheckResult(check_name=check_name, error_message=error_msg))
+            if wrong_ids:
+                check_name = "Test the validity of " + str(k)
+                error_msg = "Invalid " + str(k) + "(s) for " + str(entity_type) + ": " + str(wrong_ids)
+                errors.append(CheckResult(check_name=check_name, error_message=error_msg))
         return errors
 
     def check_metadata(self):
