@@ -27,7 +27,7 @@ from results.checks_results import CheckResult
 class SAMFileHeaderMetadata(object):
     INVALID_IDS = ['N/A', 'undefined', 'unspecified', -1, '', None]
 
-    def __init__(self, fpath, fname, samples=[], libraries=[], studies=[], lanelets=None, reference=None):
+    def __init__(self, fpath, fname, samples={}, libraries={}, studies={}, lanelets=None, reference=None):
         self.fname = fname
         self.fpath = fpath
         self.samples = samples
