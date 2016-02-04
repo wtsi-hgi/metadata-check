@@ -95,3 +95,37 @@ class TestSAMFileHeaderMetadata(unittest.TestCase):
         result = SAMFileHeaderMetadata._check_for_invalid_ids(multi_ids, 'sample')
         self.assertEqual(len(result), 2)
 
+
+
+    def test_fix_metadata_1(self):
+        metadata = SAMFileHeaderMetadata(fpath='some_path', fname='some_name')
+        metadata.samples = {'name': ['sample1', 'sample2', 'sample3', None]}
+        metadata.libraries = {'internal_id': [-1, '', 123], 'name': ['', None]}
+        expected = SAMFileHeaderMetadata(fpath='some_path', fname='some_name')
+        expected.samples = {'name': ['sample1', 'sample2', 'sample3']}
+        expected.libraries = {'internal_id': [123], 'name': []}
+        metadata.fix_metadata()
+        self.assertDictEqual(metadata.samples, expected.samples)
+        self.assertDictEqual(metadata.libraries, expected.libraries)
+
+    def test_fix_metadata_2(self):
+        metadata = SAMFileHeaderMetadata(fpath='some_path', fname='some_name')
+        metadata.samples = {'name': ['sample1', 'sample2', 'sample3']}
+        metadata.libraries = {'internal_id': [-1, '', 123], 'name': []}
+        expected = SAMFileHeaderMetadata(fpath='some_path', fname='some_name')
+        expected.samples = {'name': ['sample1', 'sample2', 'sample3']}
+        expected.libraries = {'internal_id': [123], 'name': []}
+        metadata.fix_metadata()
+        self.assertDictEqual(metadata.samples, expected.samples)
+        self.assertDictEqual(metadata.libraries, expected.libraries)
+
+
+    # def fix_metadata(self):
+    #     for id_type, values in self.samples.items():
+    #         fixed_values = self._filter_out_invalid_ids(values)
+    #         self.samples[id_type] = fixed_values
+    #
+    #     for id_type, values in self.libraries.items():
+    #         fixed_values = self._filter_out_invalid_ids(values)
+    #         self.libraries[id_type] = fixed_values
+    #     return
