@@ -22,7 +22,7 @@ This file has been created on Jun 26, 2015.
 import unittest
 
 from mcheck.irods.data_types import MetaAVU
-from metadata.irods_metadata.irods_file_metadata import IrodsSeqFileMetadata, IrodsRawFileMetadata
+from mcheck.metadata.irods_metadata.irods_file_metadata import IrodsSeqFileMetadata, IrodsRawFileMetadata
 from mcheck.metadata.irods_metadata.file_replica import IrodsFileReplica
 from mcheck.results.constants import RESULT
 
@@ -329,7 +329,7 @@ class TestIrodsSeqFileMetadata(unittest.TestCase):
         irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam',fname='1234_5#6.bam', checksum_in_meta='123abc123', checksum_at_upload='123abc')
         result = irods_metadata.check_checksum_calculated_vs_metadata()
         self.assertEqual(len(result), 1)
-        self.assertEqual(result[0].result, RESULT.FAILURE.value)
+        self.assertEqual(result[0].result, RESULT.FAILURE)
 
     def test_check_checksum_calculated_vs_metadata_3(self):
         irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam', fname='1234_5#6.bam', checksum_in_meta='123abc')

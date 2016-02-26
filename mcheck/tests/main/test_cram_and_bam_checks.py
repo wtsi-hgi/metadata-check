@@ -21,7 +21,7 @@ This file has been created on Dec 11, 2014.
 
 import unittest
 
-from main import cram_and_bam_checks
+from mcheck.main import cram_and_bam_checks
 from mcheck.main import constants
 
 

@@ -22,9 +22,9 @@ This file has been created on Feb 10, 2015.
 import os
 from collections import defaultdict
 
-from irods import icommands_wrapper
-from irods import data_types
-from metadata_types.identifiers import EntityIdentifier as Identif
+from mcheck.irods import icommands_wrapper
+from mcheck.irods import data_types
+from mcheck.metadata_types.identifiers import EntityIdentifier as Identif
 from mcheck.com import utils as common_utils
 from mcheck.header_parser.sam import header_analyser as header_analyser
 from mcheck.irods import api as irods_api
