@@ -24,7 +24,8 @@ from mcheck.main import error_types
 from mcheck.main import irods_metadata_consistency_checks as checks
 from mcheck.seqscape import models
 
-
+#TODO: to delete this module after moving these tests to where they belong
+@unittest.skip
 class TestUtilFunctionsForEntities(unittest.TestCase):
 
     def test_is_id_missing(self):
@@ -71,6 +72,7 @@ class TestUtilFunctionsForEntities(unittest.TestCase):
         self.assertEqual(result, False)
 
 
+@unittest.skip
 class TestIRODSvsSeqscMetadata(unittest.TestCase):
 
     def test_compare_entity_sets_in_seqsc(self):
@@ -83,7 +85,7 @@ class TestIRODSvsSeqscMetadata(unittest.TestCase):
         result = checks.fetch_and_compare_entity_sets_in_seqsc(irods_samples, 'sample')
         self.assertEqual(len(result), 1)
 
-
+@unittest.skip
 class TestGetEntitiesFromSeqscape(unittest.TestCase):
 
     def test_get_samples_from_seqsc(self):
@@ -110,6 +112,7 @@ class TestGetEntitiesFromSeqscape(unittest.TestCase):
 
 
 ######## I think the classes above don't really belong here. So here's the class for the functions in the
+@unittest.skip
 class TestIrodsMetadataConsistencyChecks(unittest.TestCase):
 
     def test_check_sample_is_in_desired_study(self):
