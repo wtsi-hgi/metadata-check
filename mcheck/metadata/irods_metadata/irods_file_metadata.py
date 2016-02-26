@@ -23,18 +23,18 @@ import re
 from collections import defaultdict
 from typing import List, Dict, Union
 
-from com.operators import Operators
+from mcheck.com.operators import Operators
 from mcheck.main import error_types
-from com import wrappers
-from irods import data_types
-from metadata.common.identifiers import EntityIdentifier
-from metadata.common.attribute_count import AttributeCount
-from results.checks_results import CheckResult
+from mcheck.com import wrappers
+from mcheck.irods import data_types
+from mcheck.metadata.common.identifiers import EntityIdentifier
+from mcheck.metadata.common.attribute_count import AttributeCount
+from mcheck.results.checks_results import CheckResult
 from mcheck.com import utils as common_utils
 from mcheck.irods import constants as irods_consts
 from mcheck.results.constants import SEVERITY
 from mcheck.metadata.irods_metadata.acl import IrodsACL
-from metadata.irods_metadata.file_replica import IrodsFileReplica
+from mcheck.metadata.irods_metadata.file_replica import IrodsFileReplica
 
 
 class IrodsRawFileMetadata:

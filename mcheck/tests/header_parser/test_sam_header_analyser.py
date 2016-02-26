@@ -23,18 +23,7 @@ import unittest
 
 from hamcrest import *
 import config
-
-
-
-# from Celery_Django_Prj import configs
-# from serapis.com import constants
-# from serapis.worker import tasks
-# from serapis.worker.logic import entities
-# from serapis.seqscape import data_access
-# from serapis.worker.logic.header_parser import BAMHeaderParser, BAMHeader, VCFHeaderParser, VCFHeader, MetadataHandling
-
 from mcheck.header_parser.sam.header_analyser import BAMHeaderAnalyser, _RGTagAnalyser
-#from header_parser.sam_header_parser import BAMHeaderParser
 
 class Test_RGTagAnalyser(unittest.TestCase):
 

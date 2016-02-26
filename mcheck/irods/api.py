@@ -26,7 +26,7 @@ This file has been created on Oct 24, 2014
 """
 
 from mcheck.irods import exceptions as irods_exc
-
+from mcheck.irods import icommands_wrapper
 
 class iRODSAPI:
 
@@ -39,7 +39,7 @@ class iRODSAPI:
     @classmethod
     def list_dir(cls, path):
         try:
-            return irods_api.iRODSListOperations.list_files_in_coll(path)
+            return icommands_wrapper.iRODSListOperations.list_files_in_coll(path)
         except irods_exc.iLSException as e:
             exc = cls._map_irods_exc_on_backend_exc(e)
             raise exc
@@ -61,7 +61,7 @@ class iRODSAPI:
             BackendException
         '''
         try:
-            return irods_api.iRODSChecksumOperations.run_file_checksum_across_all_replicas(path)
+            return icommands_wrapper.iRODSChecksumOperations.run_file_checksum_across_all_replicas(path)
         except irods_exc.iChksumException as e:
             exc = cls._map_irods_exc_on_backend_exc(e)
             raise exc
@@ -82,7 +82,7 @@ class iRODSAPI:
             BackendException
         """
         try:
-            return irods_api.iRODSChecksumOperations.run_file_checksum(path)
+            return icommands_wrapper.iRODSChecksumOperations.run_file_checksum(path)
         except irods_exc.iChksumException as e:
             exc = cls._map_irods_exc_on_backend_exc(e)
             raise exc
@@ -90,13 +90,13 @@ class iRODSAPI:
 
     @classmethod
     def retrieve_metadata_for_file(cls, path):
-        return irods_api.iRODSMetaListOperations.get_metadata(path)
+        return icommands_wrapper.iRODSMetaListOperations.get_metadata(path)
 
 
     @classmethod
     def search_files_by_metadata(cls, avu_dict):
         avu_dict_bytes = str.encode(avu_dict)
-        return irods_api.iRODSMetaQueryOperations.query_by_metadata(avu_dict_bytes)
+        return icommands_wrapper.iRODSMetaQueryOperations.query_by_metadata(avu_dict_bytes)
 
 
     @classmethod
@@ -114,14 +114,14 @@ class iRODSAPI:
             -------
             bool
         """
-        irods_api.iRODSMetaRMOperations.remove_avu(path, old_avu)
-        irods_api.iRODSMetaAddOperations.add_avu(path, new_avu)
+        icommands_wrapper.iRODSMetaRMOperations.remove_avu(path, old_avu)
+        icommands_wrapper.iRODSMetaAddOperations.add_avu(path, new_avu)
         return True
 
     @classmethod
     def add_metadata_avu(cls, path, avu):
-        return irods_api.iRODSMetaAddOperations.add_avu(path, avu)
+        return icommands_wrapper.iRODSMetaAddOperations.add_avu(path, avu)
 
     @classmethod
     def remove_metadata_avu(cls, path, avu):
-        return irods_api.iRODSMetaRMOperations.remove_avu(path, avu)
+        return icommands_wrapper.iRODSMetaRMOperations.remove_avu(path, avu)

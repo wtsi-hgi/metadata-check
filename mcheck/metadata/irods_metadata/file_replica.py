@@ -22,7 +22,7 @@ This file has been created on Nov 30, 2015.
 import re
 
 import mcheck.irods.constants as irods_consts
-from results.checks_results import CheckResult
+from mcheck.results.checks_results import CheckResult
 from mcheck.results.constants import SEVERITY
 
 
@@ -65,10 +65,10 @@ class IrodsFileReplica:
         problems = []
         if not self._is_checksum_valid(self.checksum):
             problems.append(
-                CheckResult(check_name="Check that the replica checksum field is valid", severity=SEVERITY.IMPORTANT.value,
+                CheckResult(check_name="Check that the replica checksum field is valid", severity=SEVERITY.IMPORTANT,
                             error_message="The checksum looks invalid: " + str(self.checksum)))
         if not self._is_replica_nr_valid(self.replica_nr):
-            problems.append(CheckResult(check_name="Check that the replica nr is valid", severity=SEVERITY.WARNING.value,
+            problems.append(CheckResult(check_name="Check that the replica nr is valid", severity=SEVERITY.WARNING,
                                         error_message="The replica number looks invalid: " + str(self.replica_nr)))
         return problems
 

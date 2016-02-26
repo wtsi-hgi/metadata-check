@@ -25,8 +25,8 @@ This file has been created on Oct 27, 2014
 import os
 import subprocess
 
-from com import wrappers
-from irods import data_types as irods_types
+from mcheck.com import wrappers
+from mcheck.irods import data_types as irods_types
 from . import constants
 
 
