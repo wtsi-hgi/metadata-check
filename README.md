@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.org/wtsi-hgi/metadata-check.svg)](https://travis-ci.org/wtsi-hgi/metadata-check)
+[![codecov.io](https://codecov.io/github/wtsi-hgi/metadata-check/coverage.svg?branch=master)](https://codecov.io/github/wtsi-hgi/metadata-check?branch=master)
+
 Metadata-check
 ==============
 
