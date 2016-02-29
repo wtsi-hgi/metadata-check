@@ -98,30 +98,30 @@ class iRODSAPI:
         avu_dict_bytes = str.encode(avu_dict)
         return icommands_wrapper.iRODSMetaQueryOperations.query_by_metadata(avu_dict_bytes)
 
-
-    @classmethod
-    def modify_metadata_avu(cls, path, old_avu, new_avu):
-        """ This method modifies one AVU, but removing the old one and adding the new one.
-            Parameters
-            ----------
-            path : str
-                The path to the file in iRODS
-            old_avu : data_types.MetaAVU
-                The old avu, to be removed
-            new_avu : data_types.MetaAVU
-                The new avu to be added
-            Returns
-            -------
-            bool
-        """
-        icommands_wrapper.iRODSMetaRMOperations.remove_avu(path, old_avu)
-        icommands_wrapper.iRODSMetaAddOperations.add_avu(path, new_avu)
-        return True
-
-    @classmethod
-    def add_metadata_avu(cls, path, avu):
-        return icommands_wrapper.iRODSMetaAddOperations.add_avu(path, avu)
-
-    @classmethod
-    def remove_metadata_avu(cls, path, avu):
-        return icommands_wrapper.iRODSMetaRMOperations.remove_avu(path, avu)
+    #
+    # @classmethod
+    # def modify_metadata_avu(cls, path, old_avu, new_avu):
+    #     """ This method modifies one AVU, but removing the old one and adding the new one.
+    #         Parameters
+    #         ----------
+    #         path : str
+    #             The path to the file in iRODS
+    #         old_avu : data_types.MetaAVU
+    #             The old avu, to be removed
+    #         new_avu : data_types.MetaAVU
+    #             The new avu to be added
+    #         Returns
+    #         -------
+    #         bool
+    #     """
+    #     icommands_wrapper.iRODSMetaRMOperations.remove_avu(path, old_avu)
+    #     icommands_wrapper.iRODSMetaAddOperations.add_avu(path, new_avu)
+    #     return True
+    #
+    # @classmethod
+    # def add_metadata_avu(cls, path, avu):
+    #     return icommands_wrapper.iRODSMetaAddOperations.add_avu(path, avu)
+    #
+    # @classmethod
+    # def remove_metadata_avu(cls, path, avu):
+    #     return icommands_wrapper.iRODSMetaRMOperations.remove_avu(path, avu)

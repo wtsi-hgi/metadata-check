@@ -22,8 +22,9 @@ This file has been created on Nov 09, 2015.
 from collections import defaultdict
 from typing import List
 import collections
+from typing import Sequence
 
-from results.checks_results import CheckResult
+from mcheck.results.checks_results import CheckResult
 from mcheck.results.constants import SEVERITY
 
 
@@ -43,17 +44,17 @@ class SeqscapeEntitiesFetched:
         self.query_entity_type = query_entity_type
         self.fetched_entity_type = fetched_entity_type
 
-    def _find_missing_ids(self):
+    def _find_missing_ids(self) -> Sequence:
         ids_found = [str(getattr(ent, self.query_id_type)) for ent in self.entities_fetched]
-        ids_missing = set(ids_found).difference(set(self.query_ids))
+        ids_missing = list(set(ids_found).difference(set(self.query_ids)))
         return ids_missing
 
-    def _find_duplicated_ids(self):
+    def _find_duplicated_ids(self) -> Sequence:
         ids_found = [getattr(ent, self.query_id_type) for ent in self.entities_fetched]
         ids_duplicated = [item for item, count in collections.Counter(ids_found).items() if count > 1]
         return ids_duplicated
 
-    def check_all_ids_were_found(self):
+    def check_all_ids_were_found(self) -> Sequence:
         problems = []
         ids_missing = self._find_missing_ids()
         if ids_missing:
@@ -62,7 +63,7 @@ class SeqscapeEntitiesFetched:
                                                       ids_missing))
         return problems
 
-    def check_no_duplicates_found(self):
+    def check_no_duplicates_found(self) -> Sequence:
         problems = []
         ids_dupl = self._find_duplicated_ids()
         if ids_dupl:

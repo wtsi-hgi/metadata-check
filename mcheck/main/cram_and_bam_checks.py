@@ -33,13 +33,13 @@ from collections import defaultdict
 import sys
 import os
 
-from metadata_types.seqscape_metadata import SeqscapeMetadata
-from mcheck.metadata_comparisons.seqsc_metadata_checks import SeqscapeRawMetadataChecks
-from metadata_provider.seqscape_meta_provider import SeqscapeRawMetadataProvider
+from mcheck.metadata.seqscape_metadata.seqscape_metadata import SeqscapeMetadata
+# from mcheck.metadata_comparisons.seqsc_metadata_checks import SeqscapeRawMetadataChecks
+# from metadata_provider.seqscape_meta_provider import SeqscapeRawMetadataProvider
 
 
 #BOTH_FILE_TYPES = 'both'
-from metadata_types import irods_metadata as irods_meta_module
+from mcheck.metadata import irods_metadata as irods_meta_module
 from mcheck.com import utils
 from mcheck.main import complete_irods_metadata_checks, constants
 
