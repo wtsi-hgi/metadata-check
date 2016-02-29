@@ -25,6 +25,7 @@ from hamcrest import *
 import config
 from mcheck.header_parser.sam.header_analyser import BAMHeaderAnalyser, _RGTagAnalyser
 
+@unittest.skip
 class Test_RGTagAnalyser(unittest.TestCase):
 
     def test_extract_platform_list_from_rg(self):
@@ -190,7 +191,7 @@ class Test_RGTagAnalyser(unittest.TestCase):
         assert_that(header_parsed.rg.platform_list, has_item('ILLUMINA HS'))
 
 
-
+@unittest.skip
 class TestRGTagAnalyser(unittest.TestCase):
 
     # def test_group_header_entries_by_type(self):

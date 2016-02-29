@@ -14,7 +14,7 @@ import mcheck.irods.icommands_wrapper as irods_api
 #     m.return_value = output
 from mcheck.irods import exceptions as irods_exc
 
-
+@unittest.skip
 class TestiRODSListOperations(unittest.TestCase):
 
     ils_output = '/humgen/projects/serapis_staging:\n  mercury           0 irods-ddn-gg07-9             9370 2014-07-18.12:03 & celery.log\n  C- /humgen/projects/serapis_staging/537f5ff69bbf8f62fc5d9fb3\n    C- /humgen/projects/serapis_staging/537f67919bbf8f62fc5d9fb5'
@@ -82,7 +82,7 @@ class TestiRODSListOperations(unittest.TestCase):
                                                                      ])
         self.assertEqual(res, expected)
         
-
+@unittest.skip
 class TestiRODSChecksumOperations(unittest.TestCase):
     
     def test_process_icmd_output(self):
@@ -95,6 +95,7 @@ class TestiRODSChecksumOperations(unittest.TestCase):
         self.assertRaises(irods_exc.UnexpectedIRODSiCommandOutputException, irods_api.iRODSChecksumOperations._process_icmd_output, ichksum_output)
     
 
+@unittest.skip
 class TestiRODSMetaQueryOperations(unittest.TestCase):
 
     #def query_by_metadata(cls, avu_dict, zone=constants.IRODS_HUMGEN_ZONE, operator='='):
@@ -151,7 +152,7 @@ class TestiRODSMetaQueryOperations(unittest.TestCase):
         expected = []
         self.assertEqual(res, expected)
         
-        
+@unittest.skip
 class TestiRODSMetaListOperations(unittest.TestCase):
     
     def test_extract_attribute_from_line(self):

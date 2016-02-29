@@ -25,7 +25,7 @@ import unittest
 from mcheck.irods.data_types import MetaAVU
 from mcheck.main import complete_irods_metadata_checks as target_module
 
-
+@unittest.skip
 class TestCompleteIrodsMetadataChecks(unittest.TestCase):
 
     # def parse_config_file(path):

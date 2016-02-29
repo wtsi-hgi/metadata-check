@@ -26,7 +26,7 @@ from mcheck.main import irods_seq_data_tests as irods_seq_tests
 from mcheck.irods import data_types as irods_types
 from mcheck.main import error_types
 
-
+@unittest.skip
 class MD5Test(unittest.TestCase):
 
     @unittest.skipIf(config.RUNNING_LOCATION == 'localhost', "Skipping checksum test because it runs locally")
@@ -44,7 +44,7 @@ class MD5Test(unittest.TestCase):
         result = irods_seq_tests.check_md5_metadata(irods_fpath, irods_metadata)
         self.assertEqual(len(result), 0)
 
-
+@unittest.skip
 class AdjancentMetadataChecksTests(unittest.TestCase):
 
     def test_check_bam_run_id(self):

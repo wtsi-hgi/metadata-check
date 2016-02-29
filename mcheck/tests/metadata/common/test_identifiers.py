@@ -30,31 +30,31 @@ class TestEntityIdentifier(unittest.TestCase):
 
         # Tests on sample identifiers
         identif = 'EGAN00001033157'
-        identif_name = identifiers.guess_identifier_type(identif)
+        identif_name = identifiers.EntityIdentifier.guess_identifier_type(identif)
         self.assertEqual(identif_name, 'accession_number')
 
         identif = 808346
-        identif_name = identifiers.guess_identifier_type(identif)
+        identif_name = identifiers.EntityIdentifier.guess_identifier_type(identif)
         self.assertEqual(identif_name, 'internal_id')
 
         identif = '808346'
-        identif_name = identifiers.guess_identifier_type(identif)
+        identif_name = identifiers.EntityIdentifier.guess_identifier_type(identif)
         self.assertEqual(identif_name, 'internal_id')
 
         identif = '2294STDY5395187'
-        identif_name = identifiers.guess_identifier_type(identif)
+        identif_name = identifiers.EntityIdentifier.guess_identifier_type(identif)
         self.assertEqual(identif_name, 'name')
 
         identif = 'VBSEQ5231029'
-        identif_name = identifiers.guess_identifier_type(identif)
+        identif_name = identifiers.EntityIdentifier.guess_identifier_type(identif)
         self.assertEqual(identif_name, 'name')
 
 
         # Tests on library identifiers - same ones actually (id, name)
         identif = '3656641'
-        identif_name = identifiers.guess_identifier_type(identif)
+        identif_name = identifiers.EntityIdentifier.guess_identifier_type(identif)
         self.assertEqual(identif_name, 'internal_id')
 
         identif = 'bcX98J21 1'
-        identif_name = identifiers.guess_identifier_type(identif)
-        assert_that(identif_name, equal_to('name'))
+        identif_name = identifiers.EntityIdentifier.guess_identifier_type(identif)
+        self.assertEqual(identif_name, 'name')

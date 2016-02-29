@@ -25,6 +25,7 @@ from mcheck.main import cram_and_bam_checks
 from mcheck.main import constants
 
 
+@unittest.skip
 class TestBamChecks(unittest.TestCase):
 
     def test_check_irods_vs_header_metadata(self):
