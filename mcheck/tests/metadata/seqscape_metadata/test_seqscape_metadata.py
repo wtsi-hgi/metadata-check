@@ -25,7 +25,7 @@ from mcheck.metadata.seqscape_metadata.seqscape_metadata import SeqscapeRawMetad
 
 class TestSeqscapeEntitiesFetched(unittest.TestCase):
 
-    def test_check_all_ids_were_found_when_no_missing_internal_id(self):
+    def test_find_missing_ids_no_missing_internal_id(self):
         entities_fetched = [Sample(name='sam1', internal_id='123', accession_number='ega123')]
         query_ids = ['123']
         test_obj = SeqscapeEntitiesFetched(entities_fetched, query_ids, query_id_type='internal_id', query_entity_type='sample',
@@ -34,7 +34,7 @@ class TestSeqscapeEntitiesFetched(unittest.TestCase):
         expected = []
         self.assertEqual(result, expected)
 
-    def test_check_all_ids_were_found_when_missing_internal_id(self):
+    def test_find_missing_ids_missing_internal_id(self):
         entities_fetched = [Sample(name='sam1', internal_id='123', accession_number='ega123')]
         query_ids = ['123', '456']
         test_obj = SeqscapeEntitiesFetched(entities_fetched, query_ids, query_id_type='internal_id', query_entity_type='sample',
@@ -43,7 +43,7 @@ class TestSeqscapeEntitiesFetched(unittest.TestCase):
         expected = ['456']
         self.assertEqual(result, expected)
 
-    def test_check_all_ids_were_found_nothing_found(self):
+    def test_find_missing_ids_nothing_found(self):
         entities_fetched = []
         query_ids = ['123']
         test_obj = SeqscapeEntitiesFetched(entities_fetched, query_ids, query_id_type='internal_id', query_entity_type='sample',
@@ -53,7 +53,7 @@ class TestSeqscapeEntitiesFetched(unittest.TestCase):
         self.assertEqual(result, expected)
 
 
-    def test_check_no_duplicates_found_when_no_duplicates(self):
+    def test_find_duplicated_ids_no_duplicates(self):
         entities_fetched = [Sample(name='sam1', internal_id='123', accession_number='ega123')]
         test_obj = SeqscapeEntitiesFetched(entities_fetched, ['123'], query_id_type='internal_id', query_entity_type='sample',
                                            fetched_entity_type='sample')
@@ -61,7 +61,7 @@ class TestSeqscapeEntitiesFetched(unittest.TestCase):
         expected = []
         self.assertEqual(result, expected)
 
-    def test_check_no_duplicates_found_when_1_duplicate(self):
+    def test_find_duplicated_ids_1_duplicate(self):
         entities_fetched = [Sample(name='sam1', internal_id='123', accession_number='ega123'), Sample(name='sam2', internal_id='123', accession_number='ega444')]
         test_obj = SeqscapeEntitiesFetched(entities_fetched, ['123'], query_id_type='internal_id', query_entity_type='sample',
                                            fetched_entity_type='sample')
@@ -69,7 +69,7 @@ class TestSeqscapeEntitiesFetched(unittest.TestCase):
         expected = ['123']
         self.assertEqual(result, expected)
 
-    def test_check_no_duplicates_found_when_nothing_fetched(self):
+    def test_find_duplicated_ids_nothing_fetched(self):
         entities_fetched = []
         test_obj = SeqscapeEntitiesFetched(entities_fetched, ['123'], query_id_type='internal_id', query_entity_type='sample',
                                            fetched_entity_type='sample')

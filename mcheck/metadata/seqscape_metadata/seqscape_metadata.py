@@ -44,10 +44,20 @@ class SeqscapeEntitiesFetched:
         self.query_entity_type = query_entity_type
         self.fetched_entity_type = fetched_entity_type
 
+    def _find_missing_ids(self) -> Sequence:
+        ids_found = [str(getattr(ent, self.query_id_type)) for ent in self.entities_fetched]
+        print("IDs found: %s" % ids_found)
+        ids_missing = list(set(self.query_ids).difference(set(ids_found)))
+        return ids_missing
+
+    def _find_duplicated_ids(self) -> Sequence:
+        ids_found = [getattr(ent, self.query_id_type) for ent in self.entities_fetched]
+        ids_duplicated = [item for item, count in collections.Counter(ids_found).items() if count > 1]
+        return ids_duplicated
+
     def check_all_ids_were_found(self) -> Sequence:
         problems = []
-        ids_found = [str(getattr(ent, self.query_id_type)) for ent in self.entities_fetched]
-        ids_missing = list(set(self.query_ids).difference(set(ids_found)))
+        ids_missing = self._find_missing_ids()
         if ids_missing:
             problems.append(CheckResult(check_name="Check all ids were found",
                                         error_message="The following ids weren't found in SequencescapeDB: %s " %
@@ -56,13 +66,12 @@ class SeqscapeEntitiesFetched:
 
     def check_no_duplicates_found(self) -> Sequence:
         problems = []
-        ids_found = [getattr(ent, self.query_id_type) for ent in self.entities_fetched]
-        ids_duplicated = [item for item, count in collections.Counter(ids_found).items() if count > 1]
-        if ids_duplicated:
-            entities_dupl = [ent for ent in self.entities_fetched if getattr(ent, self.query_id_type) in ids_duplicated]
+        ids_dupl = self._find_duplicated_ids()
+        if ids_dupl:
+            entities_dupl = [ent for ent in self.entities_fetched if getattr(ent, self.query_id_type) in ids_dupl]
             problems.append(CheckResult("Check for duplicated ids",
                                         error_message="The following ids: %s are duplicated - entities: %s" % (
-                                            ids_duplicated, entities_dupl)))
+                                            ids_dupl, entities_dupl)))
         return problems
 
 
