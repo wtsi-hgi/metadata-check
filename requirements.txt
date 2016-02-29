@@ -1,5 +1,4 @@
 git+https://github.com/wtsi-hgi/common-python.git@master#egg=hgicommon
-nose==1.3.7
 PyHamcrest==1.8.5
 git+https://github.com/wtsi-hgi/sequencescape-python-client.git@master#egg=sequencescape
 virtualenv==14.0.6
