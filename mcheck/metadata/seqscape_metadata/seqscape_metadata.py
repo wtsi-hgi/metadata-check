@@ -49,7 +49,6 @@ class SeqscapeEntitiesFetched:
 
     def _find_missing_ids(self) -> Sequence:
         ids_found = [str(getattr(ent, self.query_id_type)) for ent in self.entities_fetched]
-        print("IDs found: %s" % ids_found)
         ids_missing = list(set(self.query_ids).difference(set(ids_found)))
         return ids_missing
 
@@ -170,7 +169,6 @@ class SeqscapeRawMetadata(object):
     def _check_by_comparison_entities_fetched_by_different_id_types(cls, fetched_entities_obj_list: SeqscapeEntitiesFetched) -> Sequence:
         problems = []
         for i in range(1, len(fetched_entities_obj_list)):
-            print("Entering...")
             entities_1 = fetched_entities_obj_list[i - 1]
             entities_2 = fetched_entities_obj_list[i]
             if not set(entities_1.entities_fetched) == set(entities_2.entities_fetched):
@@ -197,8 +195,8 @@ class SeqscapeRawMetadata(object):
     def _check_entities_fetched(cls, entities_fetched_list: List[SeqscapeEntitiesFetched]) -> None:
         problems = []
         for entity_fetched in entities_fetched_list:
-            problems.extend(entity_fetched.check_all_ids_were_found(entity_fetched))
-            problems.extend(entity_fetched.check_no_duplicates_found)
+            problems.extend(entity_fetched.check_all_ids_were_found())
+            problems.extend(entity_fetched.check_no_duplicates_found())
         return problems
 
     def check_samples_fetched_by_study(self):
@@ -207,7 +205,7 @@ class SeqscapeRawMetadata(object):
         studies = self.get_fetched_entities_by_type('study')
         if not set(samples).issubset(set(studies)):
             diff = set(samples).difference(set(studies))
-            error_msg = "Samples that don't appear in the metadata but are associated with the study(s) from metadata: %s that aren't part of metadata: %s" % diff
+            error_msg = "Samples that don't appear in the metadata but are associated with the study(s) from metadata: %s that aren't part of metadata: %s" % (studies, diff)
             problems.append(CheckResult(check_name="Check the samples returned by querying by study(s)", error_message=error_msg, severity=SEVERITY.WARNING))
         return problems
 
