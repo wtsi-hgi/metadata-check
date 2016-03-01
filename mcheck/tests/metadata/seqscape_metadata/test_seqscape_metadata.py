@@ -20,7 +20,7 @@ This file has been created on Feb 26, 2016.
 """
 import unittest
 from sequencescape import connect_to_sequencescape, Sample, Study, Library
-from mcheck.metadata.seqscape_metadata.seqscape_metadata import SeqscapeRawMetadata, SeqscapeEntitiesFetched
+from mcheck.metadata.seqscape_metadata.seqscape_metadata import SeqscapeRawMetadata, SeqscapeEntitiesFetched, SeqscapeMetadata
 
 
 class TestSeqscapeEntitiesFetched(unittest.TestCase):
@@ -393,6 +393,21 @@ class TestCheckEntitiesFetched(unittest.TestCase):
                                                        fetched_entity_type='sample')
         result = SeqscapeRawMetadata._check_entities_fetched([sam1_fetched])
         self.assertEqual(len(result), 1)
+
+
+class TestSeqscapeMetadata(unittest.TestCase):
+
+    def test_from_raw_metadata(self):
+        raw_metadata = SeqscapeRawMetadata()
+        sam1 = Sample(name='sam1', accession_number='ega1', internal_id='1')
+        sam1_fetched = SeqscapeEntitiesFetched(sam1, query_ids=['1'],
+                                                       query_id_type='internal_id', query_entity_type='sample',
+                                                       fetched_entity_type='sample')
+        raw_metadata.add_fetched_entities(sam1_fetched)
+        metadata = SeqscapeMetadata.from_raw_metadata(raw_metadata)
+        self.assertListEqual(metadata.get_samples(), [sam1])
+
+
 
 
 

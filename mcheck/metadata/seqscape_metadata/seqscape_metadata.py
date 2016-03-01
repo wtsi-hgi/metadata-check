@@ -266,9 +266,9 @@ class SeqscapeMetadata:
         :param studies: a dict like above
         :return:
         """
-        self.samples = samples
-        self.libraries = libraries
-        self.studies = studies
+        self._samples = samples
+        self._libraries = libraries
+        self._studies = studies
 
         # I think these fields are used only for self-checks, not for the metadata to be "exported"
         # to be compared with other types of metadata
@@ -284,6 +284,32 @@ class SeqscapeMetadata:
                 'internal_id': self._extract_list_of_ids_from_entities(entities, 'internal_id')
         }
 
+    def get_samples(self):
+        return self._samples
+
+    def get_all_sample_ids_grouped_by_id_type(self):
+        return self._group_entity_ids_by_id_type(self._samples)
+
+    def get_sample_ids_by_id_type(self, id_type: str):
+        return self._group_entity_ids_by_id_type(self._samples).get(id_type)
+
+    def get_libraries(self):
+        return self._libraries
+
+    def get_all_library_ids_grouped_by_id_type(self):
+        return self._group_entity_ids_by_id_type(self._libraries)
+
+    def get_library_ids_by_id_type(self, id_type: str) -> Sequence:
+        return self._group_entity_ids_by_id_type(self._studies).get(id_type)
+
+    def get_studies(self):
+        return self._studies
+
+    def get_all_study_ids_group_by_id_type(self):
+        return self._group_entity_ids_by_id_type(self._studies)
+
+    def get_study_ids_by_id_type(self, id_type) -> Sequence:
+        return self._group_entity_ids_by_id_type(self._studies).get(id_type)
 
     @staticmethod
     def from_raw_metadata(raw_metadata: SeqscapeRawMetadata):
@@ -293,21 +319,15 @@ class SeqscapeMetadata:
         :return:
         """
         ss_metadata = SeqscapeMetadata()
-        samples = raw_metadata.get_entities_without_duplicates_by_entity_type('sample')
-        ss_metadata.samples = ss_metadata._group_entity_ids_by_id_type(samples)
-
-        libraires = raw_metadata.get_entities_without_duplicates_by_entity_type('library')
-        ss_metadata.libraries = ss_metadata._group_entity_ids_by_id_type(libraires)
-
-        studies = raw_metadata.get_entities_without_duplicates_by_entity_type('study')
-        ss_metadata.studies = ss_metadata._group_entity_ids_by_id_type(studies)
-
+        ss_metadata._samples = raw_metadata.get_entities_without_duplicates_by_entity_type('sample')
+        ss_metadata._libraries = raw_metadata.get_entities_without_duplicates_by_entity_type('library')
+        ss_metadata._studies = raw_metadata.get_entities_without_duplicates_by_entity_type('study')
         return ss_metadata
 
 
     def __str__(self):
-        return "SAMPLE: " + str(self.samples) + ", LIBRARIES: " + str(self.libraries) + ", STUDIES: " + str(
-            self.studies)
+        return "SAMPLE: " + str(self._samples) + ", LIBRARIES: " + str(self._libraries) + ", STUDIES: " + str(
+            self._studies)
 
     def __repr__(self):
         return self.__str__()
