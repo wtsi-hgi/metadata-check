@@ -38,7 +38,10 @@ class SeqscapeEntitiesFetched:
         :param query_ids: a list of strings = the list of ids that Seqscape was queried by,
         :return:
         """
-        self.entities_fetched = entities_fetched
+        if type(entities_fetched) == list:
+            self.entities_fetched = entities_fetched
+        else:
+            self.entities_fetched = [entities_fetched]
         self.query_ids = query_ids
         self.query_id_type = query_id_type
         self.query_entity_type = query_entity_type
@@ -120,15 +123,17 @@ class SeqscapeRawMetadata(object):
             entity_type = entities_fetched[0].fetched_entity_type
             self._entities_dict_by_type[entity_type].extend(entities_fetched)
 
-    def add_fetched_entities_by_association(self, entities_fetched) -> None:
+    def add_fetched_entities_by_association(self, entities_fetched: SeqscapeEntitiesFetched) -> None:
         """
         This method adds a new entry in the dict of entities fetched from Seqscape in association with others.
         :param entities_fetched: list[SeqscapeEntitiesFetchedBasedOnIds] to be added to the internal dict
         :return:
         """
+        if not type(entities_fetched) == SeqscapeEntitiesFetched:
+            raise ValueError("Expected SeqscapeEntitiesFetched type and got: %s " % str(type(entities_fetched)))
         if entities_fetched:
-            entity_type = (entities_fetched[0].query_entity_type, entities_fetched[0].fetched_entity_type)
-            self._entities_fetched_by_association[entity_type] = entities_fetched
+            entity_type = (entities_fetched.query_entity_type, entities_fetched.fetched_entity_type)
+            self._entities_fetched_by_association[entity_type].append(entities_fetched)
 
     def get_fetched_entities_by_type(self, entity_type: str):
         return self._entities_dict_by_type[entity_type]
@@ -155,24 +160,24 @@ class SeqscapeRawMetadata(object):
             result.extend(fetched_entities)
         return result
 
-    def get_fetched_entities_by_association(self):
+    def get_all_fetched_entities_by_association(self):
         return self._entities_fetched_by_association
 
-    def get_fetched_entities_by_association_by_type(self, query_entity_type, fetched_entity_type):
+    def get_all_fetched_entities_by_association_by_type(self, query_entity_type, fetched_entity_type):
         return self._entities_fetched_by_association[(query_entity_type, fetched_entity_type)]
 
-
     @classmethod
-    def _check_by_comparison_entities_fetched_by_different_id_types(cls, entities_list):
+    def _check_by_comparison_entities_fetched_by_different_id_types(cls, fetched_entities_obj_list: SeqscapeEntitiesFetched) -> Sequence:
         problems = []
-        for i in range(1, len(entities_list) - 1):
-            entities_1 = entities_list[i - 1].entities_fetched
-            entities_2 = entities_list[i].entities_fetched
-            if not set(entities_1) == set(entities_2):
+        for i in range(1, len(fetched_entities_obj_list)):
+            print("Entering...")
+            entities_1 = fetched_entities_obj_list[i - 1]
+            entities_2 = fetched_entities_obj_list[i]
+            if not set(entities_1.entities_fetched) == set(entities_2.entities_fetched):
                 id_type_1 = entities_1.query_id_type
                 id_type_2 = entities_2.query_id_type
-                diff_1 = set(entities_1).difference(set(entities_2))
-                diff_2 = set(entities_2).difference(set(entities_1))
+                diff_1 = set(entities_1.entities_fetched).difference(set(entities_2.entities_fetched))
+                diff_2 = set(entities_2.entities_fetched).difference(set(entities_1.entities_fetched))
 
                 error_message = ""
                 if diff_1:
@@ -198,7 +203,7 @@ class SeqscapeRawMetadata(object):
 
     def check_samples_fetched_by_study(self):
         problems = []
-        samples = self.get_fetched_entities_by_association_by_type('sample', 'study')
+        samples = self.get_all_fetched_entities_by_association_by_type('sample', 'study')
         studies = self.get_fetched_entities_by_type('study')
         if not set(samples).issubset(set(studies)):
             diff = set(samples).difference(set(studies))
@@ -209,7 +214,7 @@ class SeqscapeRawMetadata(object):
 
     def check_studies_fetched_by_samples(self):
         problems = []
-        studies = self.get_fetched_entities_by_association_by_type('study', 'sample')
+        studies = self.get_all_fetched_entities_by_association_by_type('study', 'sample')
         samples = self.get_fetched_entities_by_type('sample')
         if not set(studies).issubset(set(samples)):
             diff = set(studies).issubset(set(samples))
