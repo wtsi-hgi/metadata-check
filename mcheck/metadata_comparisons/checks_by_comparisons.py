@@ -25,3 +25,14 @@ class IrodsMetadataVsHeaderMetadata:
 
 
 
+class Setup:
+
+    def fetch_seqscape_metadata(self, samples, libraries, studies):
+        pass
+
+    def fetch_header_metadata(self):
+        pass
+
+    def fetch_irods_metadata(self):
+        pass
+

@@ -20,91 +20,130 @@ This file has been created on Nov 16, 2015.
 """
 
 import typing
-
+from sequencescape import connect_to_sequencescape, Sample, Study, Library
 from mcheck.metadata.seqscape_metadata.seqscape_metadata import SeqscapeRawMetadata, SeqscapeEntitiesFetched
 import config
 
 
 class SeqscapeRawMetadataProvider:
-
     @classmethod
     def _get_connection(cls, host, port, db_name, user):
         return connect_to_sequencescape("mysql://" + user + ":@" + host + ":" + str(port) + "/" + db_name)
 
     @classmethod
-    def _fetch_samples(cls, ss_connection, sample_names: str, sample_ids: str, sample_accession_nrs: str):
-        samples_by_name = ss_connection.sample.get_by_name(sample_names)
-        samples_fetched_by_name = SeqscapeEntitiesFetched(samples_by_name,
-                                                                    query_ids=sample_names,
-                                                                    query_id_type='name',
-                                                                    query_entity_type='sample',
-                                                                    fetched_entity_type='sample')
+    def _fetch_samples(cls, ss_connection, sample_names: typing.List[str], sample_ids: typing.List[str],
+                       sample_accession_nrs: typing.List[str]):
+        if sample_names and type(sample_names) is not list:
+            raise ValueError("Sample_names parameter should be a list, and is a %s" % str(type(sample_names)))
+        if sample_ids and type(sample_ids) is not list:
+            raise ValueError("Sample_ids parameter should be a list and is a %s" % str(type(sample_ids)))
+        if sample_accession_nrs and type(sample_accession_nrs) is not list:
+            raise ValueError(
+                "Sample_accession_numbers parameter should be a list and is a %s" % str(type(sample_accession_nrs)))
 
-        samples_by_id = ss_connection.sample.get_by_id(sample_ids)
-        samples_fetched_by_id = SeqscapeEntitiesFetched(samples_by_id,
-                                                                  query_ids=sample_ids,
-                                                                  query_id_type='internal_id',
+        samples_fetched_by_name = None
+        if sample_names:
+            samples_by_name = ss_connection.sample.get_by_name(sample_names)
+            if samples_by_name:
+                samples_fetched_by_name = SeqscapeEntitiesFetched(samples_by_name,
+                                                                  query_ids=sample_names,
+                                                                  query_id_type='name',
                                                                   query_entity_type='sample',
                                                                   fetched_entity_type='sample')
-
-        samples_by_accession_nr = ss_connection.sample.get_by_accession_number(sample_accession_nrs)
-        samples_fetched_by_accession_nr = SeqscapeEntitiesFetched(samples_by_accession_nr,
-                                                                            query_ids=sample_accession_nrs,
-                                                                            query_id_type='accession_number',
-                                                                            query_entity_type='sample',
-                                                                            fetched_entity_type='sample')
-
+        samples_fetched_by_id = None
+        if sample_ids:
+            samples_by_id = ss_connection.sample.get_by_id(sample_ids)
+            if samples_by_id:
+                samples_fetched_by_id = SeqscapeEntitiesFetched(samples_by_id,
+                                                                query_ids=sample_ids,
+                                                                query_id_type='internal_id',
+                                                                query_entity_type='sample',
+                                                                fetched_entity_type='sample')
+        samples_fetched_by_accession_nr = None
+        if sample_accession_nrs:
+            samples_by_accession_nr = ss_connection.sample.get_by_accession_number(sample_accession_nrs)
+            if samples_by_accession_nr:
+                samples_fetched_by_accession_nr = SeqscapeEntitiesFetched(samples_by_accession_nr,
+                                                                          query_ids=sample_accession_nrs,
+                                                                          query_id_type='accession_number',
+                                                                          query_entity_type='sample',
+                                                                          fetched_entity_type='sample')
         return samples_fetched_by_name, samples_fetched_by_id, samples_fetched_by_accession_nr
 
+
     @classmethod
-    def _fetch_studies(cls, ss_connection, study_names: str, study_ids: str, study_accession_nrs: str) -> typing.Tuple:
-        studies_by_name = ss_connection.study.get_by_name(study_names)
-        studies_fetched_by_name = SeqscapeEntitiesFetched(studies_by_name,
-                                                                    query_ids=study_names,
-                                                                    query_id_type='name',
-                                                                    query_entity_type='study',
-                                                                    fetched_entity_type='study'
-        )
+    def _fetch_studies(cls, ss_connection, study_names: typing.List[str], study_ids: typing.List[str],
+                       study_accession_nrs: typing.List[str]) -> typing.Tuple:
+        if study_names and type(study_names) is not list:
+            raise ValueError("Study_names parameter should be a list and it is a %s." % str(type(study_names)))
+        if study_ids and type(study_ids) is not list:
+            raise ValueError("Study_ids parameter should be a list and it is a %s" % str(type(study_ids)))
+        if study_accession_nrs and type(study_accession_nrs) is not list:
+            raise ValueError(
+                "Study_accession_nrs parameter should be a list and it is a %s" % str(type(study_accession_nrs)))
 
-        studies_by_accession_nr = ss_connection.study.get_by_accession_number(study_accession_nrs)
-        studies_fetched_by_accession_nr = SeqscapeEntitiesFetched(studies_by_accession_nr,
-                                                                            query_ids=study_accession_nrs,
-                                                                            query_id_type='accession_number',
-                                                                            query_entity_type='study',
-                                                                            fetched_entity_type='study'
-        )
-
-        studies_by_id = ss_connection.study.get_by_id(study_ids)
-        studies_fetched_by_id = SeqscapeEntitiesFetched(studies_by_id,
-                                                                  query_ids=study_ids,
-                                                                  query_id_type='internal_id',
+        studies_fetched_by_name = None
+        if study_names:
+            studies_by_name = ss_connection.study.get_by_name(study_names)
+            if studies_by_name:
+                studies_fetched_by_name = SeqscapeEntitiesFetched(studies_by_name,
+                                                                  query_ids=study_names,
+                                                                  query_id_type='name',
                                                                   query_entity_type='study',
-                                                                  fetched_entity_type='study'
-        )
+                                                                  fetched_entity_type='study')
 
+        studies_fetched_by_accession_nr = None
+        if study_accession_nrs:
+            studies_by_accession_nr = ss_connection.study.get_by_accession_number(study_accession_nrs)
+            if studies_by_accession_nr:
+                studies_fetched_by_accession_nr = SeqscapeEntitiesFetched(studies_by_accession_nr,
+                                                                          query_ids=study_accession_nrs,
+                                                                          query_id_type='accession_number',
+                                                                          query_entity_type='study',
+                                                                          fetched_entity_type='study')
+
+        studies_fetched_by_id = None
+        if study_ids:
+            studies_by_id = ss_connection.study.get_by_id(study_ids)
+            if studies_by_id:
+                studies_fetched_by_id = SeqscapeEntitiesFetched(studies_by_id,
+                                                                query_ids=study_ids,
+                                                                query_id_type='internal_id',
+                                                                query_entity_type='study',
+                                                                fetched_entity_type='study')
         return studies_fetched_by_name, studies_fetched_by_id, studies_fetched_by_accession_nr
 
 
     @classmethod
-    def _fetch_libraries(cls, ss_connection, library_names, library_ids):
-        libraries_by_id = ss_connection.library.get_by_id(library_ids)
-        if not libraries_by_id:
-            libraries_by_id = ss_connection.well.get_by_id(library_ids)
-        if not libraries_by_id:
-            libraries_by_id = ss_connection.multiplexed_library(library_ids)
+    def _fetch_libraries(cls, ss_connection, library_names: typing.List[str], library_ids: typing.List[str]):
+        if library_names and type(library_names) is not list:
+            raise ValueError("Library_names parameter should be a list and it is a %s" % str(type(library_names)))
+        if library_ids and type(library_ids) is not list:
+            raise ValueError("Library_ids parameter should be a list and it is a %s" % str(type(library_ids)))
 
-        libraries_fetched_by_id = SeqscapeEntitiesFetched(libraries_by_id,
-                                                                    query_ids=library_ids,
-                                                                    query_id_type='internal_id',
+        libraries_fetched_by_id = None
+        if library_ids:
+            libraries_by_id = ss_connection.library.get_by_id(library_ids)
+            if not libraries_by_id:
+                libraries_by_id = ss_connection.well.get_by_id(library_ids)
+            if not libraries_by_id:
+                libraries_by_id = ss_connection.multiplexed_library.get_by_id(library_ids)
+
+            if libraries_by_id:
+                libraries_fetched_by_id = SeqscapeEntitiesFetched(libraries_by_id,
+                                                                  query_ids=library_ids,
+                                                                  query_id_type='internal_id',
+                                                                  query_entity_type='library',
+                                                                  fetched_entity_type='library')
+        libraries_fetched_by_name = None
+        if library_names:
+            libraries_by_name = ss_connection.library.get_by_name(library_names)
+            if libraries_by_name:
+                libraries_fetched_by_name = SeqscapeEntitiesFetched(libraries_by_name,
+                                                                    query_ids=library_names,
+                                                                    query_id_type='name',
                                                                     query_entity_type='library',
                                                                     fetched_entity_type='library')
-
-        libraries_by_name = ss_connection.library.get_by_name(library_names)
-        libraries_fetched_by_name = SeqscapeEntitiesFetched(libraries_by_name,
-                                                                      query_ids=library_names,
-                                                                      query_id_type='name',
-                                                                      query_entity_type='library',
-                                                                      fetched_entity_type='library')
         return libraries_fetched_by_name, libraries_fetched_by_id
 
     @classmethod
@@ -116,7 +155,7 @@ class SeqscapeRawMetadataProvider:
         return ss_connection.study.get_associated_with_sample(samples)
 
     @classmethod
-    def fetch(cls, samples: typing.Mapping, libraries: typing.Mapping, studies: typing.Mapping) ->SeqscapeRawMetadata:
+    def fetch(cls, samples: typing.Mapping, libraries: typing.Mapping, studies: typing.Mapping) -> SeqscapeRawMetadata:
         ss_connection = cls._get_connection(config.SEQSC_HOST, config.SEQSC_PORT, config.SEQSC_DB_NAME,
                                             config.SEQSC_USER)
 

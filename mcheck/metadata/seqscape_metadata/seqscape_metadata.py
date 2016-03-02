@@ -20,7 +20,6 @@ This file has been created on Nov 09, 2015.
 """
 
 from collections import defaultdict
-from typing import List
 import collections
 from typing import List
 
