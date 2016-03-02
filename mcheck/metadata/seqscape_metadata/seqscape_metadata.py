@@ -22,7 +22,7 @@ This file has been created on Nov 09, 2015.
 from collections import defaultdict
 from typing import List
 import collections
-from typing import Sequence
+from typing import List
 
 from mcheck.results.checks_results import CheckResult
 from mcheck.results.constants import SEVERITY
@@ -47,17 +47,17 @@ class SeqscapeEntitiesFetched:
         self.query_entity_type = query_entity_type
         self.fetched_entity_type = fetched_entity_type
 
-    def _find_missing_ids(self) -> Sequence:
+    def _find_missing_ids(self) -> List:
         ids_found = [str(getattr(ent, self.query_id_type)) for ent in self.entities_fetched]
         ids_missing = list(set(self.query_ids).difference(set(ids_found)))
         return ids_missing
 
-    def _find_duplicated_ids(self) -> Sequence:
+    def _find_duplicated_ids(self) -> List:
         ids_found = [getattr(ent, self.query_id_type) for ent in self.entities_fetched]
         ids_duplicated = [item for item, count in collections.Counter(ids_found).items() if count > 1]
         return ids_duplicated
 
-    def check_all_ids_were_found(self) -> Sequence:
+    def check_all_ids_were_found(self) -> List:
         problems = []
         ids_missing = self._find_missing_ids()
         if ids_missing:
@@ -66,7 +66,7 @@ class SeqscapeEntitiesFetched:
                                                       ids_missing))
         return problems
 
-    def check_no_duplicates_found(self) -> Sequence:
+    def check_no_duplicates_found(self) -> List:
         problems = []
         ids_dupl = self._find_duplicated_ids()
         if ids_dupl:
@@ -147,8 +147,8 @@ class SeqscapeRawMetadata(object):
         return list(all_fetched)
 
 
-    def get_all_fetched_entity_types(self):
-        return self._entities_dict_by_type.keys()
+    def get_all_fetched_entity_types(self) -> List:
+        return list(self._entities_dict_by_type.keys())
 
     def get_all_fetched_entities(self) -> List[SeqscapeEntitiesFetched]:
         """
@@ -166,7 +166,7 @@ class SeqscapeRawMetadata(object):
         return self._entities_fetched_by_association[(query_entity_type, fetched_entity_type)]
 
     @classmethod
-    def _check_by_comparison_entities_fetched_by_different_id_types(cls, fetched_entities_obj_list: SeqscapeEntitiesFetched) -> Sequence:
+    def _check_by_comparison_entities_fetched_by_different_id_types(cls, fetched_entities_obj_list: SeqscapeEntitiesFetched) -> List:
         problems = []
         for i in range(1, len(fetched_entities_obj_list)):
             entities_1 = fetched_entities_obj_list[i - 1]
@@ -221,7 +221,7 @@ class SeqscapeRawMetadata(object):
         return problems
 
 
-    def check_raw_metadata(self):#, raw_metadata: SeqscapeRawMetadata) -> None:
+    def check_raw_metadata(self) -> List:
         """
         Checks the raw metadata and throws exceptions if any problem is found
         :param raw_metadata:
@@ -229,8 +229,8 @@ class SeqscapeRawMetadata(object):
         """
         problems = []
         entity_types = self.get_all_fetched_entity_types()
-        for entity_type in entity_types:
-            entities_fetched = self.get_fetched_entities_by_type(entity_type)
+        for ent_type in entity_types:
+            entities_fetched = self.get_fetched_entities_by_type(ent_type)
             problems.extend(self._check_entities_fetched(entities_fetched))
             problems.extend(self._check_by_comparison_entities_fetched_by_different_id_types(entities_fetched))
             problems.extend(self.check_samples_fetched_by_study())
@@ -275,13 +275,15 @@ class SeqscapeMetadata:
         # self.samples_by_study = samples_by_study
         # self.studies_by_sample = studies_by_sample
 
-    def _extract_list_of_ids_from_entities(self, entities: List, id_type):
-        return [getattr(ent, id_type) for ent in entities if hasattr(ent, id_type)]
+    @classmethod
+    def _extract_list_of_ids_from_entities(cls, entities: List, id_type):
+        return [getattr(ent, id_type) for ent in entities if hasattr(ent, id_type) and getattr(ent, id_type) is not None]
 
-    def _group_entity_ids_by_id_type(self, entities):
-        return {'name': self._extract_list_of_ids_from_entities(entities, 'name'),
-                'accession_number': self._extract_list_of_ids_from_entities(entities, 'accession_number'),
-                'internal_id': self._extract_list_of_ids_from_entities(entities, 'internal_id')
+    @classmethod
+    def _group_entity_ids_by_id_type(cls, entities):
+        return {'name': cls._extract_list_of_ids_from_entities(entities, 'name'),
+                'accession_number': cls._extract_list_of_ids_from_entities(entities, 'accession_number'),
+                'internal_id': cls._extract_list_of_ids_from_entities(entities, 'internal_id')
         }
 
     def get_samples(self):
@@ -299,8 +301,8 @@ class SeqscapeMetadata:
     def get_all_library_ids_grouped_by_id_type(self):
         return self._group_entity_ids_by_id_type(self._libraries)
 
-    def get_library_ids_by_id_type(self, id_type: str) -> Sequence:
-        return self._group_entity_ids_by_id_type(self._studies).get(id_type)
+    def get_library_ids_by_id_type(self, id_type: str) -> List:
+        return self._group_entity_ids_by_id_type(self._libraries).get(id_type)
 
     def get_studies(self):
         return self._studies
@@ -308,7 +310,7 @@ class SeqscapeMetadata:
     def get_all_study_ids_group_by_id_type(self):
         return self._group_entity_ids_by_id_type(self._studies)
 
-    def get_study_ids_by_id_type(self, id_type) -> Sequence:
+    def get_study_ids_by_id_type(self, id_type) -> List:
         return self._group_entity_ids_by_id_type(self._studies).get(id_type)
 
     @staticmethod
