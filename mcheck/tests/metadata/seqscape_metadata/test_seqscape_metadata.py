@@ -103,9 +103,6 @@ class TestSeqscapeEntitiesFetched(unittest.TestCase):
         self.assertEqual(len(result), 1)
 
 
-
-class TestSeqscapeRawMetadata(unittest.TestCase):
-
     def test_add_fetched_entities_ok(self):
         samples_fetched = Sample(name='sam12', accession_number='ega12', internal_id='12')
         entities_fetched_obj = SeqscapeEntitiesFetched(samples_fetched, query_ids=['12'],
@@ -265,7 +262,6 @@ class TestSeqscapeRawMetadata(unittest.TestCase):
         raw_metadata.add_fetched_entities(samples_fetched_obj_2)
 
         entities_fetched = raw_metadata.get_fetched_entities_by_type('sample')
-        print("Type of entity fetched -- from tests : %s " % str(type(entities_fetched[0])))
         result = raw_metadata._check_by_comparison_entities_fetched_by_different_id_types(entities_fetched)
         self.assertEqual(1, len(result))
 
@@ -294,9 +290,24 @@ class TestSeqscapeRawMetadata(unittest.TestCase):
         raw_metadata.add_fetched_entities(samples_fetched_obj_3)
 
         entities_fetched = raw_metadata.get_fetched_entities_by_type('sample')
-        print("Type of entity fetched -- from tests : %s " % str(type(entities_fetched[0])))
         result = raw_metadata._check_by_comparison_entities_fetched_by_different_id_types(entities_fetched)
         self.assertEqual(2, len(result))
+
+
+    def test_get_all_fetched_entities(self):
+        raw_metadata = SeqscapeRawMetadata()
+
+        # Sample1:
+        sam1 = Sample(name='sam12', accession_number='ega12', internal_id='12')
+        samples_fetched_1 = [sam1]
+        samples_fetched_obj_1 = SeqscapeEntitiesFetched(samples_fetched_1, query_ids=['12'],
+                                                       query_id_type='name', query_entity_type='sample',
+                                                       fetched_entity_type='sample')
+        raw_metadata.add_fetched_entities(samples_fetched_obj_1)
+        result = raw_metadata.get_all_fetched_entities()
+        self.assertEqual(len(result), 1)
+        expected = samples_fetched_obj_1
+        self.assertEqual(result[0], expected)
 
 
 class TestEntitiesFetchedByAssociation(unittest.TestCase):
