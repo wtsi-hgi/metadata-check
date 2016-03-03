@@ -19,13 +19,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 This file has been created on Mar 02, 2016.
 """
 
-import unittest
+from unittest import TestCase, mock, skip
 
 import config
 from mcheck.metadata.seqscape_metadata.seqscape_meta_provider import SeqscapeRawMetadataProvider
 
 
-class TestFetchSamplesFromSeqscapeRawMetadataProvider(unittest.TestCase):
+@skip
+class TestFetchSamplesFromSeqscapeRawMetadataProvider(TestCase):
 
     def setUp(self):
         self.ss_connection = SeqscapeRawMetadataProvider._get_connection(config.SEQSC_HOST, config.SEQSC_PORT,
@@ -65,7 +66,8 @@ class TestFetchSamplesFromSeqscapeRawMetadataProvider(unittest.TestCase):
         self.assertIsNone(samples_fetched_by_accession_nrs)
 
 
-class TestFetchStudiesFromSeqscapeRawMetadataProvider(unittest.TestCase):
+@skip
+class TestFetchStudiesFromSeqscapeRawMetadataProvider(TestCase):
 
     def setUp(self):
         self.ss_connection = SeqscapeRawMetadataProvider._get_connection(config.SEQSC_HOST, config.SEQSC_PORT,
@@ -99,8 +101,8 @@ class TestFetchStudiesFromSeqscapeRawMetadataProvider(unittest.TestCase):
         study_name = 'smth'
         self.assertRaises(ValueError, SeqscapeRawMetadataProvider._fetch_studies, self.ss_connection, None, study_name, None)
 
-
-class TestFetchLibrariesFromSeqscapeRawMetadataProvider(unittest.TestCase):
+@skip
+class TestFetchLibrariesFromSeqscapeRawMetadataProvider(TestCase):
 
     def setUp(self):
         self.ss_connection = SeqscapeRawMetadataProvider._get_connection(config.SEQSC_HOST, config.SEQSC_PORT,
@@ -123,7 +125,7 @@ class TestFetchLibrariesFromSeqscapeRawMetadataProvider(unittest.TestCase):
         self.assertIsNone(libraries_fetched_by_name)
 
 
-class TestFetch(unittest.TestCase):
+class TestFetch(TestCase):
 
     def setUp(self):
         self.ss_connection = SeqscapeRawMetadataProvider._get_connection(config.SEQSC_HOST, config.SEQSC_PORT,

@@ -77,15 +77,17 @@ class SeqscapeEntitiesFetched:
 
 
     def __str__(self):
-        return str(self.query_entity_type) + " ID TYPE: " + str(self.query_id_type) + ", query_ids =  " + \
+        return str(self.query_entity_type) + " ID type: " + str(self.query_id_type) + ", query_ids =  " + \
                str(self.query_ids) + ", fetched entities: " + str(self.entities_fetched)
 
     def __repr__(self):
         return self.__str__()
 
     def __eq__(self, other):
+        if not type(self) is type(other):
+            return False
         return self.query_id_type == other.query_id_type and self.query_ids == other.query_ids and \
-               self.entities_fetched == other.entities_fetched and self.query_entity_type == other.entity_type
+               self.entities_fetched == other.entities_fetched and self.query_entity_type == other.query_entity_type
 
     def __hash__(self):
         return hash(frozenset(self.entities_fetched))
@@ -153,10 +155,11 @@ class SeqscapeRawMetadata(object):
         """
         Returns a list of SeqscapeEntitiesFetchedBasedOnIds for all the entity types concatenated together.
         """
-        result = []
-        for _, fetched_entities in self._entities_dict_by_type:
-            result.extend(fetched_entities)
-        return result
+        res = []
+        for v in self._entities_dict_by_type.values():
+            res.extend(v)
+        return res
+
 
     def get_all_fetched_entities_by_association(self):
         return self._entities_fetched_by_association
