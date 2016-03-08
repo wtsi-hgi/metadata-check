@@ -24,7 +24,7 @@ from unittest import TestCase, mock, skip
 import config
 from mcheck.metadata.seqscape_metadata.seqscape_meta_provider import SeqscapeRawMetadataProvider
 
-
+@skip
 class TestFetchSamplesFromSeqscapeRawMetadataProvider(TestCase):
 
     def setUp(self):
@@ -99,6 +99,7 @@ class TestFetchStudiesFromSeqscapeRawMetadataProvider(TestCase):
         study_name = 'smth'
         self.assertRaises(ValueError, SeqscapeRawMetadataProvider._fetch_studies, self.ss_connection, None, study_name, None)
 
+@skip
 class TestFetchLibrariesFromSeqscapeRawMetadataProvider(TestCase):
 
     def setUp(self):
@@ -122,6 +123,7 @@ class TestFetchLibrariesFromSeqscapeRawMetadataProvider(TestCase):
         self.assertIsNone(libraries_fetched_by_name)
 
 
+@skip
 class TestFetchRawMetadata(TestCase):
 
     def setUp(self):
