@@ -363,7 +363,7 @@ def main():
 
 
             # FETCH Seqscape raw metadata:
-            raw_ss_meta = SeqscapeRawMetadataProvider.fetch(i_meta.samples, i_meta.libraries, i_meta.studies)
+            raw_ss_meta = SeqscapeRawMetadataProvider.fetch_raw_metadata(i_meta.samples, i_meta.libraries, i_meta.studies)
 
             # RUN CHECKS:
             SeqscapeRawMetadataChecks.check_raw_metadata(raw_ss_meta)

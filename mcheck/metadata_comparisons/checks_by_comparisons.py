@@ -18,6 +18,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 This file has been created on Jan 12, 2016.
 """
+
+from mcheck.metadata.seqscape_metadata.seqscape_meta_provider import SeqscapeRawMetadataProvider
+from mcheck.metadata.seqscape_metadata.seqscape_metadata import SeqscapeEntityQueryAndResults, SeqscapeRawMetadata, SeqscapeMetadata
+
 class IrodsMetadataVsHeaderMetadata:
 
     def compare(self, irods_metadata, header_metadata):
@@ -28,7 +32,10 @@ class IrodsMetadataVsHeaderMetadata:
 class Setup:
 
     def fetch_seqscape_metadata(self, samples, libraries, studies):
-        pass
+        raw_metadata = SeqscapeRawMetadataProvider.fetch_raw_metadata(samples, libraries, studies)
+        problems = raw_metadata.check_raw_metadata()
+        seqsc_metadata = SeqscapeMetadata.from_raw_metadata(raw_metadata)
+        return seqsc_metadata, problems
 
     def fetch_header_metadata(self):
         pass

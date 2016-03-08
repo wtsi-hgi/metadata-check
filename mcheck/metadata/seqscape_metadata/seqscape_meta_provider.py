@@ -21,7 +21,7 @@ This file has been created on Nov 16, 2015.
 
 import typing
 from sequencescape import connect_to_sequencescape, Sample, Study, Library
-from mcheck.metadata.seqscape_metadata.seqscape_metadata import SeqscapeRawMetadata, SeqscapeEntitiesFetched
+from mcheck.metadata.seqscape_metadata.seqscape_metadata import SeqscapeRawMetadata, SeqscapeEntityQueryAndResults
 import config
 
 
@@ -43,9 +43,11 @@ class SeqscapeRawMetadataProvider:
 
         samples_fetched_by_name = None
         if sample_names:
+            print("Sample names: %s" % sample_names)
             samples_by_name = ss_connection.sample.get_by_name(sample_names)
+            print("Samples by name found: %s" % samples_by_name)
             if samples_by_name:
-                samples_fetched_by_name = SeqscapeEntitiesFetched(samples_by_name,
+                samples_fetched_by_name = SeqscapeEntityQueryAndResults(samples_by_name,
                                                                   query_ids=sample_names,
                                                                   query_id_type='name',
                                                                   query_entity_type='sample',
@@ -54,7 +56,7 @@ class SeqscapeRawMetadataProvider:
         if sample_ids:
             samples_by_id = ss_connection.sample.get_by_id(sample_ids)
             if samples_by_id:
-                samples_fetched_by_id = SeqscapeEntitiesFetched(samples_by_id,
+                samples_fetched_by_id = SeqscapeEntityQueryAndResults(samples_by_id,
                                                                 query_ids=sample_ids,
                                                                 query_id_type='internal_id',
                                                                 query_entity_type='sample',
@@ -63,7 +65,7 @@ class SeqscapeRawMetadataProvider:
         if sample_accession_nrs:
             samples_by_accession_nr = ss_connection.sample.get_by_accession_number(sample_accession_nrs)
             if samples_by_accession_nr:
-                samples_fetched_by_accession_nr = SeqscapeEntitiesFetched(samples_by_accession_nr,
+                samples_fetched_by_accession_nr = SeqscapeEntityQueryAndResults(samples_by_accession_nr,
                                                                           query_ids=sample_accession_nrs,
                                                                           query_id_type='accession_number',
                                                                           query_entity_type='sample',
@@ -86,7 +88,7 @@ class SeqscapeRawMetadataProvider:
         if study_names:
             studies_by_name = ss_connection.study.get_by_name(study_names)
             if studies_by_name:
-                studies_fetched_by_name = SeqscapeEntitiesFetched(studies_by_name,
+                studies_fetched_by_name = SeqscapeEntityQueryAndResults(studies_by_name,
                                                                   query_ids=study_names,
                                                                   query_id_type='name',
                                                                   query_entity_type='study',
@@ -96,7 +98,7 @@ class SeqscapeRawMetadataProvider:
         if study_accession_nrs:
             studies_by_accession_nr = ss_connection.study.get_by_accession_number(study_accession_nrs)
             if studies_by_accession_nr:
-                studies_fetched_by_accession_nr = SeqscapeEntitiesFetched(studies_by_accession_nr,
+                studies_fetched_by_accession_nr = SeqscapeEntityQueryAndResults(studies_by_accession_nr,
                                                                           query_ids=study_accession_nrs,
                                                                           query_id_type='accession_number',
                                                                           query_entity_type='study',
@@ -106,7 +108,7 @@ class SeqscapeRawMetadataProvider:
         if study_ids:
             studies_by_id = ss_connection.study.get_by_id(study_ids)
             if studies_by_id:
-                studies_fetched_by_id = SeqscapeEntitiesFetched(studies_by_id,
+                studies_fetched_by_id = SeqscapeEntityQueryAndResults(studies_by_id,
                                                                 query_ids=study_ids,
                                                                 query_id_type='internal_id',
                                                                 query_entity_type='study',
@@ -130,7 +132,7 @@ class SeqscapeRawMetadataProvider:
                 libraries_by_id = ss_connection.multiplexed_library.get_by_id(library_ids)
 
             if libraries_by_id:
-                libraries_fetched_by_id = SeqscapeEntitiesFetched(libraries_by_id,
+                libraries_fetched_by_id = SeqscapeEntityQueryAndResults(libraries_by_id,
                                                                   query_ids=library_ids,
                                                                   query_id_type='internal_id',
                                                                   query_entity_type='library',
@@ -139,7 +141,7 @@ class SeqscapeRawMetadataProvider:
         if library_names:
             libraries_by_name = ss_connection.library.get_by_name(library_names)
             if libraries_by_name:
-                libraries_fetched_by_name = SeqscapeEntitiesFetched(libraries_by_name,
+                libraries_fetched_by_name = SeqscapeEntityQueryAndResults(libraries_by_name,
                                                                     query_ids=library_names,
                                                                     query_id_type='name',
                                                                     query_entity_type='library',
@@ -148,37 +150,47 @@ class SeqscapeRawMetadataProvider:
 
     @classmethod
     def _fetch_samples_for_studies(cls, ss_connection, studies):
-        return ss_connection.sample.get_associated_with_study(studies)
+        print("Studies: %s" % studies)
+        samples = ss_connection.sample.get_associated_with_study(studies)
+        if samples:
+            samples_fetched = SeqscapeEntityQueryAndResults(samples, query_ids=studies, query_id_type='whole study', query_entity_type='study', fetched_entity_type='sample')
+            return samples_fetched
+        return None
 
     @classmethod
     def _fetch_studies_for_samples(cls, ss_connection, samples):
-        return ss_connection.study.get_associated_with_sample(samples)
+        print("Fetch studies for samples where samples = %s" % samples)
+        studies = ss_connection.study.get_associated_with_sample(samples)
+        if studies:
+            studies_fetched = SeqscapeEntityQueryAndResults(studies, query_ids=samples, query_id_type='whole sample', query_entity_type='sample', fetched_entity_type='study')
+            return studies_fetched
+        return None
 
     @classmethod
-    def fetch(cls, samples: typing.Mapping, libraries: typing.Mapping, studies: typing.Mapping) -> SeqscapeRawMetadata:
+    def fetch_raw_metadata(cls, samples: typing.Mapping, libraries: typing.Mapping, studies: typing.Mapping) -> SeqscapeRawMetadata:
+        raw_meta = SeqscapeRawMetadata()
         ss_connection = cls._get_connection(config.SEQSC_HOST, config.SEQSC_PORT, config.SEQSC_DB_NAME,
                                             config.SEQSC_USER)
+        if samples:
+            samples_fetched_by_names, samples_fetched_by_ids, samples_fetched_by_accession_nrs = \
+                cls._fetch_samples(ss_connection, samples.get('name'), samples.get('internal_id'), samples.get('accession_number'))
+            raw_meta.add_fetched_entities(samples_fetched_by_names)
+            raw_meta.add_fetched_entities(samples_fetched_by_accession_nrs)
+            raw_meta.add_fetched_entities(samples_fetched_by_ids)
 
-        samples_fetched_by_names, samples_fetched_by_ids, samples_fetched_by_accession_nrs = \
-            cls._fetch_samples(ss_connection, samples['name'], samples['internal_id'], samples['accession_number'])
+        if studies:
+            studies_fetched_by_names, studies_fetched_by_ids, studies_fetched_by_accession_nrs = \
+                cls._fetch_studies(ss_connection, studies.get('name'), studies.get('internal_id'), studies.get('accession_number'))
+            raw_meta.add_fetched_entities(studies_fetched_by_accession_nrs)
+            raw_meta.add_fetched_entities(studies_fetched_by_ids)
+            raw_meta.add_fetched_entities(studies_fetched_by_names)
 
-        studies_fetched_by_names, studies_fetched_by_ids, studies_fetched_by_accession_nrs = \
-            cls._fetch_studies(ss_connection, studies['name'], studies['internal_id'], studies['accession_number'])
 
-        libraries_fetched_by_names, libraries_fetched_by_ids = \
-            cls._fetch_libraries(ss_connection, libraries['name'], libraries['internal_id'])
-
-        raw_meta = SeqscapeRawMetadata()
-        raw_meta.add_fetched_entities(samples_fetched_by_names)
-        raw_meta.add_fetched_entities(samples_fetched_by_accession_nrs)
-        raw_meta.add_fetched_entities(samples_fetched_by_ids)
-
-        raw_meta.add_fetched_entities(studies_fetched_by_accession_nrs)
-        raw_meta.add_fetched_entities(studies_fetched_by_ids)
-        raw_meta.add_fetched_entities(studies_fetched_by_names)
-
-        raw_meta.add_fetched_entities(libraries_fetched_by_names)
-        raw_meta.add_fetched_entities(libraries_fetched_by_ids)
+        if libraries:
+            libraries_fetched_by_names, libraries_fetched_by_ids = \
+                cls._fetch_libraries(ss_connection, libraries.get('name'), libraries.get('internal_id'))
+            raw_meta.add_fetched_entities(libraries_fetched_by_names)
+            raw_meta.add_fetched_entities(libraries_fetched_by_ids)
 
 
         # Getting the sample-study associations:

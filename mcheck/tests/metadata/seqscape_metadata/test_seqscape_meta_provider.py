@@ -25,7 +25,6 @@ import config
 from mcheck.metadata.seqscape_metadata.seqscape_meta_provider import SeqscapeRawMetadataProvider
 
 
-@skip
 class TestFetchSamplesFromSeqscapeRawMetadataProvider(TestCase):
 
     def setUp(self):
@@ -66,7 +65,6 @@ class TestFetchSamplesFromSeqscapeRawMetadataProvider(TestCase):
         self.assertIsNone(samples_fetched_by_accession_nrs)
 
 
-@skip
 class TestFetchStudiesFromSeqscapeRawMetadataProvider(TestCase):
 
     def setUp(self):
@@ -101,7 +99,6 @@ class TestFetchStudiesFromSeqscapeRawMetadataProvider(TestCase):
         study_name = 'smth'
         self.assertRaises(ValueError, SeqscapeRawMetadataProvider._fetch_studies, self.ss_connection, None, study_name, None)
 
-@skip
 class TestFetchLibrariesFromSeqscapeRawMetadataProvider(TestCase):
 
     def setUp(self):
@@ -125,9 +122,58 @@ class TestFetchLibrariesFromSeqscapeRawMetadataProvider(TestCase):
         self.assertIsNone(libraries_fetched_by_name)
 
 
-class TestFetch(TestCase):
+class TestFetchRawMetadata(TestCase):
 
     def setUp(self):
         self.ss_connection = SeqscapeRawMetadataProvider._get_connection(config.SEQSC_HOST, config.SEQSC_PORT,
                                                                  config.SEQSC_DB_NAME, config.SEQSC_USER)
 
+    def test_fetch_1_sample(self):
+        samples = {'name': ['SC_BLUE5620006'],
+                   'accession_number': ['EGAN00001192046'],
+                   'internal_id': [1724102]
+        }
+        raw_meta = SeqscapeRawMetadataProvider.fetch_raw_metadata(samples, None, None)
+        self.assertEqual(len(raw_meta.get_entities_by_type('sample')), 3)
+
+
+    def test_fetch_with_sample_names(self):
+        samples = {'name': ['SC_BLUE5620006', 'DDD_MAIN6028810']}
+        raw_meta = SeqscapeRawMetadataProvider.fetch_raw_metadata(samples, None, None)
+        print("Raw metadata: %s" % raw_meta.get_entities_by_type('sample'))
+        self.assertEqual(len(raw_meta.get_entities_by_type('sample')), 2)
+
+
+    def test_fetch_sample_names_empty_ids(self):
+        samples = {'name': ['SC_BLUE5620006'],
+                   'internal_id': [],
+                   'accession_number': []
+                   }
+        raw_meta = SeqscapeRawMetadataProvider.fetch_raw_metadata(samples, None, None)
+        self.assertEqual(len(raw_meta.get_entities_by_type('sample')), 1)
+
+    def test_fetch_with_no_data(self):
+        empty_dict = {'name': [],
+                   'internal_id': [],
+                   'accession_number': []
+                   }
+        raw_meta = SeqscapeRawMetadataProvider.fetch_raw_metadata(empty_dict, empty_dict, empty_dict)
+        self.assertEqual(len(raw_meta.get_entities_by_type('sample')), 0)
+
+    def test_fetch_all_types_of_entities(self):
+        samples = {'name': ['SC_BLUE5620006'],
+                   'accession_number': ['EGAN00001192046'],
+                   'internal_id': [1724102]
+        }
+        studies = {'name': ["IHTP_ISC_Congenital anosmia 2"],
+                   'accession_number': ['EGAS00001001429'],
+                   'internal_id': [3724]
+        }
+
+        libs = {'name': ['APP5117332 3656641'],
+                'internal_id': ['3656641']
+        }
+        raw_meta = SeqscapeRawMetadataProvider.fetch_raw_metadata(samples, libs, studies)
+        self.assertEqual(len(raw_meta.get_entities_by_type('sample')), 3)
+        self.assertEqual(len(raw_meta.get_entities_by_type('library')), 2)
+        self.assertEqual(len(raw_meta.get_entities_by_type('study')), 3)
