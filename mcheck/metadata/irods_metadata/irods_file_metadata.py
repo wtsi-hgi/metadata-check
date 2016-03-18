@@ -21,7 +21,7 @@ This file has been created on Jun 23, 2015.
 
 import re
 from collections import defaultdict
-from typing import List, Dict, Union
+from typing import List, Dict, Union, Set
 
 from mcheck.com.operators import Operators
 from mcheck.main import error_types
@@ -44,12 +44,13 @@ class IrodsRawFileMetadata:
         self.dir_path = dir_path
         self.file_replicas = file_replicas
         self.acls = acls
-        self._attributes = {}
+        self._attributes = defaultdict(set)
 
-    def set_attributes_from_avus(self, avus_list: List[data_types.MetaAVU]) -> None:
+
+    def set_attributes_from_avus(self, avus_list: Set[data_types.MetaAVU]) -> None:
         self._attributes = IrodsRawFileMetadata._group_avus_per_attribute(avus_list)
 
-    def set_attributes_from_dict(self, avus_dict: Dict[str, List[str]]) -> None:
+    def set_attributes_from_dict(self, avus_dict: Dict[str, Set[str]]) -> None:
         if not type(avus_dict):
             raise TypeError("The avus_dict parameter of set_attributes_from_dict must be a dict, and is a {0}".format(
                 str(type(avus_dict))))
@@ -57,16 +58,16 @@ class IrodsRawFileMetadata:
 
     def get_values_for_attribute(self, attribute: str) -> list:
         found = self._attributes.get(attribute)
-        return found if found else []
+        return found if found else set()
 
     def get_values_count_for_attribute(self, attribute: str) -> int:
         return len(self.get_values_for_attribute(attribute))
 
     @staticmethod
-    def _group_avus_per_attribute(avus: List[data_types.MetaAVU]) -> Dict[str, List[str]]:
-        avus_grouped = defaultdict(list)
+    def _group_avus_per_attribute(avus: List[data_types.MetaAVU]) -> Dict[str, Set[str]]:
+        avus_grouped = defaultdict(set)
         for avu in avus:
-            avus_grouped[avu.attribute].append(avu.value)
+            avus_grouped[avu.attribute].add(avu.value)
         return avus_grouped
 
     def validate_fields(self) -> List[CheckResult]:
