@@ -38,6 +38,11 @@ class IrodsACL:
         # except KeyError:
         #     raise ValueError("The permission is not right: %s " % permission)
 
+    @staticmethod
+    def from_baton_wrapper(acl_item):
+        return IrodsACL(access_group=acl_item.owner, zone=acl_item.zone, permission=acl_item.level.name)
+
+
     def __eq__(self, other):
         return self.access_group == other.access_group and self.zone == other.zone and \
                self.permission == other.permission

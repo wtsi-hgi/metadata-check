@@ -31,6 +31,10 @@ class IrodsFileReplica:
         self.checksum = checksum
         self.replica_nr = replica_nr
 
+    @staticmethod
+    def from_baton_wrapper(replica):
+        return IrodsFileReplica(checksum=replica.checksum, replica_nr=replica.number)
+
     def __eq__(self, other):
         return self.checksum == other.checksum and self.replica_nr == other.replica_nr
 
