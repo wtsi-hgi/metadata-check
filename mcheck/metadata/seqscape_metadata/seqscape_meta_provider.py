@@ -178,6 +178,10 @@ class SeqscapeRawMetadataProvider:
             raw_meta.add_fetched_entities(samples_fetched_by_accession_nrs)
             raw_meta.add_fetched_entities(samples_fetched_by_ids)
 
+            samples_set = raw_meta.get_entities_without_duplicates_by_entity_type('sample')
+            studies_for_samples = cls._fetch_studies_for_samples(ss_connection, samples_set)
+            raw_meta.add_fetched_entities_by_association(studies_for_samples)
+
         if studies:
             studies_fetched_by_names, studies_fetched_by_ids, studies_fetched_by_accession_nrs = \
                 cls._fetch_studies(ss_connection, studies.get('name'), studies.get('internal_id'), studies.get('accession_number'))
@@ -185,21 +189,15 @@ class SeqscapeRawMetadataProvider:
             raw_meta.add_fetched_entities(studies_fetched_by_ids)
             raw_meta.add_fetched_entities(studies_fetched_by_names)
 
+            # Getting the sample-study associations:
+            studies_set = raw_meta.get_entities_without_duplicates_by_entity_type('study')
+            samples_for_study = cls._fetch_samples_for_studies(ss_connection, studies_set)
+            raw_meta.add_fetched_entities_by_association(samples_for_study)
 
         if libraries:
             libraries_fetched_by_names, libraries_fetched_by_ids = \
                 cls._fetch_libraries(ss_connection, libraries.get('name'), libraries.get('internal_id'))
             raw_meta.add_fetched_entities(libraries_fetched_by_names)
             raw_meta.add_fetched_entities(libraries_fetched_by_ids)
-
-
-        # Getting the sample-study associations:
-        studies_set = raw_meta.get_entities_without_duplicates_by_entity_type('study')
-        samples_for_study = cls._fetch_samples_for_studies(ss_connection, studies_set)
-        raw_meta.add_fetched_entities_by_association(samples_for_study)
-
-        samples_set = raw_meta.get_entities_without_duplicates_by_entity_type('sample')
-        studies_for_samples = cls._fetch_studies_for_samples(ss_connection, samples_set)
-        raw_meta.add_fetched_entities_by_association(studies_for_samples)
 
         return raw_meta
