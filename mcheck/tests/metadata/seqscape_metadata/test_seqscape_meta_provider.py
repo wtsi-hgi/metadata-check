@@ -64,7 +64,7 @@ class TestFetchSamplesFromSeqscapeRawMetadataProvider(TestCase):
         self.assertEqual(len(samples_fetched_by_ids.entities_fetched), 2)
         self.assertIsNone(samples_fetched_by_accession_nrs)
 
-
+@skip
 class TestFetchStudiesFromSeqscapeRawMetadataProvider(TestCase):
 
     def setUp(self):
