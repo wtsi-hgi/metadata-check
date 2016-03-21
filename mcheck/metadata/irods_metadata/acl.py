@@ -38,9 +38,23 @@ class IrodsACL:
         # except KeyError:
         #     raise ValueError("The permission is not right: %s " % permission)
 
+
     @staticmethod
     def from_baton_wrapper(acl_item):
-        return IrodsACL(access_group=acl_item.owner, zone=acl_item.zone, permission=acl_item.level.name)
+        def get_corresponding_permission(perm):
+            if perm == 'READ':
+                return irods_consts.IrodsPermission.READ
+            elif perm == 'WRITE':
+                return irods_consts.IrodsPermission.WRITE
+            elif perm == 'OWN':
+                return irods_consts.IrodsPermission.OWN
+            elif perm == 'null':
+                return irods_consts.IrodsPermission.NULL
+            else:
+                raise ValueError("This permission %s is not recognized." % perm)
+
+        permission = get_corresponding_permission(acl_item.level.name)
+        return IrodsACL(access_group=acl_item.owner, zone=acl_item.zone, permission=permission)
 
 
     def __eq__(self, other):
