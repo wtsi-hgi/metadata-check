@@ -55,8 +55,6 @@ class IrodsRawFileMetadata:
         raw_meta = IrodsRawFileMetadata(fname=fname, dir_path=collection, file_replicas=replicas, acls=acls)
         if data_object.metadata:
             raw_meta.set_attributes_from_dict(data_object.metadata.to_dict())
-            print("DATA OBJ DICT: %s" % data_object.metadata.to_dict())
-            print("DATA OBJ DICT: %s" % data_object.metadata)
         return raw_meta
 
 
