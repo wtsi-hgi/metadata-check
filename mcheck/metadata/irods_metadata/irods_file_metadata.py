@@ -46,12 +46,25 @@ class IrodsRawFileMetadata:
         self.acls = acls
         self._attributes = defaultdict(set)
 
+    @staticmethod
+    def from_baton_wrapper(data_object):
+        fname = data_object.get_name()
+        collection = data_object.get_collection_path()
+        replicas = [IrodsFileReplica.from_baton_wrapper(replica) for replica in data_object.replicas]
+        acls = [IrodsACL.from_baton_wrapper(ac_item) for ac_item in data_object.acl]
+        raw_meta = IrodsRawFileMetadata(fname=fname, dir_path=collection, file_replicas=replicas, acls=acls)
+        if data_object.metadata:
+            raw_meta.set_attributes_from_dict(data_object.metadata.to_dict())
+            print("DATA OBJ DICT: %s" % data_object.metadata.to_dict())
+            print("DATA OBJ DICT: %s" % data_object.metadata)
+        return raw_meta
+
 
     def set_attributes_from_avus(self, avus_list: Set[data_types.MetaAVU]) -> None:
         self._attributes = IrodsRawFileMetadata._group_avus_per_attribute(avus_list)
 
     def set_attributes_from_dict(self, avus_dict: Dict[str, Set[str]]) -> None:
-        if not type(avus_dict):
+        if not type(avus_dict) == dict:
             raise TypeError("The avus_dict parameter of set_attributes_from_dict must be a dict, and is a {0}".format(
                 str(type(avus_dict))))
         self._attributes = avus_dict
