@@ -42,7 +42,7 @@ class IrodsFileReplica:
         return "Replica nr =  " + str(self.replica_nr) + ", checksum = " + str(self.checksum)
 
     def __repr__(self):
-        return self.__repr__()
+        return self.__str__()
 
     def __hash__(self):
         return hash(self.checksum) + hash(self.replica_nr)
