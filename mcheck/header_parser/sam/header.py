@@ -28,6 +28,13 @@ class SAMFileHeader:
         self.hd_tags = hd_tag
         self.pg_tags = pg_tag
 
+    def __str__(self):
+        return "RG tags: " + str(self.rg_tags) #+ ", SQ tags: " + str(self.sq_tags) + ", HD tags: " + \
+               #str(self.hd_tags) + ", PG tags: " + str(self.pg_tags)
+
+    def __repr__(self):
+        return self.__str__()
+
     class RGTag:
         def __init__(self, seq_centers=None, seq_dates=None, lanelets=None, platforms=None,
                      libraries=None, samples=None, platform_units=None):
@@ -39,6 +46,13 @@ class SAMFileHeader:
             self.samples = samples
             self.platform_units = platform_units
 
+        def __str__(self):
+            return "SC: " + str(self.seq_centers) + "\n, DATE: " + str(self.seq_dates) + "\n, LANELETS: " + \
+                   str(self.lanelets) + "\n, PLATFORMS: " + str(self.platforms) + "\n, PLATFORM UNITS: " + \
+                   str(self.platform_units) + "\n, LIBRARIES: " + str(self.libraries) + "\n, SAMPLES: " + str(self.samples)
+
+        def __repr__(self):
+            return self.__str__()
 
 
 
