@@ -47,9 +47,9 @@ class SAMFileHeader:
             self.platform_units = platform_units
 
         def __str__(self):
-            return "SC: " + str(self.seq_centers) + "\n, DATE: " + str(self.seq_dates) + "\n, LANELETS: " + \
-                   str(self.lanelets) + "\n, PLATFORMS: " + str(self.platforms) + "\n, PLATFORM UNITS: " + \
-                   str(self.platform_units) + "\n, LIBRARIES: " + str(self.libraries) + "\n, SAMPLES: " + str(self.samples)
+            return "CN: " + str(self.seq_centers) + "\n DATE: " + str(self.seq_dates) + "\n LANELETS: " + \
+                   str(self.lanelets) + "\n PLATFORMS: " + str(self.platforms) + "\n PLATFORM UNITS: " + \
+                   str(self.platform_units) + "\n LIBRARIES: " + str(self.libraries) + "\n SAMPLES: " + str(self.samples)
 
         def __repr__(self):
             return self.__str__()

@@ -64,11 +64,8 @@ class EntityIdentifier(object):
             Basically if it contains numbers and alphabet characters, it may be a name."""
         if not type(field) == str:
             return False
-        is_match = re.search('^[0-9a-zA-Z]*$', field)
-        if is_match:
-            return True
-        return False
-
+        return field.isalnum()
+    
     @classmethod
     @wrappers.check_args_not_none
     def guess_identifier_type(cls, identifier: str) -> str:
