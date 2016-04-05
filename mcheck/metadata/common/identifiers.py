@@ -89,9 +89,9 @@ class EntityIdentifier(object):
     def separate_identifiers_by_type(cls, identifiers: List[str]) -> Dict[str, List[str]]:
         ids, names, accession_nrs = [], [], []
         for identifier in identifiers:
-            if cls.is_internal_id:
+            if cls.is_internal_id(identifier):
                 ids.append(identifier)
-            elif cls.is_accession_nr:
+            elif cls.is_accession_nr(identifier):
                 accession_nrs.append(identifier)
             else:
                 names.append(identifier)
