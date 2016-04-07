@@ -23,10 +23,10 @@ This file has been created on Jan 12, 2016.
 
 class SAMFileHeader:
     def __init__(self, rg_tag=None, sq_tag=None, hd_tag=None, pg_tag=None):
-        self.rg_tags = rg_tag
-        self.sq_tags = sq_tag
-        self.hd_tags = hd_tag
-        self.pg_tags = pg_tag
+        self.rg_tags = rg_tag if rg_tag else []
+        self.sq_tags = sq_tag if sq_tag else []
+        self.hd_tags = hd_tag if hd_tag else []
+        self.pg_tags = pg_tag if pg_tag else []
 
     def __str__(self):
         return "RG tags: " + str(self.rg_tags) #+ ", SQ tags: " + str(self.sq_tags) + ", HD tags: " + \
@@ -35,16 +35,20 @@ class SAMFileHeader:
     def __repr__(self):
         return self.__str__()
 
+    def __eq__(self, other):
+        return set(self.rg_tags) == set(other.rg_tags) and set(self.sq_tags) == set(other.sq_tags) and \
+        set(self.hd_tags) == set(other.hd_tags) and set(self.pg_tags) == set(other.pg_tags)
+
     class RGTag:
         def __init__(self, seq_centers=None, seq_dates=None, lanelets=None, platforms=None,
                      libraries=None, samples=None, platform_units=None):
-            self.seq_centers = seq_centers
-            self.seq_dates = seq_dates
-            self.lanelets = lanelets
-            self.platforms = platforms
-            self.libraries = libraries
-            self.samples = samples
-            self.platform_units = platform_units
+            self.seq_centers = seq_centers if seq_centers else []
+            self.seq_dates = seq_dates if seq_dates else []
+            self.lanelets = lanelets if lanelets else []
+            self.platforms = platforms if platforms else []
+            self.libraries = libraries if libraries else []
+            self.samples = samples if samples else []
+            self.platform_units = platform_units if platform_units else []
 
         def __str__(self):
             return "CN: " + str(self.seq_centers) + "\n DATE: " + str(self.seq_dates) + "\n LANELETS: " + \
@@ -53,6 +57,13 @@ class SAMFileHeader:
 
         def __repr__(self):
             return self.__str__()
+
+        def __eq__(self, other):
+            return set(self.seq_dates) == set(other.seq_dates) and set(self.seq_centers) == set(other.seq_centers) and \
+                   set(self.lanelets) == set(other.lanelets) and set(self.platforms) == set(other.platforms) and \
+                   set(self.libraries) == set(other.libraries) and set(self.samples) == set(other.samples) and \
+                   set(self.platform_units) == set(other.platform_units)
+
 
 
 
