@@ -20,24 +20,25 @@ This file has been created on Jan 12, 2016.
 """
 
 
-
 class SAMFileHeader:
     def __init__(self, rg_tag=None, sq_tag=None, hd_tag=None, pg_tag=None):
-        self.rg_tags = rg_tag if rg_tag else []
-        self.sq_tags = sq_tag if sq_tag else []
-        self.hd_tags = hd_tag if hd_tag else []
-        self.pg_tags = pg_tag if pg_tag else []
+        self.rg_tags = rg_tag
+        self.sq_tags = sq_tag
+        self.hd_tags = hd_tag
+        self.pg_tags = pg_tag
 
     def __str__(self):
-        return "RG tags: " + str(self.rg_tags) #+ ", SQ tags: " + str(self.sq_tags) + ", HD tags: " + \
-               #str(self.hd_tags) + ", PG tags: " + str(self.pg_tags)
+        return "RG tags: " + str(self.rg_tags)  # + ", SQ tags: " + str(self.sq_tags) + ", HD tags: " + \
+        # str(self.hd_tags) + ", PG tags: " + str(self.pg_tags)
 
     def __repr__(self):
         return self.__str__()
 
     def __eq__(self, other):
-        return set(self.rg_tags) == set(other.rg_tags) and set(self.sq_tags) == set(other.sq_tags) and \
-        set(self.hd_tags) == set(other.hd_tags) and set(self.pg_tags) == set(other.pg_tags)
+        print(self)
+        print(str(type(self.rg_tags)))
+        return self.rg_tags == other.rg_tags and self.sq_tags == other.sq_tags and \
+               self.hd_tags == other.hd_tags and self.pg_tags == other.pg_tags
 
     class RGTag:
         def __init__(self, seq_centers=None, seq_dates=None, lanelets=None, platforms=None,
@@ -53,7 +54,8 @@ class SAMFileHeader:
         def __str__(self):
             return "CN: " + str(self.seq_centers) + "\n DATE: " + str(self.seq_dates) + "\n LANELETS: " + \
                    str(self.lanelets) + "\n PLATFORMS: " + str(self.platforms) + "\n PLATFORM UNITS: " + \
-                   str(self.platform_units) + "\n LIBRARIES: " + str(self.libraries) + "\n SAMPLES: " + str(self.samples)
+                   str(self.platform_units) + "\n LIBRARIES: " + str(self.libraries) + "\n SAMPLES: " + str(
+                self.samples)
 
         def __repr__(self):
             return self.__str__()
