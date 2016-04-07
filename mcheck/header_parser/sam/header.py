@@ -35,8 +35,6 @@ class SAMFileHeader:
         return self.__str__()
 
     def __eq__(self, other):
-        print(self)
-        print(str(type(self.rg_tags)))
         return self.rg_tags == other.rg_tags and self.sq_tags == other.sq_tags and \
                self.hd_tags == other.hd_tags and self.pg_tags == other.pg_tags
 
