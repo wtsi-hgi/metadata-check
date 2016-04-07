@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 This file has been created on Apr 07, 2016.
 """
 import unittest
-from mcheck.header_parser.sam.header import SAMFileHeader
+from mcheck.header_parser.sam.header import SAMFileHeader, RGTag
 
 
 class TestSAMFileHeader(unittest.TestCase):
@@ -67,3 +67,35 @@ class TestSAMFileHeader(unittest.TestCase):
         header1 = SAMFileHeader()
         header2 = SAMFileHeader(rg_tag=['other RG', 'second other RG'])
         self.assertNotEqual(header1, header2)
+
+class TestRGTag(unittest.TestCase):
+
+    def test_eq_when_eqal_tags(self):
+        tag1 = RGTag(seq_centers=['SC'], seq_dates=[], lanelets=['1234'], libraries=['lib1'], samples=['sam1'])
+        tag2 = RGTag(seq_centers=['SC'], seq_dates=[], lanelets=['1234'], libraries=['lib1'], samples=['sam1'])
+        self.assertEqual(tag1, tag2)
+
+    def test_eq_when_not_eqal_samples(self):
+        tag1 = RGTag(seq_centers=['SC'], lanelets=['1234'], libraries=['lib1'], samples=['sam1'])
+        tag2 = RGTag(seq_centers=['SC'], lanelets=['1234'], libraries=['lib2'], samples=['sam2'])
+        self.assertNotEqual(tag1, tag2)
+
+    def test_eq_when_missing_fields(self):
+        tag1 = RGTag(seq_centers=['SC'], lanelets=['1234'], libraries=['lib1'], samples=['sam1'])
+        tag2 = RGTag(seq_centers=['SC'], lanelets=['1234'])
+        self.assertNotEqual(tag1, tag2)
+
+    def test_eq_when_equals_qith_short_lists(self):
+        tag1 = RGTag(lanelets=['1234'])
+        tag2 = RGTag(lanelets=['1234'])
+        self.assertEqual(tag1, tag2)
+
+    def test_eq_when_equals_qith_long_lists(self):
+        tag1 = RGTag(lanelets=['1234', '3456', '5678'])
+        tag2 = RGTag(lanelets=['1234', '5678', '3456'])
+        self.assertEqual(tag1, tag2)
+
+
+
+
+
