@@ -80,6 +80,9 @@ class TestSAMFileRGTagParser(unittest.TestCase):
         expected = {}
         self.assertDictEqual(expected, result)
 
+    def test_from_read_grp_to_dict_when_invalid(self):
+        read_grp = '@HD\tMMM\tM:N'
+        self.assertRaises(ValueError, SAMFileRGTagParser._from_read_grp_to_dict, read_grp)
 
     def test_parse_when_ok(self):
         read_grps = ['@RG\tID:1662_1\tPL:SLX\tLB:A_J_SLX_500_HC_2\tPI:500\tDS:A_J_Mouse_Genome\tSM:A_J\tCN:SC']
