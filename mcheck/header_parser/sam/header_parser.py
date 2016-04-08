@@ -82,7 +82,7 @@ class SAMFileRGTagParser:
 
     @classmethod
     def parse(cls, read_grps):
-        seq_center_list, seq_dates, lanelets, platforms, libraries, samples, platform_units = [], [], [], [], [], [], []
+        seq_center_list, seq_dates, platforms, libraries, samples, platform_units = [], [], [], [], [], []
         print("From SAMFILE, the tags: %s" % read_grps)
         print("From SAMFILE, the tags: %s" % str(type(read_grps)))
         for read_grp in read_grps:
@@ -103,7 +103,7 @@ class SAMFileRGTagParser:
         return SAMFileRGTag(
             seq_centers=[_f for _f in list(set(seq_center_list)) if _f],
             seq_dates=[_f for _f in list(set(seq_dates)) if _f],
-            lanelets=[_f for _f in list(set(lanelets)) if _f],
+            #lanelets=[_f for _f in list(set(lanelets)) if _f],
             platforms=[_f for _f in list(set(platforms)) if _f],
             libraries=[_f for _f in list(set(libraries)) if _f],
             samples=[_f for _f in list(set(samples)) if _f],

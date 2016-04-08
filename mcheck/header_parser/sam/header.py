@@ -43,15 +43,14 @@ class SAMFileRGTag:
                  libraries=None, samples=None, platform_units=None):
         self.seq_centers = set(seq_centers) if seq_centers else set()
         self.seq_dates = set(seq_dates) if seq_dates else set()
-        self.lanelets = set(lanelets) if lanelets else set()
         self.platforms = set(platforms) if platforms else set()
         self.libraries = set(libraries) if libraries else set()
         self.samples = set(samples) if samples else set()
         self.platform_units = set(platform_units) if platform_units else set()
 
     def __str__(self):
-        return "CN: " + str(self.seq_centers) + "\n DATE: " + str(self.seq_dates) + "\n LANELETS: " + \
-               str(self.lanelets) + "\n PLATFORMS: " + str(self.platforms) + "\n PLATFORM UNITS: " + \
+        return "CN: " + str(self.seq_centers) + "\n DATE: " + str(self.seq_dates) + \
+               "\n PLATFORMS: " + str(self.platforms) + "\n PLATFORM UNITS: " + \
                str(self.platform_units) + "\n LIBRARIES: " + str(self.libraries) + "\n SAMPLES: " + str(
             self.samples)
 
@@ -59,12 +58,9 @@ class SAMFileRGTag:
         return self.__str__()
 
     def __eq__(self, other):
-        print("SELF: %s" % self)
-        print("OTHER: %s" % other)
         return self.seq_dates == other.seq_dates and self.seq_centers == other.seq_centers and \
-               self.lanelets == other.lanelets and self.platforms == other.platforms and \
-               self.libraries == other.libraries and self.samples == other.samples and \
-               self.platform_units == other.platform_units
+               self.platforms == other.platforms and self.libraries == other.libraries and \
+               self.samples == other.samples and self.platform_units == other.platform_units
 
 
 
