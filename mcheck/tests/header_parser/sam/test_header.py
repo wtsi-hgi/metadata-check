@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 This file has been created on Apr 07, 2016.
 """
 import unittest
-from mcheck.header_parser.sam.header import SAMFileHeader, RGTag
+from mcheck.header_parser.sam.header import SAMFileHeader, SAMFileRGTag
 
 
 class TestSAMFileHeader(unittest.TestCase):
@@ -71,28 +71,28 @@ class TestSAMFileHeader(unittest.TestCase):
 class TestRGTag(unittest.TestCase):
 
     def test_eq_when_eqal_tags(self):
-        tag1 = RGTag(seq_centers=['SC'], seq_dates=[], lanelets=['1234'], libraries=['lib1'], samples=['sam1'])
-        tag2 = RGTag(seq_centers=['SC'], seq_dates=[], lanelets=['1234'], libraries=['lib1'], samples=['sam1'])
+        tag1 = SAMFileRGTag(seq_centers=['SC'], seq_dates=[], lanelets=['1234'], libraries=['lib1'], samples=['sam1'])
+        tag2 = SAMFileRGTag(seq_centers=['SC'], seq_dates=[], lanelets=['1234'], libraries=['lib1'], samples=['sam1'])
         self.assertEqual(tag1, tag2)
 
     def test_eq_when_not_eqal_samples(self):
-        tag1 = RGTag(seq_centers=['SC'], lanelets=['1234'], libraries=['lib1'], samples=['sam1'])
-        tag2 = RGTag(seq_centers=['SC'], lanelets=['1234'], libraries=['lib2'], samples=['sam2'])
+        tag1 = SAMFileRGTag(seq_centers=['SC'], lanelets=['1234'], libraries=['lib1'], samples=['sam1'])
+        tag2 = SAMFileRGTag(seq_centers=['SC'], lanelets=['1234'], libraries=['lib2'], samples=['sam2'])
         self.assertNotEqual(tag1, tag2)
 
     def test_eq_when_missing_fields(self):
-        tag1 = RGTag(seq_centers=['SC'], lanelets=['1234'], libraries=['lib1'], samples=['sam1'])
-        tag2 = RGTag(seq_centers=['SC'], lanelets=['1234'])
+        tag1 = SAMFileRGTag(seq_centers=['SC'], lanelets=['1234'], libraries=['lib1'], samples=['sam1'])
+        tag2 = SAMFileRGTag(seq_centers=['SC'], lanelets=['1234'])
         self.assertNotEqual(tag1, tag2)
 
     def test_eq_when_equals_qith_short_lists(self):
-        tag1 = RGTag(lanelets=['1234'])
-        tag2 = RGTag(lanelets=['1234'])
+        tag1 = SAMFileRGTag(lanelets=['1234'])
+        tag2 = SAMFileRGTag(lanelets=['1234'])
         self.assertEqual(tag1, tag2)
 
     def test_eq_when_equals_qith_long_lists(self):
-        tag1 = RGTag(lanelets=['1234', '3456', '5678'])
-        tag2 = RGTag(lanelets=['1234', '5678', '3456'])
+        tag1 = SAMFileRGTag(lanelets=['1234', '3456', '5678'])
+        tag2 = SAMFileRGTag(lanelets=['1234', '5678', '3456'])
         self.assertEqual(tag1, tag2)
 
 
