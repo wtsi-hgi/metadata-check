@@ -87,5 +87,22 @@ class TestSAMFileRGTagParser(unittest.TestCase):
         expected = SAMFileRGTag(seq_centers=['SC'], platforms=['SLX'], samples=['A_J'], libraries=['A_J_SLX_500_HC_2'])
         self.assertEqual(result, expected)
 
+    def test_parse_when_more_rgs_in_header(self):
+        read_grps = ['@RG\tLB:1662\tSM:SAM1', '@RG\tLB:1661\tSM:SAM2']
+        result = SAMFileRGTagParser.parse(read_grps)
+        expected = SAMFileRGTag(samples=['SAM1', 'SAM2'], libraries=['1662', '1661'])
+        self.assertEqual(result, expected)
+
+    def test_parse_when_no_rgs(self):
+        read_grps = []
+        result = SAMFileRGTagParser.parse(read_grps)
+        expected = SAMFileRGTag()
+        self.assertEqual(result, expected)
+
+    def test_parse_when_empty_rg(self):
+        read_grps = ['@RG\tLB:1662\tSM:SAM1', '']
+        result = SAMFileRGTagParser.parse(read_grps)
+        expected = SAMFileRGTag(libraries=['1662'], samples=['SAM1'])
+        self.assertEqual(result, expected)
 
 
