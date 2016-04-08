@@ -68,7 +68,7 @@ class TestSAMFileHeader(unittest.TestCase):
         header2 = SAMFileHeader(rg_tag=['other RG', 'second other RG'])
         self.assertNotEqual(header1, header2)
 
-class TestRGTag(unittest.TestCase):
+class TestSAMFileRGTag(unittest.TestCase):
 
     def test_eq_when_eqal_tags(self):
         tag1 = SAMFileRGTag(seq_centers=['SC'], seq_dates=[], lanelets=['1234'], libraries=['lib1'], samples=['sam1'])
