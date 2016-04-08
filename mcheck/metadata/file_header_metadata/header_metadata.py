@@ -28,7 +28,7 @@ from mcheck.results.checks_results import CheckResult
 class SAMFileHeaderMetadata(object):
     INVALID_IDS = ['N/A', 'undefined', 'unspecified', -1, '', None]
 
-    def __init__(self, fpath, fname, samples={}, libraries={}, studies={}, lanelets=None, reference=None):
+    def __init__(self, fpath, fname, samples={}, libraries={}, studies={}, lanelets=None, reference=None, platforms=None):
         self.fname = fname
         self.fpath = fpath
         self.samples = samples
@@ -36,6 +36,7 @@ class SAMFileHeaderMetadata(object):
         self.studies = studies
         self.reference = reference
         self.lanelets = lanelets
+        self.platforms = platforms
 
 
     @classmethod
@@ -75,7 +76,8 @@ class SAMFileHeaderMetadata(object):
 
     def __str__(self):
         return "Fpath = " + str(self.fpath) + ", fname = "+ str(self.fname) + ", samples = " + str(self.samples) + \
-               ", libraries = " + str(self.libraries) + ", lanelets = " + str(self.lanelets)
+               ", libraries = " + str(self.libraries) + ", lanelets = " + str(self.lanelets) + ", platforms = " + \
+               str(self.platforms)
 
     def __repr__(self):
         return self.__str__()
