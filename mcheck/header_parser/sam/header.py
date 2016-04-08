@@ -22,14 +22,14 @@ This file has been created on Jan 12, 2016.
 
 class SAMFileHeader:
     def __init__(self, rg_tag=None, sq_tag=None, hd_tag=None, pg_tag=None):
-        self.rg_tags = rg_tag
-        self.sq_tags = sq_tag
-        self.hd_tags = hd_tag
-        self.pg_tags = pg_tag
+        self.rg_tags = rg_tag if rg_tag else []
+        self.sq_tags = sq_tag if sq_tag else []
+        self.hd_tags = hd_tag if hd_tag else []
+        self.pg_tags = pg_tag if pg_tag else []
 
     def __str__(self):
-        return "RG tags: " + str(self.rg_tags)  # + ", SQ tags: " + str(self.sq_tags) + ", HD tags: " + \
-        # str(self.hd_tags) + ", PG tags: " + str(self.pg_tags)
+        return "RG tags: " + str(self.rg_tags)  + ", SQ tags: " + str(self.sq_tags) + ", HD tags: " + \
+            str(self.hd_tags) + ", PG tags: " + str(self.pg_tags)
 
     def __repr__(self):
         return self.__str__()
@@ -38,7 +38,7 @@ class SAMFileHeader:
         return self.rg_tags == other.rg_tags and self.sq_tags == other.sq_tags and \
                self.hd_tags == other.hd_tags and self.pg_tags == other.pg_tags
 
-class RGTag:
+class SAMFileRGTag:
     def __init__(self, seq_centers=None, seq_dates=None, lanelets=None, platforms=None,
                  libraries=None, samples=None, platform_units=None):
         self.seq_centers = set(seq_centers) if seq_centers else set()
