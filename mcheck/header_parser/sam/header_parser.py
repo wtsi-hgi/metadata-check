@@ -24,7 +24,7 @@ This file has been created on Nov 3, 2014.
 import re
 import typing
 
-from mcheck.header_parser.sam.header import SAMFileHeader
+from mcheck.header_parser.sam.header import SAMFileHeader, SAMFileRGTag
 from mcheck.com import wrappers
 
 
@@ -53,7 +53,6 @@ class SAMFileHeaderParser:
         """
         rg_list, sq_list, pg_list, hd_list = [], [], [], []
         lines = header_as_text.split('\n')
-        print("NUMBER OF LINES::::::::::::::::: %s" % str(len(lines)))
         for line in lines:
             if line.startswith('@SQ'):
                 sq_list.append(line)
@@ -63,8 +62,6 @@ class SAMFileHeaderParser:
                 pg_list.append(line)
             elif line.startswith('@RG'):
                 rg_list.append(line)
-        print("FROM PARSE ------------------------- RG tag: %s" % str(len(rg_list)))
-        #print("FROM PARSE -------------------------  tag: %s" % rg_list)
         return SAMFileHeader(rg_tag=rg_list, pg_tag=pg_list, hd_tag=hd_list, sq_tag=sq_list)
 
 
@@ -103,7 +100,7 @@ class SAMFileRGTagParser:
             if 'PL' in read_grp_dict:
                 platforms.append(read_grp_dict['PL'])
 
-        return SAMFileHeader.RGTag(
+        return SAMFileRGTag(
             seq_centers=[_f for _f in list(set(seq_center_list)) if _f],
             seq_dates=[_f for _f in list(set(seq_dates)) if _f],
             lanelets=[_f for _f in list(set(lanelets)) if _f],
