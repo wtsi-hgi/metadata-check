@@ -24,18 +24,16 @@ import typing
 
 from mcheck.results.checks_results import CheckResult
 
-
 class SAMFileHeaderMetadata(object):
     INVALID_IDS = ['N/A', 'undefined', 'unspecified', -1, '', None]
 
-    def __init__(self, fpath, fname, samples={}, libraries={}, studies={}, lanelets=None, reference=None, platforms=None):
+    def __init__(self, fpath, fname, samples={}, libraries={}, studies={}, reference=None, platforms=None):
         self.fname = fname
         self.fpath = fpath
         self.samples = samples
         self.libraries = libraries
         self.studies = studies
         self.reference = reference
-        self.lanelets = lanelets
         self.platforms = platforms
 
 
@@ -76,7 +74,7 @@ class SAMFileHeaderMetadata(object):
 
     def __str__(self):
         return "Fpath = " + str(self.fpath) + ", fname = "+ str(self.fname) + ", samples = " + str(self.samples) + \
-               ", libraries = " + str(self.libraries) + ", lanelets = " + str(self.lanelets) + ", platforms = " + \
+               ", libraries = " + str(self.libraries) + ", platforms = " + \
                str(self.platforms)
 
     def __repr__(self):
@@ -87,3 +85,16 @@ class SAMFileHeaderMetadata(object):
         return self.fname == other.fname and self.fpath == other.fpath and self.samples == other.samples and \
                self.libraries == other.libraries and self.studies == other.studies and self.reference == other.reference \
                and self.lanelets == other.lanelets and self.platforms == other.platforms
+
+
+class LaneletSAMFileHeaderMetadata(SAMFileHeaderMetadata):
+    def __init__(self, fpath, fname, samples={}, libraries={}, studies={}, lanelets=None, reference=None, platforms=None):
+        super().__init__(fpath, fname, samples, libraries, studies, reference, platforms)
+        self.lanelets = lanelets
+
+    def __str__(self):
+        return super().__str__() + ", lanelets = " + str(self.lanelets)
+
+    def __eq__(self, other):
+        return super().__eq__(other) and self.lanelets == other.lanelets
+
