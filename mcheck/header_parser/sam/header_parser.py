@@ -83,8 +83,6 @@ class SAMFileRGTagParser:
     @classmethod
     def parse(cls, read_grps):
         seq_center_list, seq_dates, platforms, libraries, samples, platform_units = [], [], [], [], [], []
-        print("From SAMFILE, the tags: %s" % read_grps)
-        print("From SAMFILE, the tags: %s" % str(type(read_grps)))
         for read_grp in read_grps:
             read_grp_dict = cls._from_read_grp_to_dict(read_grp)
             if 'CN' in read_grp_dict:

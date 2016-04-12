@@ -81,3 +81,9 @@ class SAMFileHeaderMetadata(object):
 
     def __repr__(self):
         return self.__str__()
+
+
+    def __eq__(self, other):
+        return self.fname == other.fname and self.fpath == other.fpath and self.samples == other.samples and \
+               self.libraries == other.libraries and self.studies == other.studies and self.reference == other.reference \
+               and self.lanelets == other.lanelets and self.platforms == other.platforms
