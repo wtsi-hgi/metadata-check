@@ -83,14 +83,14 @@ class EntityIdentifier(object):
     @classmethod
     @wrappers.check_args_not_none
     def separate_identifiers_by_type(cls, identifiers: List[str]) -> Dict[str, List[str]]:
-        ids, names, accession_nrs = [], [], []
+        ids, names, accession_nrs = set(), set(), set()
         for identifier in identifiers:
             if cls.is_internal_id(identifier):
-                ids.append(identifier)
+                ids.add(identifier)
             elif cls.is_accession_nr(identifier):
-                accession_nrs.append(identifier)
+                accession_nrs.add(identifier)
             else:
-                names.append(identifier)
+                names.add(identifier)
         return {'name': names,
                 'accession_number': accession_nrs,
                 'internal_id': ids

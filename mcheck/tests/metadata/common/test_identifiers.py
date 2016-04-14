@@ -126,18 +126,18 @@ class TestEntityIdentifier(unittest.TestCase):
     def test_separate_identifiers_by_type(self):
         ids = ['123']
         ids_dict = identifiers.EntityIdentifier.separate_identifiers_by_type(ids)
-        self.assertDictEqual({'internal_id': ['123'], 'name': [], 'accession_number': []}, ids_dict)
+        self.assertDictEqual({'internal_id': set(['123']), 'name': set(), 'accession_number': set()}, ids_dict)
 
         ids = ['EGA123']
         ids_dict = identifiers.EntityIdentifier.separate_identifiers_by_type(ids)
-        self.assertDictEqual({'internal_id': [], 'name': [], 'accession_number': ['EGA123']}, ids_dict)
+        self.assertDictEqual({'internal_id': set(), 'name': set(), 'accession_number': set(['EGA123'])}, ids_dict)
 
         ids = ['123MYNAME']
         ids_dict = identifiers.EntityIdentifier.separate_identifiers_by_type(ids)
-        self.assertDictEqual({'internal_id': [], 'name': ['123MYNAME'], 'accession_number': []}, ids_dict)
+        self.assertDictEqual({'internal_id': set(), 'name': set(['123MYNAME']), 'accession_number': set()}, ids_dict)
 
         ids = ['123', 'MYNAME', 'ERP123']
         ids_dict = identifiers.EntityIdentifier.separate_identifiers_by_type(ids)
-        self.assertDictEqual({'internal_id': ['123'], 'name': ['MYNAME'], 'accession_number': ['ERP123']}, ids_dict)
+        self.assertDictEqual({'internal_id': set(['123']), 'name': set(['MYNAME']), 'accession_number': set(['ERP123'])}, ids_dict)
 
 
