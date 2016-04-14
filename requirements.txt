@@ -1,6 +1,6 @@
 git+https://github.com/wtsi-hgi/common-python.git@master#egg=hgicommon
 git+https://github.com/wtsi-hgi/baton-python-wrapper.git@master#egg=baton
-git+https://github.com/wtsi-hgi/python-json.git@d743cd4a0d141e2ab24dd5cdce34b7e7329482a6#egg=hgijson
+git+https://github.com/wtsi-hgi/python-json.git@master#egg=hgijson
 PyHamcrest==1.8.5
 git+https://github.com/wtsi-hgi/sequencescape-python-client.git@master#egg=sequencescape
 virtualenv==14.0.6
