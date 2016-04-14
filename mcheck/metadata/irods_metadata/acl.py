@@ -54,7 +54,7 @@ class IrodsACL:
                 raise ValueError("This permission %s is not recognized." % perm)
 
         permission = get_corresponding_permission(acl_item.level.name)
-        return IrodsACL(access_group=acl_item.owner, zone=acl_item.zone, permission=permission)
+        return IrodsACL(access_group=acl_item.user_or_group, zone=None, permission=permission)
 
 
     def __eq__(self, other):
