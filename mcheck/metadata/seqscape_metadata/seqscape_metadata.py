@@ -310,9 +310,9 @@ class SeqscapeMetadata:
 
     @classmethod
     def _group_entity_ids_by_id_type(cls, entities):
-        return {'name': cls._extract_list_of_ids_from_entities(entities, 'name'),
-                'accession_number': cls._extract_list_of_ids_from_entities(entities, 'accession_number'),
-                'internal_id': cls._extract_list_of_ids_from_entities(entities, 'internal_id')
+        return {'name': set(cls._extract_list_of_ids_from_entities(entities, 'name')),
+                'accession_number': set(cls._extract_list_of_ids_from_entities(entities, 'accession_number')),
+                'internal_id': set(cls._extract_list_of_ids_from_entities(entities, 'internal_id'))
         }
 
     def get_samples(self):

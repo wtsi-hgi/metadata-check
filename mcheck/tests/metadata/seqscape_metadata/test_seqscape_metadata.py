@@ -454,8 +454,8 @@ class TestSeqscapeMetadata(unittest.TestCase):
         raw_metadata.add_fetched_entities(lib1_fetched)
 
         metadata = SeqscapeMetadata.from_raw_metadata(raw_metadata)
-        self.assertListEqual(metadata.get_samples(), [sam1])
-        self.assertListEqual(metadata.get_libraries(), [lib1])
+        self.assertSetEqual(metadata.get_samples(), set([sam1]))
+        self.assertSetEqual(metadata.get_libraries(), set([lib1]))
 
 
     def test_extract_list_of_ids_from_entities_ok(self):
@@ -497,11 +497,11 @@ class TestSeqscapeMetadata(unittest.TestCase):
     def test_get_all_sample_ids_grouped_by_id_type_ok(self):
         sam1 = Sample(name='sam1', accession_number='ega1', internal_id='1')
         sam2 = Sample(name='sam2', accession_number='ega2', internal_id='2')
-        seqsc_metadata = SeqscapeMetadata(samples=[sam1, sam2])
+        seqsc_metadata = SeqscapeMetadata(samples=set([sam1, sam2]))
         result = seqsc_metadata.get_all_sample_ids_grouped_by_id_type()
-        expected = {'name': ['sam1', 'sam2'],
-                    'accession_number': ['ega1', 'ega2'],
-                    'internal_id': ['1', '2']
+        expected = {'name': set(['sam1', 'sam2']),
+                    'accession_number': set(['ega1', 'ega2']),
+                    'internal_id': set(['1', '2'])
         }
         self.assertDictEqual(result, expected)
 
@@ -511,8 +511,8 @@ class TestSeqscapeMetadata(unittest.TestCase):
         sam2 = Sample(name='sam2', accession_number='ega2', internal_id='2')
         seqsc_metadata = SeqscapeMetadata(samples=[sam1, sam2])
         result = seqsc_metadata.get_sample_ids_by_id_type('name')
-        expected = ['sam1', 'sam2']
-        self.assertListEqual(result, expected)
+        expected = set(['sam1', 'sam2'])
+        self.assertSetEqual(result, expected)
 
 
     def test_get_sample_ids_by_id_type_empty(self):
@@ -520,7 +520,7 @@ class TestSeqscapeMetadata(unittest.TestCase):
         sam2 = Sample(accession_number='ega2', internal_id='2')
         seqsc_metadata = SeqscapeMetadata(samples=[sam1, sam2])
         result = seqsc_metadata.get_sample_ids_by_id_type('name')
-        expected = []
-        self.assertListEqual(result, expected)
+        expected = set([])
+        self.assertSetEqual(result, expected)
 
 
