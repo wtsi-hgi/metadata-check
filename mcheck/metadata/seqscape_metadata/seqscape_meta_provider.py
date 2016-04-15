@@ -31,21 +31,22 @@ class SeqscapeRawMetadataProvider:
         return connect_to_sequencescape("mysql://" + user + ":@" + host + ":" + str(port) + "/" + db_name)
 
     @classmethod
-    def _fetch_samples(cls, ss_connection, sample_names: typing.List[str], sample_ids: typing.List[str],
-                       sample_accession_nrs: typing.List[str]):
-        if sample_names and type(sample_names) is not list:
+    def _fetch_samples(cls, ss_connection, sample_names: typing.Set[str], sample_ids: typing.Set[str],
+                       sample_accession_nrs: typing.Set[str]):
+        if sample_names and type(sample_names) is not set:
             raise ValueError("Sample_names parameter should be a list, and is a %s" % str(type(sample_names)))
-        if sample_ids and type(sample_ids) is not list:
+        if sample_ids and type(sample_ids) is not set:
             raise ValueError("Sample_ids parameter should be a list and is a %s" % str(type(sample_ids)))
-        if sample_accession_nrs and type(sample_accession_nrs) is not list:
+        if sample_accession_nrs and type(sample_accession_nrs) is not set:
             raise ValueError(
                 "Sample_accession_numbers parameter should be a list and is a %s" % str(type(sample_accession_nrs)))
 
+        sample_names = list(sample_names)
+        sample_accession_nrs = list(sample_accession_nrs)
+        sample_ids = list(sample_ids)
         samples_fetched_by_name = None
         if sample_names:
-            print("Sample names: %s" % sample_names)
             samples_by_name = ss_connection.sample.get_by_name(sample_names)
-            print("Samples by name found: %s" % samples_by_name)
             if samples_by_name:
                 samples_fetched_by_name = SeqscapeEntityQueryAndResults(samples_by_name,
                                                                   query_ids=sample_names,
@@ -76,14 +77,17 @@ class SeqscapeRawMetadataProvider:
     @classmethod
     def _fetch_studies(cls, ss_connection, study_names: typing.List[str], study_ids: typing.List[str],
                        study_accession_nrs: typing.List[str]) -> typing.Tuple:
-        if study_names and type(study_names) is not list:
+        if study_names and type(study_names) is not set:
             raise ValueError("Study_names parameter should be a list and it is a %s." % str(type(study_names)))
-        if study_ids and type(study_ids) is not list:
+        if study_ids and type(study_ids) is not set:
             raise ValueError("Study_ids parameter should be a list and it is a %s" % str(type(study_ids)))
-        if study_accession_nrs and type(study_accession_nrs) is not list:
+        if study_accession_nrs and type(study_accession_nrs) is not set:
             raise ValueError(
                 "Study_accession_nrs parameter should be a list and it is a %s" % str(type(study_accession_nrs)))
 
+        study_ids = list(study_ids)
+        study_names = list(study_names)
+        study_accession_nrs = list(study_accession_nrs)
         studies_fetched_by_name = None
         if study_names:
             studies_by_name = ss_connection.study.get_by_name(study_names)
@@ -117,12 +121,14 @@ class SeqscapeRawMetadataProvider:
 
 
     @classmethod
-    def _fetch_libraries(cls, ss_connection, library_names: typing.List[str], library_ids: typing.List[str]):
-        if library_names and type(library_names) is not list:
+    def _fetch_libraries(cls, ss_connection, library_names: typing.Set[str], library_ids: typing.Set[str]):
+        if library_names and type(library_names) is not set:
             raise ValueError("Library_names parameter should be a list and it is a %s" % str(type(library_names)))
-        if library_ids and type(library_ids) is not list:
+        if library_ids and type(library_ids) is not set:
             raise ValueError("Library_ids parameter should be a list and it is a %s" % str(type(library_ids)))
 
+        library_names = list(library_names)
+        library_ids = list(library_ids)
         libraries_fetched_by_id = None
         if library_ids:
             libraries_by_id = ss_connection.library.get_by_id(library_ids)
@@ -149,8 +155,8 @@ class SeqscapeRawMetadataProvider:
         return libraries_fetched_by_name, libraries_fetched_by_id
 
     @classmethod
-    def _fetch_samples_for_studies(cls, ss_connection, studies):
-        print("Studies: %s" % studies)
+    def _fetch_samples_for_studies(cls, ss_connection, studies: typing.Set[str]):
+        studies = list(studies)
         samples = ss_connection.sample.get_associated_with_study(studies)
         if samples:
             samples_fetched = SeqscapeEntityQueryAndResults(samples, query_ids=studies, query_id_type='whole study', query_entity_type='study', fetched_entity_type='sample')
@@ -158,8 +164,8 @@ class SeqscapeRawMetadataProvider:
         return None
 
     @classmethod
-    def _fetch_studies_for_samples(cls, ss_connection, samples):
-        print("Fetch studies for samples where samples = %s" % samples)
+    def _fetch_studies_for_samples(cls, ss_connection, samples: typing.Set[str]):
+        samples = list(samples)
         studies = ss_connection.study.get_associated_with_sample(samples)
         if studies:
             studies_fetched = SeqscapeEntityQueryAndResults(studies, query_ids=samples, query_id_type='whole sample', query_entity_type='sample', fetched_entity_type='study')
@@ -168,6 +174,13 @@ class SeqscapeRawMetadataProvider:
 
     @classmethod
     def fetch_raw_metadata(cls, samples: typing.Mapping, libraries: typing.Mapping, studies: typing.Mapping) -> SeqscapeRawMetadata:
+        """
+
+        :param samples: a dict containing: key = name of the identifier type, value = set of identifier values
+        :param libraries: same
+        :param studies: same
+        :return:
+        """
         raw_meta = SeqscapeRawMetadata()
         ss_connection = cls._get_connection(config.SEQSC_HOST, config.SEQSC_PORT, config.SEQSC_DB_NAME,
                                             config.SEQSC_USER)
