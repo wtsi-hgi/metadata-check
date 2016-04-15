@@ -32,7 +32,7 @@ class SamFileHeaderExtractor:
         """
             This method extract the header from a file and returns it as text (string)
         """
-        child_proc = subprocess.Popen([config.SAMTOOLS_PATH, 'view', '-H', fpath],
+        child_proc = subprocess.Popen(['samtools', 'view', '-H', fpath],
                                       stderr=subprocess.PIPE,
                                       stdout=subprocess.PIPE)
         (out, err) = child_proc.communicate()
