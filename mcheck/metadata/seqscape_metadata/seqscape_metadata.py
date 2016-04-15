@@ -157,7 +157,7 @@ class SeqscapeRawMetadata(object):
         #     # entities_by_type = set()
         #     # entities_by_type.update(ent)
         #     all_entities.update(entities_by_type)
-        return list(all_entities)
+        return all_entities
 
 
     def get_all_fetched_entity_types(self) -> List[str]:
@@ -228,7 +228,7 @@ class SeqscapeRawMetadata(object):
         studies = self.get_entities_by_type('study')
         if not set(studies_by_samples).issubset(set(studies)):
             diff = set(studies_by_samples).difference(set(studies))
-            print("Difference: %s" % diff)
+            #print("Difference: %s" % diff)
             error_msg = "These samples: %s are associated with the study(s): %s but aren't part of metadata" % (diff, studies)
             problems.append(CheckResult(check_name="Check the samples returned by querying by study(s)", error_message=error_msg, severity=SEVERITY.WARNING))
         return problems
@@ -240,11 +240,11 @@ class SeqscapeRawMetadata(object):
             return problems
         samples_by_studies = self.get_all_entities_by_association_by_type('study', 'sample')
         samples = self.get_entities_by_type('sample')
-        print("Samples by studies: %s" % samples_by_studies)
-        print("Samples: %s" % samples)
+        #print("Samples by studies: %s" % samples_by_studies)
+        #print("Samples: %s" % samples)
         if not set(samples).issubset(set(samples_by_studies)):
             diff = set(samples).difference(set(samples_by_studies))
-            print("Difference: %s" % diff)
+            #print("Difference: %s" % diff)
             error_msg = "These studies:%s are associated with the samples: %s but aren't part of metadata " % (diff, samples)
             problems.append(CheckResult(check_name="Check the studies returned by querying by sample(s)", error_message=error_msg, severity=SEVERITY.CRITICAL))
         return problems
