@@ -78,8 +78,8 @@ class TestRawFileMetadataFromBaton(unittest.TestCase):
         self.assertEqual(len(raw_meta.file_replicas), 2)
 
     def test_from_baton_wrapper_acls(self):
-        acl = [baton_models.AccessControl(owner='hgi', zone='humgen', level=baton_models.AccessControl.Level.WRITE)]
-        data_obj = baton_models.DataObject(path='/somepath/file.txt', access_control_list=acl)
+        acl = [baton_models.AccessControl(user_or_group='hgi', level=baton_models.AccessControl.Level.WRITE)]
+        data_obj = baton_models.DataObject(path='/somepath/file.txt', access_controls=acl)
         raw_meta = IrodsRawFileMetadata.from_baton_wrapper(data_obj)
         self.assertEqual(len(raw_meta.acls), 1)
         self.assertEqual(raw_meta.acls[0].access_group, 'hgi')
@@ -88,12 +88,12 @@ class TestRawFileMetadataFromBaton(unittest.TestCase):
 
 
     def test_from_baton_wrapper_full_obj(self):
-        acl = [baton_models.AccessControl(owner='irina', zone='humgen', level=baton_models.AccessControl.Level.OWN)]
+        acl = [baton_models.AccessControl(user_or_group='irina', level=baton_models.AccessControl.Level.OWN)]
         replicas = [
             baton_models.DataObjectReplica(number=1, checksum="123abc", host='hgi-dev', resource_name='irods-s1', up_to_date=True),
             baton_models.DataObjectReplica(number=2, checksum="abc", host='hgi-dev-wow', resource_name='irods-s2', up_to_date=True),]
         metadata = baton_coll.IrodsMetadata({'study': set(['BLUEPRINT'])})
-        data_obj = baton_models.DataObject(path='/somepath/file.txt', access_control_list=acl, metadata=metadata, replicas=replicas)
+        data_obj = baton_models.DataObject(path='/somepath/file.txt', access_controls=acl, metadata=metadata, replicas=replicas)
         raw_meta = IrodsRawFileMetadata.from_baton_wrapper(data_obj)
         self.assertEqual(raw_meta.fname, 'file.txt')
         self.assertEqual(raw_meta.dir_path, '/somepath')
@@ -105,10 +105,10 @@ class TestRawFileMetadataFromBaton(unittest.TestCase):
 
 
     def test_from_baton_wrapper_all_ok(self):
-        acl = [baton_models.AccessControl(owner='irina', zone='humgen', level=baton_models.AccessControl.Level.OWN)]
+        acl = [baton_models.AccessControl(user_or_group='irina', level=baton_models.AccessControl.Level.OWN)]
         replicas = [
             baton_models.DataObjectReplica(number=1, checksum="123abc", host='hgi-dev', resource_name='irods-s1', up_to_date=True)]
-        data_obj = baton_models.DataObject(path='/somepath/file.txt', access_control_list=acl, replicas=replicas)
+        data_obj = baton_models.DataObject(path='/somepath/file.txt', access_controls=acl, replicas=replicas)
         raw_meta = IrodsRawFileMetadata.from_baton_wrapper(data_obj)
         self.assertEqual(raw_meta.fname, 'file.txt')
         self.assertEqual(raw_meta.dir_path, '/somepath')
