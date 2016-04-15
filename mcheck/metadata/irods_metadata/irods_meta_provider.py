@@ -37,13 +37,12 @@ class iRODSMetadataProvider:
     def retrieve_metadata_by_file_path(cls, fpath):
         connection = connect_to_irods_with_baton(config.BATON_BIN, skip_baton_binaries_validation=True)
         baton_file_metadata_as_list = connection.data_object.get_by_path(fpath)
-        #TODO: TO change when issue #21 is resolved:
-        baton_file_metadata = baton_file_metadata_as_list[0] if baton_file_metadata_as_list else None
+        baton_file_metadata = baton_file_metadata_as_list if baton_file_metadata_as_list else None
         raw_metadata = IrodsRawFileMetadata.from_baton_wrapper(baton_file_metadata)
         return raw_metadata
 
     @classmethod
-    def retrieve_metadata_by_metadata(cls, search_criteria_dict, zone=None):
+    def retrieve_fileinfo_and_metadata_by_metadata(cls, search_criteria_dict, zone=None):
         search_crit_list = []
         for k, v in search_criteria_dict.items():
             search_criterion = SearchCriterion(k, v)
@@ -56,6 +55,7 @@ class iRODSMetadataProvider:
         return raw_meta_objects
 
 
-iRODSMetadataProvider.retrieve_metadata_by_file_path('/Sanger1/home/ic4/some_json.txt')
-objs = iRODSMetadataProvider.retrieve_metadata_by_metadata({'file_type': 'tox'})
-print("Objects found by metadata: %s" % objs)
+# by_path = iRODSMetadataProvider.retrieve_metadata_by_file_path('/Sanger1/home/ic4/some_json.txt')
+# print("Metadata for file by path %s " % by_path)
+# objs = iRODSMetadataProvider.retrieve_fileinfo_and_metadata_by_metadata({'file_type': 'tox'})
+# print("Objects found by metadata: %s" % objs)
