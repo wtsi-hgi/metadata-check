@@ -23,7 +23,7 @@ import unittest
 from mcheck.metadata.file_header_metadata.header_meta_provider import SAMFileHeaderMetadataProvider
 from mcheck.metadata.file_header_metadata.header_metadata import SAMFileHeaderMetadata
 
-
+@unittest.skip
 class TestSAMFileHeaderMetadataProvider(unittest.TestCase):
 
     def test_fetch(self):
