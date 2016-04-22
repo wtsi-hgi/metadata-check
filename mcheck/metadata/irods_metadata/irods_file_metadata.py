@@ -51,7 +51,8 @@ class IrodsRawFileMetadata:
         fname = data_object.get_name()
         collection = data_object.get_collection_path()
         replicas = [IrodsFileReplica.from_baton_wrapper(replica) for replica in data_object.replicas]
-        acls = [IrodsACL.from_baton_wrapper(ac_item) for ac_item in data_object.acl]
+        print("ACLS before initializing: %s" % data_object.acl)
+        acls = [IrodsACL.from_baton_wrapper(ac_item) for ac_item in data_object.acl if ac_item]
         raw_meta = IrodsRawFileMetadata(fname=fname, dir_path=collection, file_replicas=replicas, acls=acls)
         if data_object.metadata:
             raw_meta.set_attributes_from_dict(data_object.metadata.to_dict())
@@ -83,7 +84,7 @@ class IrodsRawFileMetadata:
 
     def validate_fields(self) -> List[CheckResult]:
         problems = []
-        for replica in self.replicas:
+        for replica in self.file_replicas:
             problems.extend(replica.validate_fields())
         for acl in self.acls:
             problems.extend(acl.validate_fields())
@@ -125,9 +126,9 @@ class IrodsRawFileMetadata:
 
     def check_more_than_one_replicas(self) -> List[CheckResult]:
         problems = []
-        if len(self.replicas) <= 1:
+        if len(self.file_replicas) <= 1:
             problems.append(CheckResult(check_name="Check that file has more than 1 replica", error_message="File has "
-                                                                            + str(len(self.replicas)) + " replicas"))
+                                                                            + str(len(self.file_replicas)) + " replicas"))
         return problems
 
     def check_non_public_acls(self) -> List[CheckResult]:
@@ -204,8 +205,9 @@ class IrodsSeqFileMetadata(object):
         }
 
         # Library: Hack to correct NPG mistakes (they submit under library names the actual library ids)
-        library_identifiers = raw_metadata.get_values_for_attribute('library') + \
-                              raw_metadata.get_values_for_attribute('library_id')
+        library_identifiers = raw_metadata.get_values_for_attribute('library')\
+
+        library_identifiers = library_identifiers.union(raw_metadata.get_values_for_attribute('library_id'))
         irods_metadata.libraries = EntityIdentifier.separate_identifiers_by_type(library_identifiers)
 
         # Study:
@@ -232,7 +234,7 @@ class IrodsSeqFileMetadata(object):
     def get_reference_paths(self) -> List[str]:
         if len(self._reference_paths) != 1:
             return []
-        return self._reference_paths[0]
+        return list(self._reference_paths)[0]
 
     def get_references(self) -> List[str]:
         return [self.extract_reference_name_from_ref_path(ref) for ref in self._reference_paths]
@@ -240,12 +242,12 @@ class IrodsSeqFileMetadata(object):
     def get_npg_qc(self) -> Union[str, None]:
         if len(self._npg_qc_values) != 1:
             return None
-        return self._npg_qc_values[0]
+        return list(self._npg_qc_values)[0]
 
     def get_target(self) -> Union[str, None]:
         if len(self._target_values) != 1:
             return None
-        return self._target_values[0]
+        return list(self._target_values)[0]
 
     @classmethod
     def extract_reference_name_from_ref_path(cls, ref_path: str) -> str:
@@ -378,8 +380,8 @@ class IrodsSeqFileMetadata(object):
 
     def __str__(self):
         return "Fpath = " + str(self.fpath) + ", fname = " + str(self.fname) + ", samples = " + str(self.samples) + \
-               ", libraries = " + str(self.libraries) + ", studies = " + str(self.studies) + ", md5 = " + str(self.md5) \
-               + ", ichksum_md5 = " + str(self.ichksum_md5) + ", reference = " + str(self.reference)
+               ", libraries = " + str(self.libraries) + ", studies = " + str(self.studies) + ", md5 = " + str(self.checksum_in_meta) \
+               + ", ichksum_md5 = " + str(self.checksum_at_upload) + ", reference = " + str(self.get_reference_paths())
 
     def __repr__(self):
         return self.__str__()
