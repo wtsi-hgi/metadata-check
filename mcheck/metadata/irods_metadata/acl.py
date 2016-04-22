@@ -91,8 +91,8 @@ class IrodsACL:
 
     @staticmethod
     def _is_permission_valid(permission: str):
-        if not type(permission) is str:
-            raise TypeError("This permission is not a string, it is a %s" % str(type(permission)))
+        # if permission and not type(permission) in [enum, str]:
+        #     raise TypeError("This permission is not a string, it is a %s" % str(type(permission)))
         try:
             irods_consts.IrodsPermission(permission)
         except KeyError:
@@ -104,7 +104,7 @@ class IrodsACL:
 
     @staticmethod
     def _is_irods_zone_valid(zone):
-        if not type(zone) is str:
+        if zone and not type(zone) is str:
             raise TypeError("This zone is not a string, it is a: %s " % str(type(zone)))
         try:
             irods_consts.IrodsZones(zone)
