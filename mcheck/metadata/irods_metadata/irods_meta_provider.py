@@ -22,7 +22,7 @@ This file has been created on Nov 16, 2015.
 from mcheck.main import metadata_utils
 #from mcheck.irods_baton import baton_wrapper as baton
 
-from mcheck.metadata.irods_metadata.irods_file_metadata import IrodsRawFileMetadata
+from mcheck.metadata.irods_metadata.irods_file_metadata import IrodsRawFileMetadata, IrodsSeqFileMetadata
 
 import config
 from baton.api import connect_to_irods_with_baton, Connection
@@ -39,7 +39,11 @@ class iRODSMetadataProvider:
         baton_file_metadata_as_list = connection.data_object.get_by_path(fpath)
         baton_file_metadata = baton_file_metadata_as_list if baton_file_metadata_as_list else None
         raw_metadata = IrodsRawFileMetadata.from_baton_wrapper(baton_file_metadata)
-        return raw_metadata
+        problems = raw_metadata.validate_fields()
+        problems.extend(raw_metadata.check_all_replicas_have_same_checksum())
+        problems.extend(raw_metadata.check_has_read_permission_ss_group())
+        seq_metadata = IrodsSeqFileMetadata.from_raw_metadata(raw_metadata)
+        return seq_metadata
 
     @classmethod
     def retrieve_fileinfo_and_metadata_by_metadata(cls, search_criteria_dict, zone=None):
