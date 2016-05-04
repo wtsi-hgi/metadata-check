@@ -29,7 +29,7 @@ from mcheck.results.constants import SEVERITY
 
 
 class SeqscapeEntityQueryAndResults:
-    def __init__(self, entities_fetched, query_ids, query_id_type, query_entity_type, fetched_entity_type):
+    def __init__(self, entities_fetched: NamedModel, query_ids: List, query_id_type: str, query_entity_type: str, fetched_entity_type: str):
         """
         This is a class used to store data retrieved from Sequencescape DB.
         It holds entities are fetched from Seqscape when querying by a list of ids of type query_id_type.
@@ -42,7 +42,7 @@ class SeqscapeEntityQueryAndResults:
             self.entities_fetched = entities_fetched
         else:
             self.entities_fetched = [entities_fetched]
-        self.query_ids = query_ids
+        self.query_ids = [str(id) for id in query_ids]
         self.query_id_type = query_id_type
         self.query_entity_type = query_entity_type
         self.fetched_entity_type = fetched_entity_type
@@ -53,7 +53,7 @@ class SeqscapeEntityQueryAndResults:
         return ids_missing
 
     def _find_duplicated_ids(self) -> List:
-        ids_found = [getattr(ent, self.query_id_type) for ent in self.entities_fetched]
+        ids_found = [str(getattr(ent, self.query_id_type)) for ent in self.entities_fetched]
         ids_duplicated = [item for item, count in collections.Counter(ids_found).items() if count > 1]
         return ids_duplicated
 
@@ -141,22 +141,14 @@ class SeqscapeRawMetadata(object):
 
     def get_entities_by_type(self, entity_type: str):
         results = []
-
         for entities in self._entities_dict_by_type[entity_type]:
             results.extend(entities.entities_fetched)
-        #     results.extend(entities)
         return results
-#        return [ent.entities_fetched for ent in self._entities_dict_by_type[entity_type]]
 
 
     def get_entities_without_duplicates_by_entity_type(self, entity_type: str) -> List[NamedModel]:
         entities_by_type = self.get_entities_by_type(entity_type)
-        print("Entities by type: %s" % entities_by_type)
         all_entities = set(entities_by_type)
-        # for ent in entities_by_type:
-        #     # entities_by_type = set()
-        #     # entities_by_type.update(ent)
-        #     all_entities.update(entities_by_type)
         return all_entities
 
 
@@ -310,9 +302,12 @@ class SeqscapeMetadata:
 
     @classmethod
     def _group_entity_ids_by_id_type(cls, entities):
-        return {'name': set(cls._extract_list_of_ids_from_entities(entities, 'name')),
-                'accession_number': set(cls._extract_list_of_ids_from_entities(entities, 'accession_number')),
-                'internal_id': set(cls._extract_list_of_ids_from_entities(entities, 'internal_id'))
+        names = cls._extract_list_of_ids_from_entities(entities, 'name')
+        accession_nrs = cls._extract_list_of_ids_from_entities(entities, 'accession_number')
+        internal_ids = cls._extract_list_of_ids_from_entities(entities, 'internal_id')
+        return {'name': {str(name) for name in names},
+                'accession_number': {str(acc_nr) for acc_nr in accession_nrs},
+                'internal_id': {str(id) for id in internal_ids}
         }
 
     def get_samples(self):
