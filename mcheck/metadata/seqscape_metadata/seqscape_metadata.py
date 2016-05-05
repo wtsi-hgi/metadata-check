@@ -220,16 +220,30 @@ class SeqscapeRawMetadata(object):
         problems = []
         if not self.get_entities_by_type('sample'):
             return problems
-        studies_by_samples = self.get_all_entities_by_association_by_type('sample', 'study')
-        studies = self.get_entities_by_type('study')
-        if not set(studies_by_samples).issubset(set(studies)):
-            diff = set(studies_by_samples).difference(set(studies))
-            # print("Difference: %s" % diff)
-            error_msg = "These samples: %s are associated with the study(s): %s but aren't part of metadata" % (
-                diff, studies)
+        studies_by_samples_set = set(self.get_all_entities_by_association_by_type('sample', 'study'))
+        studies_set = set(self.get_entities_by_type('study'))
+        print("Studies set: %s" % studies_set)
+        print("Samples set: %s" % self.get_entities_by_type('sample'))
+        print("Stds by sams set: %s" % studies_by_samples_set)
+        diff_wrong_studies_for_samples_in_irods = studies_set.difference(studies_by_samples_set)
+        if not studies_set.issubset(studies_by_samples_set):
+            error_msg = "For samples %s, the studies in iRODS: %s and the studies in Seqscape don't agree: %s" % ( self.get_entities_by_type('sample'), studies_set, studies_by_samples_set)
             problems.append(
-                CheckResult(check_name="Check the samples returned by querying by study(s)", error_message=error_msg,
+                CheckResult(check_name="Check the samples belong to the same studies in iRODS and Seqscape", error_message=error_msg,
                             severity=SEVERITY.WARNING))
+        elif diff_wrong_studies_for_samples_in_irods:
+            error_msg = "Studies in Seqscape and in iRODS for samples %s don't agree. Studies in iRODS and not in Seqscape: %s" % (
+                self.get_entities_by_type('sample'), diff_wrong_studies_for_samples_in_irods)
+            problems.append(CheckResult(
+                check_name="Check the study in iRODS for the samples given are associated with same sample in Seqscape",
+                error_message=error_msg, severity=SEVERITY.CRITICAL))
+        diff_sam_belongs2more_studies = studies_by_samples_set.difference(studies_set)
+        if diff_sam_belongs2more_studies:
+            error_msg = "Some samples belong to more than one study. For samples: %s we found in Seqscape these studies: %s" % (
+                self.get_entities_by_type('sample'), diff_sam_belongs2more_studies)
+            problems.append(CheckResult(check_name="Check the studies found in Seqscape when querying by samples",
+                                        error_message=error_msg, severity=SEVERITY.WARNING))
+
         return problems
 
 
@@ -244,7 +258,8 @@ class SeqscapeRawMetadata(object):
             error_msg = "Not all the samples in this study have been sequenced, remaining: %s, with sample ids: %s" % (
                 str(len(diff_not_sequenced_yet)), diff_not_sequenced_yet)
             problems.append(
-                CheckResult(check_name="All samples sequenced", error_message=error_msg, severity=SEVERITY.WARNING))
+                CheckResult(check_name="Check if all samples sequenced", error_message=error_msg,
+                            severity=SEVERITY.WARNING))
         if not samples_set.issubset(samples_by_studies_set):
             diff_samples_wrong_study = samples_set.difference(samples_by_studies_set)
             error_msg = "Some samples don't appear under study(s): %s in Sequencescape, but they appear under this study in iRODS. Number of samples: %s, and ids: %s" % (
