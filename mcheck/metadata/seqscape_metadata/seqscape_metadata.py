@@ -29,7 +29,8 @@ from mcheck.results.constants import SEVERITY
 
 
 class SeqscapeEntityQueryAndResults:
-    def __init__(self, entities_fetched: NamedModel, query_ids: List, query_id_type: str, query_entity_type: str, fetched_entity_type: str):
+    def __init__(self, entities_fetched: NamedModel, query_ids: List, query_id_type: str, query_entity_type: str,
+                 fetched_entity_type: str):
         """
         This is a class used to store data retrieved from Sequencescape DB.
         It holds entities are fetched from Seqscape when querying by a list of ids of type query_id_type.
@@ -107,7 +108,8 @@ class SeqscapeRawMetadata(object):
         :return:
         """
         self._entities_dict_by_type = defaultdict(list)
-        self._entities_fetched_by_association = defaultdict(list)   # key: tuple(entity_queried_type, entity_fetched_type)
+        self._entities_fetched_by_association = defaultdict(
+            list)  # key: tuple(entity_queried_type, entity_fetched_type)
 
     def add_fetched_entities(self, query_results: SeqscapeEntityQueryAndResults):
         """
@@ -119,10 +121,10 @@ class SeqscapeRawMetadata(object):
             entity_type = query_results.fetched_entity_type
             self._entities_dict_by_type[entity_type].append(query_results)
 
-    def add_all_fetched_entities(self, entities_fetched: List[SeqscapeEntityQueryAndResults]):
-        if entities_fetched:
-            entity_type = entities_fetched[0].fetched_entity_type
-            self._entities_dict_by_type[entity_type].extend(entities_fetched)
+    def add_all_fetched_entities(self, query_results: List[SeqscapeEntityQueryAndResults]):
+        if query_results:
+            entity_type = query_results[0].fetched_entity_type
+            self._entities_dict_by_type[entity_type].extend(query_results)
 
     def add_fetched_entities_by_association(self, query_results: SeqscapeEntityQueryAndResults) -> None:
         """
@@ -171,7 +173,8 @@ class SeqscapeRawMetadata(object):
     def get_all_fetched_entities_by_association_by_type(self, query_entity_type, fetched_entity_type):
         return self._entities_fetched_by_association[(query_entity_type, fetched_entity_type)]
 
-    def get_all_entities_by_association_by_type(self, query_entity_type: str, fetched_entity_type:str) -> List[SeqscapeEntityQueryAndResults]:
+    def get_all_entities_by_association_by_type(self, query_entity_type: str, fetched_entity_type:str) -> List[
+        SeqscapeEntityQueryAndResults]:
         query_results = self._entities_fetched_by_association[(query_entity_type, fetched_entity_type)]
         res = []
         for v in query_results:
@@ -180,7 +183,8 @@ class SeqscapeRawMetadata(object):
 
 
     @classmethod
-    def _check_by_comparison_entities_fetched_by_different_id_types(cls, query_results: List[SeqscapeEntityQueryAndResults]) -> List:
+    def _check_by_comparison_entities_fetched_by_different_id_types(cls, query_results: List[
+        SeqscapeEntityQueryAndResults]) -> List:
         problems = []
         for i in range(1, len(query_results)):
             entities_1 = query_results[i - 1]
@@ -220,9 +224,12 @@ class SeqscapeRawMetadata(object):
         studies = self.get_entities_by_type('study')
         if not set(studies_by_samples).issubset(set(studies)):
             diff = set(studies_by_samples).difference(set(studies))
-            #print("Difference: %s" % diff)
-            error_msg = "These samples: %s are associated with the study(s): %s but aren't part of metadata" % (diff, studies)
-            problems.append(CheckResult(check_name="Check the samples returned by querying by study(s)", error_message=error_msg, severity=SEVERITY.WARNING))
+            # print("Difference: %s" % diff)
+            error_msg = "These samples: %s are associated with the study(s): %s but aren't part of metadata" % (
+                diff, studies)
+            problems.append(
+                CheckResult(check_name="Check the samples returned by querying by study(s)", error_message=error_msg,
+                            severity=SEVERITY.WARNING))
         return problems
 
 
@@ -230,15 +237,21 @@ class SeqscapeRawMetadata(object):
         problems = []
         if not self.get_entities_by_type('study'):
             return problems
-        samples_by_studies = self.get_all_entities_by_association_by_type('study', 'sample')
-        samples = self.get_entities_by_type('sample')
-        #print("Samples by studies: %s" % samples_by_studies)
-        #print("Samples: %s" % samples)
-        if not set(samples).issubset(set(samples_by_studies)):
-            diff = set(samples).difference(set(samples_by_studies))
-            #print("Difference: %s" % diff)
-            error_msg = "These studies:%s are associated with the samples: %s but aren't part of metadata " % (diff, samples)
-            problems.append(CheckResult(check_name="Check the studies returned by querying by sample(s)", error_message=error_msg, severity=SEVERITY.CRITICAL))
+        samples_by_studies_set = set(self.get_all_entities_by_association_by_type('study', 'sample'))
+        samples_set = set(self.get_entities_by_type('sample'))
+        diff_not_sequenced_yet = samples_by_studies_set.difference(samples_set)
+        if diff_not_sequenced_yet:
+            error_msg = "Not all the samples in this study have been sequenced, remaining: %s, with sample ids: %s" % (
+                str(len(diff_not_sequenced_yet)), diff_not_sequenced_yet)
+            problems.append(
+                CheckResult(check_name="All samples sequenced", error_message=error_msg, severity=SEVERITY.WARNING))
+        if not samples_set.issubset(samples_by_studies_set):
+            diff_samples_wrong_study = samples_set.difference(samples_by_studies_set)
+            error_msg = "Some samples don't appear under study(s): %s in Sequencescape, but they appear under this study in iRODS. Number of samples: %s, and ids: %s" % (
+                self.get_entities_by_type('study'), str(len(diff_samples_wrong_study)), diff_samples_wrong_study)
+            problems.append(CheckResult(
+                check_name="Check if the sample ids in iRODS for a study belong to the same study in Sqeuencescape ",
+                error_message=error_msg, severity=SEVERITY.CRITICAL))
         return problems
 
 
@@ -280,6 +293,7 @@ class SeqscapeMetadata:
     for comparison with other metadata (fetched from different sources).
     """
 
+    # hmm, it seems that I misunderstood and here everything is a dict of id type - id value...
     def __init__(self, samples=None, libraries=None, studies=None):
         """
         :param samples: a dict like: {'internal_id': [1,2,3], 'name': ['s1',..], 'accession_number': []}
@@ -298,7 +312,8 @@ class SeqscapeMetadata:
 
     @classmethod
     def _extract_list_of_ids_from_entities(cls, entities: List, id_type):
-        return [getattr(ent, id_type) for ent in entities if hasattr(ent, id_type) and getattr(ent, id_type) is not None]
+        return [getattr(ent, id_type) for ent in entities if
+                hasattr(ent, id_type) and getattr(ent, id_type) is not None]
 
     @classmethod
     def _group_entity_ids_by_id_type(cls, entities):
@@ -309,16 +324,6 @@ class SeqscapeMetadata:
                 'accession_number': {str(acc_nr) for acc_nr in accession_nrs},
                 'internal_id': {str(id) for id in internal_ids}
         }
-
-    # def get_all_sample_ids_grouped_by_id_type(self):
-    #     return self._group_entity_ids_by_id_type(self._samples)
-
-    # def get_all_library_ids_grouped_by_id_type(self):
-    #     return self._group_entity_ids_by_id_type(self._libraries)
-    #
-    # def get_all_study_ids_group_by_id_type(self):
-    #     return self._group_entity_ids_by_id_type(self._studies)
-
 
     @property
     def samples(self):
@@ -364,7 +369,6 @@ class SeqscapeMetadata:
 
     def get_library_ids_by_id_type(self, id_type: str) -> List:
         return self._group_entity_ids_by_id_type(self._libraries).get(id_type)
-
 
 
     @property
