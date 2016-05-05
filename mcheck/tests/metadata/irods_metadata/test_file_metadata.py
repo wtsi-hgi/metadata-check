@@ -219,6 +219,21 @@ class TestIrodsRawFileMetadata(unittest.TestCase):
         actual_result = raw_metadata.check_all_replicas_have_same_checksum()
         self.assertEqual(len(actual_result), 1)
 
+    def test_is_true_comparison_when_equal(self):
+        result = IrodsRawFileMetadata._is_true_comparison(1, 1, '=')
+        self.assertTrue(result)
+
+    def test_is_true_comparison_when_less(self):
+        result = IrodsRawFileMetadata._is_true_comparison(1, 2, '<')
+        self.assertTrue(result)
+
+    def test_is_true_comparison_when_not_equal(self):
+        result = IrodsRawFileMetadata._is_true_comparison(1, 3, '=')
+        self.assertFalse(result)
+
+    def test_is_true_comparison_raises_exc_when_operator_unknown(self):
+        self.assertRaises(ValueError, IrodsRawFileMetadata._is_true_comparison, 1, 3, '#')
+
 
     #MetaAVU = namedtuple('MetaAVU', ['attribute', 'value'])    # list of attribute-value tuples
 
