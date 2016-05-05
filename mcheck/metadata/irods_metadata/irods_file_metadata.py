@@ -98,6 +98,8 @@ class IrodsRawFileMetadata:
             return left_operand > right_operand
         elif operator == Operators.LESS_THAN:
             return left_operand < right_operand
+        else:
+            raise ValueError("Operator not defined: %s. It needs to be one of: <>=" % str(operator))
 
     def check_attribute_count(self, avu_counts: List[AttributeCount]) -> List[CheckResult]:
         problems = []

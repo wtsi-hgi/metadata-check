@@ -19,9 +19,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 This file has been created on Nov 19, 2015.
 """
 
-from enum import Enum
+#from enum import Enum
 
-class Operators(Enum):
+class Operators:
     LESS_THAN = '<'
     GREATER_THAN = '>'
     EQUAL = '='
