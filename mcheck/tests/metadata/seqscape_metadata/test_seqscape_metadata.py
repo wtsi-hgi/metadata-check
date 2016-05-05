@@ -342,40 +342,51 @@ class TestEntitiesFetchedByAssociation(unittest.TestCase):
 
 
 class TestSamplesAndStudiesFetched(unittest.TestCase):
+    """
+        The point of this test is that you have:
+        samples: sam3
+        studies: std4
+        samples_by_studies: sam1
+        studies_by_samples: std2
+        And you should get errors given the fact that:
+         samples != samples_by_studies
+        and
+         studies != studies_by_samples
+        """
 
     def setUp(self):
         # Entities by association
         sam1 = Sample(name='sam1', accession_number='ega1', internal_id='1')
-        sam1_fetched = SeqscapeEntityQueryAndResults(sam1, query_ids=['1'],
-                                                       query_id_type='internal_id', query_entity_type='sample',
-                                                       fetched_entity_type='study')
+        sam1_fetched = SeqscapeEntityQueryAndResults(sam1, query_ids=['0'],
+                                                       query_id_type='internal_id', query_entity_type='study',
+                                                       fetched_entity_type='sample')
         self.raw_metadata = SeqscapeRawMetadata()
         self.raw_metadata.add_fetched_entities_by_association(sam1_fetched)
 
         st2 = Study(name='study2', accession_number='ega2', internal_id='2')
-        st2_fetched = SeqscapeEntityQueryAndResults(st2, query_ids=['2'],
-                                                       query_id_type='name', query_entity_type='study',
-                                                       fetched_entity_type='sample')
-        self.raw_metadata.add_fetched_entities_by_association(st2_fetched)
+        sam2_fetched = SeqscapeEntityQueryAndResults(st2, query_ids=['00'],
+                                                       query_id_type='name', query_entity_type='sample',
+                                                       fetched_entity_type='study')
+        self.raw_metadata.add_fetched_entities_by_association(sam2_fetched)
 
         # Independent entities:
         sam3 = Sample(name='sam3', accession_number='ega3', internal_id='3')
-        sam3_fetched = SeqscapeEntityQueryAndResults(sam3, query_ids=['3'], query_entity_type='study', query_id_type='name',
+        sam3_fetched = SeqscapeEntityQueryAndResults(sam3, query_ids=['3'], query_entity_type='sample', query_id_type='name',
                                                fetched_entity_type='sample')
         self.raw_metadata.add_fetched_entities(sam3_fetched)
 
         std4 = Study(name='study4', accession_number='ega4', internal_id='4')
-        std4_fetched = SeqscapeEntityQueryAndResults(std4, query_ids=['4'], query_id_type='name', query_entity_type='sample',
+        std4_fetched = SeqscapeEntityQueryAndResults(std4, query_ids=['4'], query_id_type='name', query_entity_type='study',
                                                fetched_entity_type='study')
         self.raw_metadata.add_fetched_entities(std4_fetched)
 
-    def test_check_samples_fetched_by_study(self):
-        result = self.raw_metadata.check_studies_fetched_by_samples()
-        self.assertEqual(len(result), 1)
-
     def test_check_studies_fetched_by_samples(self):
+        result = self.raw_metadata.check_studies_fetched_by_samples()
+        self.assertEqual(len(result), 2)
+
+    def test_samples_fetched_by_studies(self):
         result = self.raw_metadata.check_samples_fetched_by_studies()
-        self.assertEqual(len(result), 1)
+        self.assertEqual(len(result), 2)
 
 
 class TestCheckEntitiesFetched(unittest.TestCase):
@@ -523,4 +534,17 @@ class TestSeqscapeMetadata(unittest.TestCase):
         expected = set([])
         self.assertSetEqual(result, expected)
 
+    def test_samples(self):
+        sam1 = Sample(accession_number='ega1', internal_id='1')
+        sam2 = Sample(accession_number='ega2', internal_id='2')
+        seqsc_metadata = SeqscapeMetadata(samples=[sam1, sam2])
+        result = set(seqsc_metadata.samples)
+        expected = set(seqsc_metadata._group_entity_ids_by_id_type(seqsc_metadata._samples))
+        self.assertSetEqual(result, expected)
 
+
+    def test_set_sample(self):
+        sam1 = Sample(accession_number='ega1', internal_id='1')
+        sam2 = Sample(accession_number='ega2', internal_id='2')
+        seqsc_metadata = SeqscapeMetadata()
+        seqsc_metadata.samples = [sam1, sam2]
