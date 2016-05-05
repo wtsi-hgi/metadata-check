@@ -454,8 +454,8 @@ class TestSeqscapeMetadata(unittest.TestCase):
         raw_metadata.add_fetched_entities(lib1_fetched)
 
         metadata = SeqscapeMetadata.from_raw_metadata(raw_metadata)
-        self.assertSetEqual(metadata.get_samples(), set([sam1]))
-        self.assertSetEqual(metadata.get_libraries(), set([lib1]))
+        self.assertSetEqual(metadata.get_samples_as_objects(), set([sam1]))
+        self.assertSetEqual(metadata.get_libraries_as_objects(), set([lib1]))
 
 
     def test_extract_list_of_ids_from_entities_ok(self):
@@ -494,11 +494,11 @@ class TestSeqscapeMetadata(unittest.TestCase):
         self.assertSetEqual(set(grouped_entities['accession_number']), set(['ega1', 'ega2']))
 
 
-    def test_get_all_sample_ids_grouped_by_id_type_ok(self):
+    def test_group_entity_ids_by_id_type_ok(self):
         sam1 = Sample(name='sam1', accession_number='ega1', internal_id='1')
         sam2 = Sample(name='sam2', accession_number='ega2', internal_id='2')
         seqsc_metadata = SeqscapeMetadata(samples=set([sam1, sam2]))
-        result = seqsc_metadata.get_all_sample_ids_grouped_by_id_type()
+        result = seqsc_metadata._group_entity_ids_by_id_type(seqsc_metadata._samples)
         expected = {'name': set(['sam1', 'sam2']),
                     'accession_number': set(['ega1', 'ega2']),
                     'internal_id': set(['1', '2'])
