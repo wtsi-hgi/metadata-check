@@ -310,29 +310,82 @@ class SeqscapeMetadata:
                 'internal_id': {str(id) for id in internal_ids}
         }
 
-    def get_samples(self):
+    # def get_all_sample_ids_grouped_by_id_type(self):
+    #     return self._group_entity_ids_by_id_type(self._samples)
+
+    # def get_all_library_ids_grouped_by_id_type(self):
+    #     return self._group_entity_ids_by_id_type(self._libraries)
+    #
+    # def get_all_study_ids_group_by_id_type(self):
+    #     return self._group_entity_ids_by_id_type(self._studies)
+
+
+    @property
+    def samples(self):
+        """
+        By default when accessing the samples property you will get a dict of: key = name of the id type, value = set of values.
+        :return:
+        """
+        return self._group_entity_ids_by_id_type(self._samples)
+
+    @samples.setter
+    def samples(self, samples):
+        self.set_sample_objects(samples)
+
+    def get_samples_as_objects(self):
         return self._samples
 
-    def get_all_sample_ids_grouped_by_id_type(self):
-        return self._group_entity_ids_by_id_type(self._samples)
+    def set_sample_objects(self, samples):
+        """
+        Tricky this setter cause you can set the field to anything, and they the _group_entitiy_ids blah won't know
+        what to do with the data if it is not what it expects.
+        :param samples:
+        :return:
+        """
+        self._samples = samples
 
     def get_sample_ids_by_id_type(self, id_type: str):
         return self._group_entity_ids_by_id_type(self._samples).get(id_type)
 
-    def get_libraries(self):
+
+    @property
+    def libraries(self):
+        return self._group_entity_ids_by_id_type(self._libraries)
+
+    @libraries.setter
+    def libraries(self, libraries):
+        self.set_library_objects(libraries)
+
+    def get_libraries_as_objects(self):
         return self._libraries
 
-    def get_all_library_ids_grouped_by_id_type(self):
-        return self._group_entity_ids_by_id_type(self._libraries)
+    def set_library_objects(self, libraries):
+        self._libraries = libraries
 
     def get_library_ids_by_id_type(self, id_type: str) -> List:
         return self._group_entity_ids_by_id_type(self._libraries).get(id_type)
 
-    def get_studies(self):
+
+
+    @property
+    def studies(self):
+        return self._group_entity_ids_by_id_type(self._studies)
+
+    @studies.setter
+    def studies(self, studies):
+        self.set_study_objects(studies)
+
+    def get_studies_as_objects(self):
         return self._studies
 
-    def get_all_study_ids_group_by_id_type(self):
-        return self._group_entity_ids_by_id_type(self._studies)
+    def set_study_objects(self, studies):
+        self._studies = studies
+
+    def get_studies_as_objects(self):
+        return self._studies
+
+    def set_study_objects(self, studies):
+        self._studies = studies
 
     def get_study_ids_by_id_type(self, id_type) -> List:
         return self._group_entity_ids_by_id_type(self._studies).get(id_type)
@@ -345,9 +398,9 @@ class SeqscapeMetadata:
         :return:
         """
         ss_metadata = SeqscapeMetadata()
-        ss_metadata._samples = raw_metadata.get_entities_without_duplicates_by_entity_type('sample')
-        ss_metadata._libraries = raw_metadata.get_entities_without_duplicates_by_entity_type('library')
-        ss_metadata._studies = raw_metadata.get_entities_without_duplicates_by_entity_type('study')
+        ss_metadata.set_sample_objects(raw_metadata.get_entities_without_duplicates_by_entity_type('sample'))
+        ss_metadata.set_library_objects(raw_metadata.get_entities_without_duplicates_by_entity_type('library'))
+        ss_metadata.set_study_objects(raw_metadata.get_entities_without_duplicates_by_entity_type('study'))
         return ss_metadata
 
 
