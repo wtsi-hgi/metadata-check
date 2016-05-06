@@ -129,7 +129,7 @@ class IrodsRawFileMetadata:
         problems = []
         if len(self.file_replicas) <= 1:
             problems.append(CheckResult(check_name="Check that file has more than 1 replica", error_message="File has "
-                                                                            + str(len(self.file_replicas)) + " replicas"))
+                                                                            + str(len(self.file_replicas)) + " replicas", severity=SEVERITY.WARNING))
         return problems
 
     def check_non_public_acls(self) -> List[CheckResult]:
@@ -142,7 +142,7 @@ class IrodsRawFileMetadata:
         for acl in self.acls:
             if acl.provides_public_access():
                 problems.append(CheckResult(check_name="Check there are no public ACLS",
-                                            error_message="The following ACL was found: " + str(acl)))
+                                            error_message="The following ACL was found: " + str(acl), severity=SEVERITY.WARNING))
         return problems
 
 
@@ -159,12 +159,20 @@ class IrodsRawFileMetadata:
                 found_ss_gr_acl = True
                 if not acl.provides_read_permission():
                     problems.append(CheckResult(check_name="Check that the permission for ss_<id> group is READ",
-                                                error_message="ACL found: " + str(acl)))
+                                                error_message="ACL found: " + str(acl), severity=SEVERITY.WARNING))
                 break
         if not found_ss_gr_acl:
-            problems.append(CheckResult(check_name="Check there is at least one ss_<id> group that has access to data"))
+            problems.append(CheckResult(check_name="Check there is at least one ss_<id> group that has access to data", severity=SEVERITY.WARNING))
         return problems
 
+    def check_metadata(self):
+        problems = []
+        problems.extend(self.validate_fields())
+        problems.extend(self.check_has_read_permission_ss_group())
+        problems.extend(self.check_non_public_acls())
+        problems.extend(self.check_more_than_one_replicas())
+        problems.extend(self.check_all_replicas_have_same_checksum())
+        return problems
 
     def __str__(self):
         return "Location: dir_path = " + str(self.dir_path) + ", fname = " + str(self.fname) + ", AVUS: " + \
