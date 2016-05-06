@@ -346,8 +346,9 @@ class IrodsSeqFileMetadata(object):
                                                           "reference: %s" % (desired_ref_name, ref)))
         return problems
 
-    def check_file_metadata(self, desired_reference: str=None) -> List[CheckResult]:
+    def check_metadata(self, desired_reference: str=None) -> List[CheckResult]:
         problems = []
+        problems.extend(self.validate_fields())
         problems.extend(self.check_checksum_calculated_vs_metadata())
         problems.extend(self.check_reference(self, desired_reference))
         return problems
@@ -481,7 +482,7 @@ class IrodsSeqLaneletFileMetadata(IrodsSeqFileMetadata):
         fname = common_utils.extract_fname_without_ext(fpath)
         cls.check_is_lanelet_filename(fname)
 
-    def check_file_metadata(self, desired_reference: str):
+    def check_metadata(self, desired_reference: str):
         problems = []
         try:
             self.test_lane_from_fname_vs_metadata(self)
