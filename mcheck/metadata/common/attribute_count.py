@@ -29,6 +29,15 @@ class AttributeCount:
         self.count = count
         self.operator = operator
 
+    def __str__(self):
+        return "Attribute = " + str(self.attribute) + ", count = " + str(self.count) + ", operator = " + str(self.operator)
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __hash__(self):
+        return hash(self.attribute) + hash(self.count) + hash(self.operator)
+
 
 # class AttributeCountComparison:
 #
