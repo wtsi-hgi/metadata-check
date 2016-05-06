@@ -26,6 +26,7 @@ from mcheck.irods.data_types import MetaAVU
 from mcheck.metadata.irods_metadata.irods_file_metadata import IrodsSeqFileMetadata, IrodsRawFileMetadata
 from mcheck.metadata.irods_metadata.file_replica import IrodsFileReplica
 from mcheck.results.constants import RESULT
+from mcheck.metadata.irods_metadata.acl import IrodsACL
 
 from baton import models as baton_models
 from baton import collections as baton_coll
@@ -262,6 +263,49 @@ class TestIrodsRawFileMetadata(unittest.TestCase):
         self.assertEqual(len(result), 1)
 
 
+    def test_check_non_public_acls_when_there_are(self):
+        acl = IrodsACL(access_group='public#seq', zone='seq', permission='own')
+        raw_metadata = IrodsRawFileMetadata(fname='myfile', dir_path='/home', acls=[acl])
+        result = raw_metadata.check_non_public_acls()
+        self.assertEqual(len(result), 1)
+
+    def test_check_non_public_acls_when_not(self):
+        acl1 = IrodsACL(access_group='ss_123#seq', zone='seq', permission='own')
+        acl2 = IrodsACL(access_group='npg#seq', zone='seq', permission='own')
+        raw_metadata = IrodsRawFileMetadata(fname='myfile', dir_path='/home', acls=[acl1, acl2])
+        result = raw_metadata.check_non_public_acls()
+        self.assertEqual(len(result), 0)
+
+
+    def test_check_has_read_permission_ss_group_when_ok(self):
+        acl1 = IrodsACL(access_group='ss_123#seq', zone='seq', permission='read')
+        acl2 = IrodsACL(access_group='npg#seq', zone='seq', permission='own')
+        raw_metadata = IrodsRawFileMetadata(fname='myfile', dir_path='/home', acls=[acl1, acl2])
+        result = raw_metadata.check_has_read_permission_ss_group()
+        self.assertEqual(len(result), 0)
+
+    def test_check_has_read_permission_ss_group_ok(self):
+        acl1 = IrodsACL(access_group='ss_123#seq', zone='seq', permission='read')
+        acl2 = IrodsACL(access_group='npg#seq', zone='seq', permission='own')
+        raw_metadata = IrodsRawFileMetadata(fname='myfile', dir_path='/home', acls=[acl1, acl2])
+        result = raw_metadata.check_has_read_permission_ss_group()
+        self.assertEqual(len(result), 0)
+
+    def test_check_has_read_permission_ss_group_when_own_instead_of_read(self):
+        acl1 = IrodsACL(access_group='ss_123#seq', zone='seq', permission='own')
+        acl2 = IrodsACL(access_group='npg#seq', zone='seq', permission='own')
+        raw_metadata = IrodsRawFileMetadata(fname='myfile', dir_path='/home', acls=[acl1, acl2])
+        result = raw_metadata.check_has_read_permission_ss_group()
+        self.assertEqual(len(result), 1)
+
+
+
+# class IrodsACL:
+#     def __init__(self, access_group: str, zone: str, permission: str):
+#         self.access_group = access_group
+#         self.zone = zone
+#         self.permission = permission
+
     #MetaAVU = namedtuple('MetaAVU', ['attribute', 'value'])    # list of attribute-value tuples
 
     # class IrodsRawFileMetadata:
@@ -364,66 +408,55 @@ class TestIrodsSeqFileMetadata(unittest.TestCase):
         self.assertRaises(TypeError, IrodsSeqFileMetadata._is_checksum_valid, checksum)
 
 
+    #   def test_is_run_id_valid_1(self):
+    #     run_id = '1234'
+    #     result = IrodsSeqFileMetadata._is_run_id_valid(run_id)
+    #     self.assertTrue(result)
     #
-    # @classmethod
-    # def is_run_id(cls, run_id):
-    # r = re.compile(irods_consts.RUN_ID_REGEX)
-    #     return True if r.match(run_id) else False
+    # def test_is_run_id_valid_2(self):
+    #     run_id = '1'
+    #     result = IrodsSeqFileMetadata._is_run_id_valid(run_id)
+    #     self.assertFalse(result)
     #
-
-    def test_is_run_id_valid_1(self):
-        run_id = '1234'
-        result = IrodsSeqFileMetadata._is_run_id_valid(run_id)
-        self.assertTrue(result)
-
-    def test_is_run_id_valid_2(self):
-        run_id = '1'
-        result = IrodsSeqFileMetadata._is_run_id_valid(run_id)
-        self.assertFalse(result)
-
-    def test_is_run_id_valid_3(self):
-        run_id = 'aaa'
-        result = IrodsSeqFileMetadata._is_run_id_valid(run_id)
-        self.assertFalse(result)
-
-    def test_is_run_id_valid_4(self):
-        run_id = '12345'
-        result = IrodsSeqFileMetadata._is_run_id_valid(run_id)
-        self.assertTrue(result)
-
-    def test_is_run_id_valid_5(self):
-        run_id = True
-        self.assertRaises(TypeError, IrodsSeqFileMetadata._is_run_id_valid, run_id)
-
-
-    # @classmethod
-    # def is_lane_id(cls, lane_id):
-    #     r = re.compile(irods_consts.LANE_ID_REGEX)
-    #     return True if r.match(lane_id) else False
+    # def test_is_run_id_valid_3(self):
+    #     run_id = 'aaa'
+    #     result = IrodsSeqFileMetadata._is_run_id_valid(run_id)
+    #     self.assertFalse(result)
     #
-    def test_is_lane_id_valid_1(self):
-        lane_id = 1
-        result = IrodsSeqFileMetadata._is_lane_id_valid(lane_id)
-        self.assertTrue(result)
+    # def test_is_run_id_valid_4(self):
+    #     run_id = '12345'
+    #     result = IrodsSeqFileMetadata._is_run_id_valid(run_id)
+    #     self.assertTrue(result)
+    #
+    # def test_is_run_id_valid_5(self):
+    #     run_id = True
+    #     self.assertRaises(TypeError, IrodsSeqFileMetadata._is_run_id_valid, run_id)
 
-    def test_is_lane_id_valid_2(self):
-        lane_id = '1'
-        result = IrodsSeqFileMetadata._is_lane_id_valid(lane_id)
-        self.assertTrue(result)
 
-    def test_is_lane_id_valid_3(self):
-        lane_id = False
-        self.assertRaises(TypeError, IrodsSeqFileMetadata._is_lane_id_valid, lane_id)
-
-    def test_is_lane_id_valid_4(self):
-        lane_id = '123'
-        result = IrodsSeqFileMetadata._is_lane_id_valid(lane_id)
-        self.assertFalse(result)
-
-    def test_is_lane_id_valid_5(self):
-        lane_id = '123aaaa'
-        result = IrodsSeqFileMetadata._is_lane_id_valid(lane_id)
-        self.assertFalse(result)
+    #
+    # def test_is_lane_id_valid_1(self):
+    #     lane_id = 1
+    #     result = IrodsSeqFileMetadata._is_lane_id_valid(lane_id)
+    #     self.assertTrue(result)
+    #
+    # def test_is_lane_id_valid_2(self):
+    #     lane_id = '1'
+    #     result = IrodsSeqFileMetadata._is_lane_id_valid(lane_id)
+    #     self.assertTrue(result)
+    #
+    # def test_is_lane_id_valid_3(self):
+    #     lane_id = False
+    #     self.assertRaises(TypeError, IrodsSeqFileMetadata._is_lane_id_valid, lane_id)
+    #
+    # def test_is_lane_id_valid_4(self):
+    #     lane_id = '123'
+    #     result = IrodsSeqFileMetadata._is_lane_id_valid(lane_id)
+    #     self.assertFalse(result)
+    #
+    # def test_is_lane_id_valid_5(self):
+    #     lane_id = '123aaaa'
+    #     result = IrodsSeqFileMetadata._is_lane_id_valid(lane_id)
+    #     self.assertFalse(result)
 
 
     def test_is_npg_qc_valid_1(self):

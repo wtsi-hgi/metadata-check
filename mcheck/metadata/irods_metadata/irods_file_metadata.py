@@ -219,18 +219,11 @@ class IrodsSeqFileMetadata(object):
         }
 
         irods_metadata.checksum_in_meta = raw_metadata.get_values_for_attribute('md5')
-        irods_metadata.run_ids = raw_metadata.get_values_for_attribute('id_run')
-        irods_metadata.lane_ids = raw_metadata.get_values_for_attribute('lane')
         irods_metadata._reference_paths = raw_metadata.get_values_for_attribute('reference')
         irods_metadata._npg_qc_values = raw_metadata.get_values_for_attribute('manual_qc')
         irods_metadata._target_values = raw_metadata.get_values_for_attribute('target')
         return irods_metadata
 
-    def get_run_ids(self) -> List[str]:
-        return self.run_ids
-
-    def get_lane_ids(self) -> List[str]:
-        return self.lane_ids
 
     def get_reference_paths(self) -> List[str]:
         if len(self._reference_paths) != 1:
@@ -270,22 +263,6 @@ class IrodsSeqFileMetadata(object):
 
     @staticmethod
     @wrappers.check_args_not_none
-    def _is_run_id_valid(run_id):
-        if not type(run_id) in [str, int]:
-            raise TypeError("WRONG TYPE: the run_id must be a string or int and is: " + str(type(run_id)))
-        r = re.compile(irods_consts.RUN_ID_REGEX)
-        return True if r.match(str(run_id)) else False
-
-    @staticmethod
-    @wrappers.check_args_not_none
-    def _is_lane_id_valid(lane_id):
-        if not type(lane_id) in [str, int]:
-            raise TypeError("WRONG TYPE: the lane_id must be either string or int and is: " + str(type(lane_id)))
-        r = re.compile(irods_consts.LANE_ID_REGEX)
-        return True if r.match(str(lane_id)) else False
-
-    @staticmethod
-    @wrappers.check_args_not_none
     def _is_npg_qc_valid(npg_qc):
         if not type(npg_qc) in [str, int]:
             raise TypeError("WRONG TYPE: the npg_qc must be either string or int and is: " + str(npg_qc))
@@ -312,17 +289,6 @@ class IrodsSeqFileMetadata(object):
             problems.append(
                 CheckResult(check_name="Check that checksum at upload is valid",
                             error_message="The checksum looks invalid: " + str(self.checksum_at_upload)))
-        if self.lane_ids:
-            for lane in self.lane_ids:
-                if lane and not self._is_lane_id_valid(lane):
-                    problems.append(CheckResult(check_name="Check that the lane is valid",
-                                                error_message="This lane id looks invalid: " + str(lane)))
-
-        if self.run_ids:
-            for run in self.run_ids:
-                if run and not self._is_run_id_valid(run):
-                    problems.append(CheckResult(check_name="Check that the run id is valid",
-                                                error_message="This run_id looks invalid: " + str(run)))
 
         if not self.get_npg_qc() is None and not self._is_npg_qc_valid(self.get_npg_qc()):
             problems.append(CheckResult(check_name="Check that the NPG QC field is valid",
