@@ -81,7 +81,7 @@ def parse_args():
                             )
 
     filter_grp.add_argument('--filter_target',
-                            choices=["1", "0"],
+                            choices=["1", "0", "library"],
                             required=False,
                             help='This flag stopps the default filter on the target=1 irods metadata attribute'
     )
@@ -92,40 +92,37 @@ def parse_args():
                            action='store_true',
                            help='Run all the tests that can be run'
     )
-
-    tests_grp.add_argument('--test-sample',
-                           choices=['irods_vs_seqsc', 'irods_vs_header', 'all'],
-                           nargs='*',
-                           #action='append',
-                           #default='all',
-                           default=[],
-                           help='Run tests on samples - the options are: irods_vs_seqsc - '
-                                'which checks the consistency of iRODS metadata against Sequencescape and '
-                                'irods_vs_header - which checks the consistency of the header against the iRODS metadata'
-    )
-
-    tests_grp.add_argument('--test-library',
-                            choices=['irods_vs_seqsc', 'irods_vs_header', 'all'],
-                            #default='all',
-                            nargs='*',
-                            #action='append',
-                            default=[],
-                            help='Run tests on libraries - the options are: irods_vs_seqsc - '
-                                 'which checks the consistency of iRODS metadata against Sequencescape and '
-                                 'irods_vs_header - which checks the consistency of the header against the iRODS metadata'
-    )
-
-    tests_grp.add_argument('--test-study',
-                           #dest='study_tests',
-                           action='store_true',
-                           help='Flag set if one wants to run the tests on study/studies metadata. '
-                                'Only one test possible: irods_vs_seqsc, so nothing to choose, just set this flag or not'
-    )
-
-    # tests_grp.add_argument('--test-reference',
-    #                         dest='test_reference',
-    #                         help='Check if the reference in iRODS metadata is the same as this one'
+    #
+    # tests_grp.add_argument('--test-sample',
+    #                        choices=['irods_vs_seqsc', 'irods_vs_header', 'all'],
+    #                        nargs='*',
+    #                        #action='append',
+    #                        #default='all',
+    #                        default=[],
+    #                        help='Run tests on samples - the options are: irods_vs_seqsc - '
+    #                             'which checks the consistency of iRODS metadata against Sequencescape and '
+    #                             'irods_vs_header - which checks the consistency of the header against the iRODS metadata'
     # )
+    #
+    # tests_grp.add_argument('--test-library',
+    #                         choices=['irods_vs_seqsc', 'irods_vs_header', 'all'],
+    #                         #default='all',
+    #                         nargs='*',
+    #                         #action='append',
+    #                         default=[],
+    #                         help='Run tests on libraries - the options are: irods_vs_seqsc - '
+    #                              'which checks the consistency of iRODS metadata against Sequencescape and '
+    #                              'irods_vs_header - which checks the consistency of the header against the iRODS metadata'
+    # )
+    #
+    # tests_grp.add_argument('--test-study',
+    #                        #dest='study_tests',
+    #                        action='store_true',
+    #                        help='Flag set if one wants to run the tests on study/studies metadata. '
+    #                             'Only one test possible: irods_vs_seqsc, so nothing to choose, just set this flag or not'
+    # )
+
+
 
     tests_grp.add_argument('--test-reference',
                             dest='desired_reference',
@@ -134,12 +131,6 @@ def parse_args():
 
     )
 
-    tests_grp.add_argument('--test-filename',
-                            action='store_true',
-                            help='This flag applies only for iRODS seq data. Check that the lanelet name '
-                                 'is according to what is in the bam/cram header, under PU tag.'
-
-    )
 
     tests_grp.add_argument('--test-md5',
                            action='store_true',
