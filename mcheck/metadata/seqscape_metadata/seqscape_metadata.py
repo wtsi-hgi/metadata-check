@@ -270,7 +270,7 @@ class SeqscapeRawMetadata(object):
         return problems
 
 
-    def check_raw_metadata(self) -> List:
+    def check_metadata(self) -> List:
         """
         Checks the raw metadata and throws exceptions if any problem is found
         :param raw_metadata:

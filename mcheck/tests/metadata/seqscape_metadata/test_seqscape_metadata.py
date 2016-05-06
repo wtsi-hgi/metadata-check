@@ -428,7 +428,7 @@ class TestCheckRawMetadata(unittest.TestCase):
                                                        fetched_entity_type='sample')
         raw_metadata.add_fetched_entities(sam1_fetched)
         print("RAW metadata: %s FINISHED" %raw_metadata)
-        result = raw_metadata.check_raw_metadata()
+        result = raw_metadata.check_metadata()
         print("Result before exiting with error: %s" % result)
         self.assertEqual([], result)
 
@@ -444,7 +444,7 @@ class TestCheckRawMetadata(unittest.TestCase):
                                                        fetched_entity_type='study')
         raw_metadata.add_fetched_entities(sam1_fetched)
         raw_metadata.add_fetched_entities_by_association(std1_fetched)
-        result = raw_metadata.check_raw_metadata()
+        result = raw_metadata.check_metadata()
         print("Result in check_raw_meta before failing test: %s" % result)
         self.assertEqual(1, len(result))
 
