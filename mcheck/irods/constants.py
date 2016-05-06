@@ -26,7 +26,7 @@ MD5_REGEX = '^[0-9a-z]+$'
 RUN_ID_REGEX = '^[0-9]{4,5}$'
 LANE_ID_REGEX = '^[0-9]{1}$'
 NPG_QC_REGEX = '^0|1$'
-TARGET_REGEX = '^0|1$'
+TARGET_REGEX = '^0|1|library$'
 
 ######################## CONSTANTS ###############################
 
