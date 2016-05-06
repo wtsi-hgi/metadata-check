@@ -236,7 +236,7 @@ class SeqscapeRawMetadata(object):
                 self.get_entities_by_type('sample'), diff_wrong_studies_for_samples_in_irods)
             problems.append(CheckResult(
                 check_name="Check the study in iRODS for the samples given are associated with same sample in Seqscape",
-                error_message=error_msg, severity=SEVERITY.CRITICAL))
+                error_message=error_msg, severity=SEVERITY.IMPORTANT))
         diff_sam_belongs2more_studies = studies_by_samples_set.difference(studies_set)
         if diff_sam_belongs2more_studies:
             error_msg = "Some samples belong to more than one study. For samples: %s we found in Seqscape these studies: %s" % (
@@ -266,7 +266,7 @@ class SeqscapeRawMetadata(object):
                 self.get_entities_by_type('study'), str(len(diff_samples_wrong_study)), diff_samples_wrong_study)
             problems.append(CheckResult(
                 check_name="Check if the sample ids in iRODS for a study belong to the same study in Sqeuencescape ",
-                error_message=error_msg, severity=SEVERITY.CRITICAL))
+                error_message=error_msg, severity=SEVERITY.IMPORTANT))
         return problems
 
 
