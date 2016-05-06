@@ -488,6 +488,22 @@ class TestIrodsSeqFileMetadata(unittest.TestCase):
         print("Result- validate with npgqc:%s" % result)
         self.assertEqual(len(result), 1)
 
+    def test_is_target_valid_when_valid_1(self):
+        result = IrodsSeqFileMetadata._is_target_valid('1')
+        self.assertTrue(result)
+
+    def test_is_target_valid_when_valid_library(self):
+        result = IrodsSeqFileMetadata._is_target_valid('library')
+        self.assertTrue(result)
+
+    def test_is_target_valid_when_invalid(self):
+        result = IrodsSeqFileMetadata._is_target_valid('somethingelse')
+        self.assertFalse(result)
+
+    def test_is_target_valid_when_empty(self):
+        result = IrodsSeqFileMetadata._is_target_valid('')
+        self.assertFalse(result)
+
 
     def test_check_reference_1(self):
         irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.cram', fname='1234_5#6.cram',
