@@ -30,6 +30,9 @@ from mcheck.results.constants import RESULT
 from baton import models as baton_models
 from baton import collections as baton_coll
 
+from mcheck.metadata.common.attribute_count import AttributeCount
+
+
 
 class TestRawFileMetadataFromBaton(unittest.TestCase):
     # def __init__(self, fname: str, dir_path: str, file_replicas: List[IrodsFileReplica]=None,
@@ -233,6 +236,30 @@ class TestIrodsRawFileMetadata(unittest.TestCase):
 
     def test_is_true_comparison_raises_exc_when_operator_unknown(self):
         self.assertRaises(ValueError, IrodsRawFileMetadata._is_true_comparison, 1, 3, '#')
+
+    def test_check_attribute_count_equal_ok(self):
+        raw_metadata = IrodsRawFileMetadata(fname='myfile', dir_path='/home')
+        raw_metadata.set_attributes_from_dict({'sample': set(['1', '2', '3'])})
+        result = raw_metadata.check_attribute_count([AttributeCount(attribute='sample', count=3, operator='=')])
+        self.assertEqual(result, [])
+
+    def test_check_attribute_count_greater_ok(self):
+        raw_metadata = IrodsRawFileMetadata(fname='myfile', dir_path='/home')
+        raw_metadata.set_attributes_from_dict({'sample': set(['1', '2', '3'])})
+        result = raw_metadata.check_attribute_count([AttributeCount(attribute='sample', count=2, operator='>')])
+        self.assertEqual(result, [])
+
+    def test_check_attribute_count_less_wrong(self):
+        raw_metadata = IrodsRawFileMetadata(fname='myfile', dir_path='/home')
+        raw_metadata.set_attributes_from_dict({'sample': set(['1', '2', '3'])})
+        result = raw_metadata.check_attribute_count([AttributeCount(attribute='sample', count=2, operator='<')])
+        self.assertEqual(len(result), 1)
+
+    def test_check_attribute_count_when_not_found(self):
+        raw_metadata = IrodsRawFileMetadata(fname='myfile', dir_path='/home')
+        raw_metadata.set_attributes_from_dict({'sample': set(['1', '2', '3'])})
+        result = raw_metadata.check_attribute_count([AttributeCount(attribute='study', count=2, operator='>')])
+        self.assertEqual(len(result), 1)
 
 
     #MetaAVU = namedtuple('MetaAVU', ['attribute', 'value'])    # list of attribute-value tuples
