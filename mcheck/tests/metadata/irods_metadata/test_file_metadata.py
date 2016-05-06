@@ -408,57 +408,6 @@ class TestIrodsSeqFileMetadata(unittest.TestCase):
         self.assertRaises(TypeError, IrodsSeqFileMetadata._is_checksum_valid, checksum)
 
 
-    #   def test_is_run_id_valid_1(self):
-    #     run_id = '1234'
-    #     result = IrodsSeqFileMetadata._is_run_id_valid(run_id)
-    #     self.assertTrue(result)
-    #
-    # def test_is_run_id_valid_2(self):
-    #     run_id = '1'
-    #     result = IrodsSeqFileMetadata._is_run_id_valid(run_id)
-    #     self.assertFalse(result)
-    #
-    # def test_is_run_id_valid_3(self):
-    #     run_id = 'aaa'
-    #     result = IrodsSeqFileMetadata._is_run_id_valid(run_id)
-    #     self.assertFalse(result)
-    #
-    # def test_is_run_id_valid_4(self):
-    #     run_id = '12345'
-    #     result = IrodsSeqFileMetadata._is_run_id_valid(run_id)
-    #     self.assertTrue(result)
-    #
-    # def test_is_run_id_valid_5(self):
-    #     run_id = True
-    #     self.assertRaises(TypeError, IrodsSeqFileMetadata._is_run_id_valid, run_id)
-
-
-    #
-    # def test_is_lane_id_valid_1(self):
-    #     lane_id = 1
-    #     result = IrodsSeqFileMetadata._is_lane_id_valid(lane_id)
-    #     self.assertTrue(result)
-    #
-    # def test_is_lane_id_valid_2(self):
-    #     lane_id = '1'
-    #     result = IrodsSeqFileMetadata._is_lane_id_valid(lane_id)
-    #     self.assertTrue(result)
-    #
-    # def test_is_lane_id_valid_3(self):
-    #     lane_id = False
-    #     self.assertRaises(TypeError, IrodsSeqFileMetadata._is_lane_id_valid, lane_id)
-    #
-    # def test_is_lane_id_valid_4(self):
-    #     lane_id = '123'
-    #     result = IrodsSeqFileMetadata._is_lane_id_valid(lane_id)
-    #     self.assertFalse(result)
-    #
-    # def test_is_lane_id_valid_5(self):
-    #     lane_id = '123aaaa'
-    #     result = IrodsSeqFileMetadata._is_lane_id_valid(lane_id)
-    #     self.assertFalse(result)
-
-
     def test_is_npg_qc_valid_1(self):
         npq_qc = 1
         result = IrodsSeqFileMetadata._is_npg_qc_valid(npq_qc)
@@ -529,18 +478,14 @@ class TestIrodsSeqFileMetadata(unittest.TestCase):
         self.assertEqual(len(result), 1)
 
     def test_validate_fields_2(self):
-        irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam', fname='1234_5#6.bam', run_ids=['aaAAA'])
+        irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam', fname='1234_5#6.bam')
         result = irods_metadata.validate_fields()
-        self.assertEqual(len(result), 1)
+        self.assertEqual(len(result), 0)
 
     def test_validate_fields_3(self):
-        irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam', fname='1234_5#6.bam', lane_ids=['aaAAA'])
-        result = irods_metadata.validate_fields()
-        self.assertEqual(len(result), 1)
-
-    def test_validate_fields_4(self):
         irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam', fname='1234_5#6.bam', npg_qc='aaAAA')
         result = irods_metadata.validate_fields()
+        print("Result- validate with npgqc:%s" % result)
         self.assertEqual(len(result), 1)
 
 
