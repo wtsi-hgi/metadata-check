@@ -451,6 +451,45 @@ class TestCheckRawMetadata(unittest.TestCase):
 
 class TestSeqscapeMetadata(unittest.TestCase):
 
+    # def check_samples_have_all_types_of_ids(self):
+        # problems = []
+        # mandatory_ids = ['name', 'accession_number', 'internal_id']
+        # for sample in self._samples:
+        #     for id in mandatory_ids:
+        #         if not getattr(sample, id):
+        #             problems.append(CheckResult(check_name='Check for all sample id types',
+        #                                         error_message='Missing sample id %s from sample: %s' % (id, sample)))
+        # return problems
+
+    def test_check_samples_have_all_types_of_ids_when_ok(self):
+        sam1 = Sample(name='sam1', accession_number='ega1', internal_id='1')
+        sam2 = Sample(name='sam2', accession_number='ega2', internal_id='2')
+        metadata = SeqscapeMetadata(samples=[sam1, sam2])
+        result = metadata.check_samples_have_all_types_of_ids()
+        self.assertEqual(len(result), 0)
+
+    def test_check_samples_have_all_types_of_ids_when_mising_acc_nr(self):
+        sam1 = Sample(name='sam1', internal_id='1')
+        sam2 = Sample(name='sam2', accession_number='ega2', internal_id='2')
+        metadata = SeqscapeMetadata(samples=[sam1, sam2])
+        result = metadata.check_samples_have_all_types_of_ids()
+        self.assertEqual(len(result), 1)
+
+    def test_check_samples_have_all_types_of_ids_when_missing_names(self):
+        sam1 = Sample(accession_number='ega1', internal_id='1')
+        sam2 = Sample(accession_number='ega2', internal_id='2')
+        metadata = SeqscapeMetadata(samples=[sam1, sam2])
+        result = metadata.check_samples_have_all_types_of_ids()
+        self.assertEqual(len(result), 2)
+
+    def test_check_samples_have_all_types_of_ids_when_missing_all(self):
+        sam1 = Sample()
+        sam2 = Sample()
+        metadata = SeqscapeMetadata(samples=[sam1, sam2])
+        result = metadata.check_samples_have_all_types_of_ids()
+        self.assertEqual(len(result), 6)
+
+
     def test_from_raw_metadata(self):
         raw_metadata = SeqscapeRawMetadata()
         sam1 = Sample(name='sam1', accession_number='ega1', internal_id='1')
