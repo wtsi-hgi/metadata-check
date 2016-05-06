@@ -28,7 +28,7 @@ class TestSAMFileHeaderMetadataProvider(unittest.TestCase):
 
     def test_fetch(self):
         fpath = 'test_data/A.bam'
-        result = SAMFileHeaderMetadataProvider.fetch(fpath)
+        result = SAMFileHeaderMetadataProvider.fetch_metadata(fpath)
         expected = SAMFileHeaderMetadata(fpath='test_data/A.bam', fname='A.bam', samples={'name': set(['A_J']), 'internal_id': set(), 'accession_number': set()},
                                          platforms={'SLX'}, libraries={'name': set(['A_J_SLX_500_HC_2', 'A_J_SLX_200_NOPCR_3',
                                                                                  'A_J_SLX_200_NOPCR_2', 'A_J_SLX_200_NOPCR_2',
