@@ -419,6 +419,21 @@ class SeqscapeMetadata:
                                                 error_message='Missing sample id %s from sample: %s' % (id, sample)))
         return problems
 
+    def check_studies_have_all_types_of_ids(self):
+        problems = []
+        mandatory_ids = ['name', 'accession_number', 'internal_id']
+        for sample in self._samples:
+            for id in mandatory_ids:
+                if not getattr(sample, id):
+                    problems.append(CheckResult(check_name='Check for all sample id types', severity=SEVERITY.WARNING,
+                                                error_message='Missing sample id %s from sample: %s' % (id, sample)))
+        return problems
+
+    def check_metadata(self):
+        problems = []
+        problems.extend(self.check_samples_have_all_types_of_ids())
+        problems.extend(self.check_studies_have_all_types_of_ids())
+        return problems
 
     @staticmethod
     def from_raw_metadata(raw_metadata: SeqscapeRawMetadata):
