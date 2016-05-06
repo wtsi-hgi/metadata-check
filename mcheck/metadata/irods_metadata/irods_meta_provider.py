@@ -34,17 +34,14 @@ from baton.collections import IrodsMetadata
 class iRODSMetadataProvider:
 
     @classmethod
-    def retrieve_metadata_by_file_path(cls, fpath):
+    def fetch_raw_metadata(cls, fpath):
         connection = connect_to_irods_with_baton(config.BATON_BIN, skip_baton_binaries_validation=True)
         baton_file_metadata_as_list = connection.data_object.get_by_path(fpath)
         baton_file_metadata = baton_file_metadata_as_list if baton_file_metadata_as_list else None
         raw_metadata = IrodsRawFileMetadata.from_baton_wrapper(baton_file_metadata)
-        problems = raw_metadata.validate_fields()
-        problems.extend(raw_metadata.check_all_replicas_have_same_checksum())
-        problems.extend(raw_metadata.check_has_read_permission_ss_group())
-        seq_metadata = IrodsSeqFileMetadata.from_raw_metadata(raw_metadata)
-        return seq_metadata
+        return raw_metadata
 
+    # TODO: move it somewhere else...
     @classmethod
     def retrieve_fileinfo_and_metadata_by_metadata(cls, search_criteria_dict, zone=None):
         search_crit_list = []
