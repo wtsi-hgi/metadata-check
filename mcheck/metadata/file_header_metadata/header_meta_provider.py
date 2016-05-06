@@ -29,7 +29,7 @@ from mcheck.header_parser.sam.header_parser import SAMFileHeaderParser, SAMFileR
 class SAMFileHeaderMetadataProvider:
 
     @classmethod
-    def fetch(cls, fpath, irods=False):
+    def fetch_metadata(cls, fpath, irods=False):
         if irods:
             header_as_text = IrodsSamFileHeaderExtractor.extract(fpath)
         else:
