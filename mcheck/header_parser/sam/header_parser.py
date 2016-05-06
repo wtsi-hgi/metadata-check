@@ -101,7 +101,6 @@ class SAMFileRGTagParser:
         return SAMFileRGTag(
             seq_centers=[_f for _f in list(set(seq_center_list)) if _f],
             seq_dates=[_f for _f in list(set(seq_dates)) if _f],
-            #lanelets=[_f for _f in list(set(lanelets)) if _f],
             platforms=[_f for _f in list(set(platforms)) if _f],
             libraries=[_f for _f in list(set(libraries)) if _f],
             samples=[_f for _f in list(set(samples)) if _f],
