@@ -51,7 +51,6 @@ class IrodsRawFileMetadata:
         fname = data_object.get_name()
         collection = data_object.get_collection_path()
         replicas = [IrodsFileReplica.from_baton_wrapper(replica) for replica in data_object.replicas]
-        print("ACLS before initializing: %s" % data_object.acl)
         acls = [IrodsACL.from_baton_wrapper(ac_item) for ac_item in data_object.acl if ac_item]
         raw_meta = IrodsRawFileMetadata(fname=fname, dir_path=collection, file_replicas=replicas, acls=acls)
         if data_object.metadata:
@@ -104,7 +103,7 @@ class IrodsRawFileMetadata:
     def check_attribute_count(self, avu_counts: List[AttributeCount]) -> List[CheckResult]:
         problems = []
         for avu_count in avu_counts:
-            actual_count = self.get_values_count_for_attribute(avu_counts.attribute)
+            actual_count = self.get_values_count_for_attribute(avu_count.attribute)
             threshold = avu_count.count
             if not self._is_true_comparison(actual_count, threshold, avu_count.operator):
                 error_msg = "Attribute: " + str(avu_count.attribute) + " appears: " + str(actual_count) + \
