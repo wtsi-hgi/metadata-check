@@ -56,21 +56,6 @@ class IrodsACL:
         permission = get_corresponding_permission(acl_item.level.name)
         return IrodsACL(access_group=acl_item.user_or_group, zone=None, permission=permission)
 
-
-    def __eq__(self, other):
-        return self.access_group == other.access_group and self.zone == other.zone and \
-               self.permission == other.permission
-
-    def __str__(self):
-        return "Access group = " + str(self.access_group) + ", zone: " + \
-               str(self.zone) + ", permission = " + str(self.permission)
-
-    def __repr__(self):
-        return self.__str__()
-
-    def __hash__(self):
-        return hash(self.access_group) + hash(self.zone) + hash(self.permission)
-
     def provides_public_access(self):
         return self.access_group.startswith(irods_consts.IrodsGroups.PUBLIC.value)
 
@@ -122,6 +107,21 @@ class IrodsACL:
             problems.append(CheckResult(check_name="Check that the permission is valid ", severity=SEVERITY.WARNING,
                                         error_message="The iRODS permission seems wrong: " + str(self.permission)))
         return problems
+
+    def __eq__(self, other):
+        return self.access_group == other.access_group and self.zone == other.zone and \
+               self.permission == other.permission
+
+    def __str__(self):
+        return "Access group = " + str(self.access_group) + ", zone: " + \
+               str(self.zone) + ", permission = " + str(self.permission)
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __hash__(self):
+        return hash(self.access_group) + hash(self.zone) + hash(self.permission)
+
 
 
 # EXAMPLE OF ACL
