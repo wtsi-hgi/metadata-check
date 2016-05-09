@@ -176,7 +176,7 @@ class IrodsRawFileMetadata:
 
     def __str__(self):
         return "Location: dir_path = " + str(self.dir_path) + ", fname = " + str(self.fname) + ", AVUS: " + \
-               str(self._attributes) + ", md5_at_upload = " + str(self.file_replicas)
+               str(self._attributes) + ", replicas = " + str(self.file_replicas) + ", acls = " + str(self.acls)
 
     def __repr__(self):
         return self.__str__()
