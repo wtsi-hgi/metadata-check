@@ -30,7 +30,25 @@ def parse_args():
     parser = argparse.ArgumentParser(prog='Metadata Checks')
     parser.add_argument("-v", "--verbosity", action="count",
                         help="increase output verbosity")
-    input = parser.add_argument_group('INPUT',
+    # parser.add_mutually_exclusive_group(required=True)
+    #subcommands = parser.add_argument_group('Check-type', 'Choose whether to check a file by path, or fetch a bunch of files by metadata and check them')
+    subparsers = parser.add_subparsers(help='Sub-commands')
+
+    parser_filecheck = subparsers.add_parser('Check_file', help='Check one file given by irods filepath')
+    parser_filecheck.add_argument('--fpath_irods',
+                           required=False,
+                           nargs='*',
+                           dest='fpaths_irods',
+                           #action='append',
+                           help='List of file paths in iRODS')
+
+    parser_all_files_metacheck = subparsers.add_parser('Check all files fetched by metadata')
+    parser_all_files_metacheck.add_argument('--irods_zone',
+                           help='The irods zone where the data is found',
+                           required=True
+                           )
+
+    input = parser_all_files_metacheck.add_argument_group('INPUT',
                                             'Choose one or more ways of getting the list of files to check'
     )
     input_grp = input.add_mutually_exclusive_group(required=True)
@@ -42,33 +60,9 @@ def parse_args():
     input_grp.add_argument('--study_acc_nr',
                            help='The accession number of the study that you query by for getting a list of files'
                            )
-    input_grp.add_argument('--irods_zone',
-                           help='The irods zone where the data is found',
-                           required=True
-                           )
-
-    input_grp.add_argument('--fpath_irods',
-                           required=False,
-                           nargs='*',
-                           dest='fpaths_irods',
-                           #action='append',
-                           help='List of file paths in iRODS')
-    input_grp.add_argument('--fofn',
-                           required=False,
-                           help='The path to a fofn containing file paths from iRODS '
-                             'for the files one wants to run tests on')
-    input_grp.add_argument('--sample_names',
-                           required=False,
-                           nargs='*',
-                           dest='sample_names',
-                           help='Test all the files for this sample', action='append')
-    input_grp.add_argument('--file_of_samples',
-                           required=False,
-                           dest='fosn',
-                           help='Path to a file of sample names')
 
     # Filters files by type
-    filter_grp = parser.add_argument_group('FILTERS', 'Which files to exclude from the list')
+    filter_grp = parser_all_files_metacheck.add_argument_group('FILTERS', 'Which files to exclude from the list')
     filter_grp.add_argument('--file_types',
                             choices=['bam', 'cram'],
                             default=['bam', 'cram'],
@@ -96,37 +90,6 @@ def parse_args():
                            action='store_true',
                            help='Run all the tests that can be run'
     )
-    #
-    # tests_grp.add_argument('--test-sample',
-    #                        choices=['irods_vs_seqsc', 'irods_vs_header', 'all'],
-    #                        nargs='*',
-    #                        #action='append',
-    #                        #default='all',
-    #                        default=[],
-    #                        help='Run tests on samples - the options are: irods_vs_seqsc - '
-    #                             'which checks the consistency of iRODS metadata against Sequencescape and '
-    #                             'irods_vs_header - which checks the consistency of the header against the iRODS metadata'
-    # )
-    #
-    # tests_grp.add_argument('--test-library',
-    #                         choices=['irods_vs_seqsc', 'irods_vs_header', 'all'],
-    #                         #default='all',
-    #                         nargs='*',
-    #                         #action='append',
-    #                         default=[],
-    #                         help='Run tests on libraries - the options are: irods_vs_seqsc - '
-    #                              'which checks the consistency of iRODS metadata against Sequencescape and '
-    #                              'irods_vs_header - which checks the consistency of the header against the iRODS metadata'
-    # )
-    #
-    # tests_grp.add_argument('--test-study',
-    #                        #dest='study_tests',
-    #                        action='store_true',
-    #                        help='Flag set if one wants to run the tests on study/studies metadata. '
-    #                             'Only one test possible: irods_vs_seqsc, so nothing to choose, just set this flag or not'
-    # )
-
-
 
     tests_grp.add_argument('--test-reference',
                             dest='desired_reference',
@@ -134,14 +97,6 @@ def parse_args():
                             help='The desired reference, given by name'
 
     )
-
-
-    # tests_grp.add_argument('--test-md5',
-    #                        action='store_true',
-    #                        help='Set this flag for the MD5 of a file to be checked in iRODS metadata '
-    #                             'as opposed to ichksum (the calculated MD5 at file submission time).'
-    #
-    # )
 
     tests_grp.add_argument('--test-complete-meta',
                            action='store_true',
@@ -189,12 +144,6 @@ def parse_args():
                                         help='Dump all the metadata extracted to the directory given as parameter'
                                         )
 
-    # additional_outputs_grp.add_argument('--output_file_count', action='store_true')
-    # additional_outputs_grp.add_argument('--output_problematic_files',
-    #                                     dest='fofn_probl',
-    #                                     required=False,
-    #                                     help='Write the list of files with problems to this file')
-    #
     additional_outputs_grp.add_argument('--dump_fnames_by_type',
                                         #default='report',
                                         #nargs='*',
@@ -360,6 +309,71 @@ def parse_args():
     #                                          'the list of tests that havent been executed and the reasons')
     #
     # #argcomplete.autocomplete(parser)
+
+
+
+    # input_grp.add_argument('--fofn',
+    #                        required=False,
+    #                        help='The path to a fofn containing file paths from iRODS '
+    #                          'for the files one wants to run tests on')
+    # input_grp.add_argument('--sample_names',
+    #                        required=False,
+    #                        nargs='*',
+    #                        dest='sample_names',
+    #                        help='Test all the files for this sample', action='append')
+    # input_grp.add_argument('--file_of_samples',
+    #                        required=False,
+    #                        dest='fosn',
+    #                        help='Path to a file of sample names')
+
+        # additional_outputs_grp.add_argument('--output_file_count', action='store_true')
+    # additional_outputs_grp.add_argument('--output_problematic_files',
+    #                                     dest='fofn_probl',
+    #                                     required=False,
+    #                                     help='Write the list of files with problems to this file')
+    #
+
+    #
+    # tests_grp.add_argument('--test-sample',
+    #                        choices=['irods_vs_seqsc', 'irods_vs_header', 'all'],
+    #                        nargs='*',
+    #                        #action='append',
+    #                        #default='all',
+    #                        default=[],
+    #                        help='Run tests on samples - the options are: irods_vs_seqsc - '
+    #                             'which checks the consistency of iRODS metadata against Sequencescape and '
+    #                             'irods_vs_header - which checks the consistency of the header against the iRODS metadata'
+    # )
+    #
+    # tests_grp.add_argument('--test-library',
+    #                         choices=['irods_vs_seqsc', 'irods_vs_header', 'all'],
+    #                         #default='all',
+    #                         nargs='*',
+    #                         #action='append',
+    #                         default=[],
+    #                         help='Run tests on libraries - the options are: irods_vs_seqsc - '
+    #                              'which checks the consistency of iRODS metadata against Sequencescape and '
+    #                              'irods_vs_header - which checks the consistency of the header against the iRODS metadata'
+    # )
+    #
+    # tests_grp.add_argument('--test-study',
+    #                        #dest='study_tests',
+    #                        action='store_true',
+    #                        help='Flag set if one wants to run the tests on study/studies metadata. '
+    #                             'Only one test possible: irods_vs_seqsc, so nothing to choose, just set this flag or not'
+    # )
+
+
+    # tests_grp.add_argument('--test-md5',
+    #                        action='store_true',
+    #                        help='Set this flag for the MD5 of a file to be checked in iRODS metadata '
+    #                             'as opposed to ichksum (the calculated MD5 at file submission time).'
+    #
+    # )
+
+
+
+
     return parser.parse_args()
 
 #print parse_args()
