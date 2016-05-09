@@ -42,6 +42,10 @@ def parse_args():
     input_grp.add_argument('--study_acc_nr',
                            help='The accession number of the study that you query by for getting a list of files'
                            )
+    input_grp.add_argument('--irods_zone',
+                           help='The irods zone where the data is found',
+                           required=True
+                           )
 
     input_grp.add_argument('--fpath_irods',
                            required=False,
@@ -132,12 +136,12 @@ def parse_args():
     )
 
 
-    tests_grp.add_argument('--test-md5',
-                           action='store_true',
-                           help='Set this flag for the MD5 of a file to be checked in iRODS metadata '
-                                'as opposed to ichksum (the calculated MD5 at file submission time).'
-
-    )
+    # tests_grp.add_argument('--test-md5',
+    #                        action='store_true',
+    #                        help='Set this flag for the MD5 of a file to be checked in iRODS metadata '
+    #                             'as opposed to ichksum (the calculated MD5 at file submission time).'
+    #
+    # )
 
     tests_grp.add_argument('--test-complete-meta',
                            action='store_true',
