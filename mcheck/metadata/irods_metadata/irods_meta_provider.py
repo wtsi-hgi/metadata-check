@@ -34,29 +34,50 @@ from baton.collections import IrodsMetadata
 class iRODSMetadataProvider:
 
     @classmethod
-    def fetch_raw_metadata(cls, fpath):
-        connection = connect_to_irods_with_baton(config.BATON_BIN, skip_baton_binaries_validation=True)
-        baton_file_metadata_as_list = connection.data_object.get_by_path(fpath)
-        baton_file_metadata = baton_file_metadata_as_list if baton_file_metadata_as_list else None
-        raw_metadata = IrodsRawFileMetadata.from_baton_wrapper(baton_file_metadata)
-        return raw_metadata
+    def fetch_raw_file_metadata_by_path(cls, fpath):
+        try:
+            connection = connect_to_irods_with_baton(config.BATON_BIN, skip_baton_binaries_validation=True)
+            baton_file_metadata_as_list = connection.data_object.get_by_path(fpath)
+        except Exception as e:
+            if str(e).find('KRB_ERROR_ACQUIRING_CREDS') != -1:
+                raise OSError("ERROR: you need to log into iRODS and aquire the KERBEROS credentials.")
+            else:
+                raise
+        else:
+            baton_file_metadata = baton_file_metadata_as_list if baton_file_metadata_as_list else None
+            raw_metadata = IrodsRawFileMetadata.from_baton_wrapper(baton_file_metadata)
+            return raw_metadata
 
-    # TODO: move it somewhere else...
+
     @classmethod
-    def retrieve_fileinfo_and_metadata_by_metadata(cls, search_criteria_dict, zone=None):
+    def retrieve_raw_files_metadata_by_metadata(cls, search_criteria_dict, zone=None):
         search_crit_list = []
         for k, v in search_criteria_dict.items():
             search_criterion = SearchCriterion(k, v)
             search_crit_list.append(search_criterion)
 
         # Getting metadata from iRODS:
-        connection = connect_to_irods_with_baton(config.BATON_BIN, skip_baton_binaries_validation=True) # type: Connection
-        list_of_data_objs_and_metadata = connection.data_object.get_by_metadata(search_crit_list, zone)
+        try:
+            connection = connect_to_irods_with_baton(config.BATON_BIN, skip_baton_binaries_validation=True) # type: Connection
+            list_of_data_objs_and_metadata = connection.data_object.get_by_metadata(search_crit_list, zone)
+        except IOError as e:
+            if str(e).find('KRB_ERROR_ACQUIRING_CREDS') != -1:
+                raise OSError("ERROR: you need to log into iRODS and aquire the KERBEROS credentials.")
+            else:
+                raise e
+        print("List of data objs: %s" % list_of_data_objs_and_metadata)
         raw_meta_objects = [IrodsRawFileMetadata.from_baton_wrapper(data_obj) for data_obj in list_of_data_objs_and_metadata]
         return raw_meta_objects
 
 
-# by_path = iRODSMetadataProvider.retrieve_metadata_by_file_path('/Sanger1/home/ic4/some_json.txt')
-# print("Metadata for file by path %s " % by_path)
-# objs = iRODSMetadataProvider.retrieve_fileinfo_and_metadata_by_metadata({'file_type': 'tox'})
+import sys
+#by_path = iRODSMetadataProvider.fetch_raw_file_metadata_by_path('/Sanger1/home/ic4/some_json.txt')
+try:
+    by_path = iRODSMetadataProvider.fetch_raw_file_metadata_by_path('/Sanger1/home/ic4/tox.ini')
+    print("Metadata for file by path %s " % by_path)
+except Exception as e:
+    print(e)
+    sys.exit(1)
+
+# objs = iRODSMetadataProvider.retrieve_raw_files_metadata_by_metadata({'file_type': 'tox'}, zone='Sanger1')
 # print("Objects found by metadata: %s" % objs)
