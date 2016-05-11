@@ -93,30 +93,12 @@ class FileMetadataRetrieval:
         return seq_metadata, problems
 
 
-# @classmethod
-# def retrieve_files_metadata_by_metadata(cls, search_criteria_dict, zone=None):
-#     search_crit_list = []
-#     for k, v in search_criteria_dict.items():
-#         search_criterion = SearchCriterion(k, v)
-#         search_crit_list.append(search_criterion)
-#
-#     # Getting metadata from iRODS:
-#     connection = connect_to_irods_with_baton(config.BATON_BIN, skip_baton_binaries_validation=True) # type: Connection
-#     list_of_data_objs_and_metadata = connection.data_object.get_by_metadata(search_crit_list, zone)
-#     raw_meta_objects = [IrodsRawFileMetadata.from_baton_wrapper(data_obj) for data_obj in list_of_data_objs_and_metadata]
-#     return raw_meta_objects
-#
-
-
-
-
 def main():
     args = arg_parser.parse_args()
 
-    # print('args: %s' %args.metadata_fetching_strategy)
+    # Getting iRODS metadata for files:
     print('args: %s' %args)
-    files_metadata_dict = {}    # key = filepath, value = metadata (avus + checksum and others)
-
+    irods_metadata_dict = {}    # key = filepath, value = metadata (avus + checksum and others)
     if args.metadata_fetching_strategy == 'fetch_by_metadata':
         search_criteria = {}
         if args.filter_npg_qc:
@@ -135,19 +117,26 @@ def main():
         files_metadata_objs_list = iRODSMetadataProvider.retrieve_raw_files_metadata_by_metadata(search_criteria, args.irods_zone)
         for obj in files_metadata_objs_list:
             fpath = os.path.join(obj.dir_path, obj.fname)
-            files_metadata_dict[fpath] = obj
+            irods_metadata_dict[fpath] = obj
 
     elif args.metadata_fetching_strategy == 'fetch_by_path':
         for fpath in args.fpaths_irods:
             file_metadata = iRODSMetadataProvider.fetch_raw_file_metadata_by_path(fpath)
-            files_metadata_dict[fpath] = file_metadata
+            irods_metadata_dict[fpath] = file_metadata
 
+
+
+    # Perform the checks on the data itself, without comparing with other metadata sources:
+    for irods_file_meta in irods_metadata_dict.values():
+        # iRODS:
+        problems = irods_file_meta.check_metadata()
+        seq_metadata = IrodsSeqFileMetadata.from_raw_metadata(irods_file_meta)
+        if args.desired_reference:
+            problems.extend(seq_metadata.check_metadata(args.desired_reference))
 
 
 
 main()
-
-
 
 
 
@@ -173,4 +162,19 @@ print("Metadata comparison irod vs seqs: %s" % FileMetadataComparison.compare_en
 print("Metadata comparison head vs seqs: %s" % FileMetadataComparison.compare_entities(h_meta.libraries, seqsc_meta.libraries))
 
 
-    
+
+# @classmethod
+# def retrieve_files_metadata_by_metadata(cls, search_criteria_dict, zone=None):
+#     search_crit_list = []
+#     for k, v in search_criteria_dict.items():
+#         search_criterion = SearchCriterion(k, v)
+#         search_crit_list.append(search_criterion)
+#
+#     # Getting metadata from iRODS:
+#     connection = connect_to_irods_with_baton(config.BATON_BIN, skip_baton_binaries_validation=True) # type: Connection
+#     list_of_data_objs_and_metadata = connection.data_object.get_by_metadata(search_crit_list, zone)
+#     raw_meta_objects = [IrodsRawFileMetadata.from_baton_wrapper(data_obj) for data_obj in list_of_data_objs_and_metadata]
+#     return raw_meta_objects
+#
+
+
