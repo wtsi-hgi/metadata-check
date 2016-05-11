@@ -350,7 +350,8 @@ class IrodsSeqFileMetadata(object):
         problems = []
         problems.extend(self.validate_fields())
         problems.extend(self.check_checksum_calculated_vs_metadata())
-        problems.extend(self.check_reference(self, desired_reference))
+        if desired_reference:
+            problems.extend(self.check_reference(self, desired_reference))
         return problems
 
 
