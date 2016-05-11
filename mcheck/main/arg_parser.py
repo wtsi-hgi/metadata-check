@@ -27,17 +27,10 @@ from mcheck.main import constants
 
 def parse_args():
     parser = argparse.ArgumentParser(prog='metadata_checks', conflict_handler='resolve')#, usage='%(prog)s {fetch_by_path | fetch_by_metadata}') # usage='%(prog)s subcommands [options]',
-    # parser.add_mutually_exclusive_group(required=True)
-    #subcommands = parser.add_argument_group('Check-type', 'Choose whether to check a file by path, or fetch a bunch of files by metadata and check them')
 
     # Tests
     parent_parser = argparse.ArgumentParser(add_help=False)
     tests_grp = parent_parser.add_argument_group('TESTS', 'Choose which tests to run on your data')
-    # tests_grp.add_argument('--all-tests',
-    #                        action='store_true',
-    #                        help='Run all the tests that can be run'
-    # )
-
     tests_grp.add_argument('--test-reference',
                            dest='desired_reference',
                            choices=[constants.HS37D5, constants.GRCH38, constants.G1K, constants.GRCH37],
