@@ -42,7 +42,7 @@ class iRODSMetadataProvider:
             if str(e).find('KRB_ERROR_ACQUIRING_CREDS') != -1:
                 raise OSError("ERROR: you need to log into iRODS and aquire the KERBEROS credentials.")
             else:
-                raise
+                raise e from None
         else:
             baton_file_metadata = baton_file_metadata_as_list if baton_file_metadata_as_list else None
             raw_metadata = IrodsRawFileMetadata.from_baton_wrapper(baton_file_metadata)
@@ -64,20 +64,20 @@ class iRODSMetadataProvider:
             if str(e).find('KRB_ERROR_ACQUIRING_CREDS') != -1:
                 raise OSError("ERROR: you need to log into iRODS and aquire the KERBEROS credentials.")
             else:
-                raise e
+                raise e from None
         print("List of data objs: %s" % list_of_data_objs_and_metadata)
         raw_meta_objects = [IrodsRawFileMetadata.from_baton_wrapper(data_obj) for data_obj in list_of_data_objs_and_metadata]
         return raw_meta_objects
 
 
-import sys
-#by_path = iRODSMetadataProvider.fetch_raw_file_metadata_by_path('/Sanger1/home/ic4/some_json.txt')
-try:
-    by_path = iRODSMetadataProvider.fetch_raw_file_metadata_by_path('/Sanger1/home/ic4/tox.ini')
-    print("Metadata for file by path %s " % by_path)
-except Exception as e:
-    print(e)
-    sys.exit(1)
+# import sys
+# #by_path = iRODSMetadataProvider.fetch_raw_file_metadata_by_path('/Sanger1/home/ic4/some_json.txt')
+# try:
+#     by_path = iRODSMetadataProvider.fetch_raw_file_metadata_by_path('/Sanger1/home/ic4/tox.ini')
+#     print("Metadata for file by path %s " % by_path)
+# except Exception as e:
+#     print(e)
+#     sys.exit(1)
 
 # objs = iRODSMetadataProvider.retrieve_raw_files_metadata_by_metadata({'file_type': 'tox'}, zone='Sanger1')
 # print("Objects found by metadata: %s" % objs)
