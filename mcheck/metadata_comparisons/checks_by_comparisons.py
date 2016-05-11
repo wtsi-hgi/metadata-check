@@ -30,10 +30,10 @@ from mcheck.metadata.irods_metadata.irods_meta_provider import iRODSMetadataProv
 from mcheck.metadata.irods_metadata.irods_file_metadata import IrodsSeqFileMetadata
 
 
-class IrodsMetadataVsHeaderMetadata:
-
-    pass
-
+# class IrodsMetadataVsHeaderMetadata:
+#
+#     pass
+#
     # def compare(self, irods_metadata, header_metadata):
     #     return self._compare_entities(irods_metadata.samples, header_metadata.samples)
 
@@ -53,41 +53,6 @@ class FileMetadataComparison:
                 if values != entity_set2.get(id_type):
                     return False
         return True
-
-class BulkMetadataRetrieval:
-
-    @staticmethod
-    def fetch_irods_metadata_by_metadata(search_criteria):
-        """
-        Queries iRODS for all the files that match the search criteria and fetch all the metadata for them.
-        :param search_criteria: a dict with: key = search field name, value = search field value
-        :return:
-        """
-        return iRODSMetadataProvider.retrieve_fileinfo_and_metadata_by_metadata(search_criteria)
-
-
-class FileMetadataRetrieval:
-
-    @staticmethod
-    def fetch_seqscape_metadata(samples, libraries, studies):
-        raw_metadata = SeqscapeRawMetadataProvider.fetch_raw_metadata(samples, libraries, studies)
-        problems = raw_metadata.check_metadata()
-        seqsc_metadata = SeqscapeMetadata.from_raw_metadata(raw_metadata)
-        return seqsc_metadata, problems
-
-    @staticmethod
-    def fetch_header_metadata(fpath):
-        header_metadata = SAMFileHeaderMetadataProvider.fetch_metadata(fpath, irods=True)
-        problems = header_metadata.check_metadata()
-        header_metadata.fix_metadata()
-        return header_metadata, problems
-
-    @staticmethod
-    def fetch_irods_metadata_by_path(fpath):
-        raw_metadata = iRODSMetadataProvider.fetch_raw_metadata(fpath)
-        problems = raw_metadata.check_metadata()
-        seq_metadata = IrodsSeqFileMetadata.from_raw_metadata(raw_metadata)
-        return seq_metadata, problems
 
 
 
