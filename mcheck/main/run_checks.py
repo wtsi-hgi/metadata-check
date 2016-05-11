@@ -20,6 +20,7 @@ This file has been created on May 05, 2016.
 """
 
 import os
+from collections import defaultdict
 
 from mcheck.main import arg_parser
 from mcheck.metadata.irods_metadata.irods_meta_provider import iRODSMetadataProvider
@@ -70,35 +71,52 @@ class BulkMetadataRetrieval:
 class FileMetadataRetrieval:
 
     @staticmethod
-    def fetch_and_check_seqscape_metadata(samples, libraries, studies):
-        raw_metadata = SeqscapeRawMetadataProvider.fetch_raw_metadata(samples, libraries, studies)
+    def fetch_seqscape_metadata(samples, libraries, studies):
+        return SeqscapeRawMetadataProvider.fetch_raw_metadata(samples, libraries, studies)
+
+    @staticmethod
+    def fetch_header_metadata(fpath):
+        return SAMFileHeaderMetadataProvider.fetch_metadata(fpath, irods=True)
+
+    @staticmethod
+    def fetch_irods_metadata_by_path(fpath, reference):
+         return iRODSMetadataProvider.fetch_raw_file_metadata_by_path(fpath)
+
+
+class MetadataSelfChecks:
+
+    @staticmethod
+    def check_and_convert_seqscape_metadata(raw_metadata):
         problems = raw_metadata.check_metadata()
         seqsc_metadata = SeqscapeMetadata.from_raw_metadata(raw_metadata)
         problems.extend(seqsc_metadata.check_metadata())
         return seqsc_metadata, problems
 
     @staticmethod
-    def fetch_and_check_header_metadata(fpath):
-        header_metadata = SAMFileHeaderMetadataProvider.fetch_metadata(fpath, irods=True)
+    def check_and_convert_header_metadata(header_metadata):
         problems = header_metadata.check_metadata()
         header_metadata.fix_metadata()
         return header_metadata, problems
 
     @staticmethod
-    def fetch_and_check_irods_metadata_by_path(fpath, reference):
-        raw_metadata = iRODSMetadataProvider.fetch_raw_file_metadata_by_path(fpath)
+    def check_and_convert_irods_metadata(raw_metadata, reference=None):
         problems = raw_metadata.check_metadata()
-        seq_metadata = IrodsSeqFileMetadata.from_raw_metadata(raw_metadata)
-        problems.extend(seq_metadata.check_metadata(reference))
-        return seq_metadata, problems
+        file_metadata = IrodsSeqFileMetadata.from_raw_metadata(raw_metadata)
+        problems.extend(file_metadata.check_metadata(reference))
+        return file_metadata, problems
+
+
 
 
 def main():
     args = arg_parser.parse_args()
 
-    # Getting iRODS metadata for files:
+    issues_to_report = defaultdict(list)
+    # Getting iRODS metadata for files and checking before bringing it a "normalized" form:
+    # TODO: add the option of getting the metadata as a json from the command line...
     print('args: %s' %args)
     irods_metadata_dict = {}    # key = filepath, value = metadata (avus + checksum and others)
+    reference = args.desired_reference if args.desired_reference else None
     if args.metadata_fetching_strategy == 'fetch_by_metadata':
         search_criteria = {}
         if args.filter_npg_qc:
@@ -114,26 +132,37 @@ def main():
         elif args.study_internal_id:
             search_criteria['study_internal_id'] = args.study_internal_id
 
-        files_metadata_objs_list = iRODSMetadataProvider.retrieve_raw_files_metadata_by_metadata(search_criteria, args.irods_zone)
-        for obj in files_metadata_objs_list:
-            fpath = os.path.join(obj.dir_path, obj.fname)
-            irods_metadata_dict[fpath] = obj
+        all_files_metadata_objs_list = iRODSMetadataProvider.retrieve_raw_files_metadata_by_metadata(search_criteria, args.irods_zone)
+        for raw_metadata in all_files_metadata_objs_list:
+            fpath = os.path.join(raw_metadata.dir_path, raw_metadata.fname)
+            file_metadata, problems = MetadataSelfChecks.check_and_convert_irods_metadata(raw_metadata, reference)
+            irods_metadata_dict[fpath] = file_metadata
+            issues_to_report[fpath].extend(problems)
 
     elif args.metadata_fetching_strategy == 'fetch_by_path':
         for fpath in args.fpaths_irods:
-            file_metadata = iRODSMetadataProvider.fetch_raw_file_metadata_by_path(fpath)
+            raw_metadata = iRODSMetadataProvider.fetch_raw_file_metadata_by_path(fpath)
+            file_metadata, problems = MetadataSelfChecks.check_and_convert_irods_metadata(raw_metadata, reference)
             irods_metadata_dict[fpath] = file_metadata
+            issues_to_report[fpath].extend(problems)
 
 
 
-    # Perform the checks on the data itself, without comparing with other metadata sources:
-    for irods_file_meta in irods_metadata_dict.values():
-        # iRODS:
-        problems = irods_file_meta.check_metadata()
-        seq_metadata = IrodsSeqFileMetadata.from_raw_metadata(irods_file_meta)
-        if args.desired_reference:
-            problems.extend(seq_metadata.check_metadata(args.desired_reference))
+    # Getting HEADER metadata:
+    header_metadata_dict = {}
+    for fpath in irods_metadata_dict.keys():
+        header_metadata = SAMFileHeaderMetadataProvider.fetch_metadata(fpath, irods=True)
+        processed_header_metadata, problems = MetadataSelfChecks.check_and_convert_header_metadata(header_metadata)
+        header_metadata_dict[fpath] = processed_header_metadata
+        issues_to_report[fpath].extend(problems)
 
+    # Getting Seqscape metadata:
+    seqsc_metadata_dict = {}
+    for fpath, irods_metadata in irods_metadata_dict.items():
+        raw_metadata = SeqscapeRawMetadataProvider.fetch_raw_metadata(irods_metadata.samples, irods_metadata.libraries, irods_metadata.studies)
+        seqsc_metadata, problems = MetadataSelfChecks.check_and_convert_seqscape_metadata(raw_metadata)
+        seqsc_metadata_dict[fpath] = seqsc_metadata
+        issues_to_report[fpath] = problems
 
 
 main()
@@ -157,9 +186,9 @@ print("\nLibraries from H META:     %s" % h_meta.libraries)
 print("\nLibraries from IRODS META: %s" % irods_meta.libraries)
 print("\nLibraries from SEQSCAPE:   %s" % seqsc_meta.libraries)
 
-print("Metadata comparison head vs irod: %s" % FileMetadataComparison.compare_entities(h_meta.libraries, irods_meta.libraries))
-print("Metadata comparison irod vs seqs: %s" % FileMetadataComparison.compare_entities(irods_meta.libraries, seqsc_meta.libraries))
-print("Metadata comparison head vs seqs: %s" % FileMetadataComparison.compare_entities(h_meta.libraries, seqsc_meta.libraries))
+# print("Metadata comparison head vs irod: %s" % FileMetadataComparison.compare_entities(h_meta.libraries, irods_meta.libraries))
+# print("Metadata comparison irod vs seqs: %s" % FileMetadataComparison.compare_entities(irods_meta.libraries, seqsc_meta.libraries))
+# print("Metadata comparison head vs seqs: %s" % FileMetadataComparison.compare_entities(h_meta.libraries, seqsc_meta.libraries))
 
 
 
