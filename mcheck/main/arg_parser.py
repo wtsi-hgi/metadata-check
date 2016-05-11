@@ -31,7 +31,7 @@ def parse_args():
     # Tests
     parent_parser = argparse.ArgumentParser(add_help=False)
     tests_grp = parent_parser.add_argument_group('TESTS', 'Choose which tests to run on your data')
-    tests_grp.add_argument('--test-reference',
+    tests_grp.add_argument('--test-for-reference',
                            dest='desired_reference',
                            choices=[constants.HS37D5, constants.GRCH38, constants.G1K, constants.GRCH37],
                            help='The desired reference, given by name'
