@@ -20,81 +20,28 @@ This file has been created on Jun 23, 2015.
 """
 
 import argparse
-#from . import constants
-#import argcomplete
+# from . import constants
+# import argcomplete
 from mcheck.main import constants
 
 
 def parse_args():
-
-    parser = argparse.ArgumentParser(prog='Metadata Checks')
-    parser.add_argument("-v", "--verbosity", action="count",
-                        help="increase output verbosity")
+    parser = argparse.ArgumentParser(prog='metadata_checks', conflict_handler='resolve')#, usage='%(prog)s {fetch_by_path | fetch_by_metadata}') # usage='%(prog)s subcommands [options]',
     # parser.add_mutually_exclusive_group(required=True)
     #subcommands = parser.add_argument_group('Check-type', 'Choose whether to check a file by path, or fetch a bunch of files by metadata and check them')
-    subparsers = parser.add_subparsers(help='Sub-commands')
-
-    parser_filecheck = subparsers.add_parser('Check_file', help='Check one file given by irods filepath')
-    parser_filecheck.add_argument('--fpath_irods',
-                           required=False,
-                           nargs='*',
-                           dest='fpaths_irods',
-                           #action='append',
-                           help='List of file paths in iRODS')
-
-    parser_all_files_metacheck = subparsers.add_parser('Check all files fetched by metadata')
-    parser_all_files_metacheck.add_argument('--irods_zone',
-                           help='The irods zone where the data is found',
-                           required=True
-                           )
-
-    input = parser_all_files_metacheck.add_argument_group('INPUT',
-                                            'Choose one or more ways of getting the list of files to check'
-    )
-    input_grp = input.add_mutually_exclusive_group(required=True)
-    input_grp.add_argument('--study_name', required=False, help='Study name')
-    input_grp.add_argument('--study_internal_id',
-                           help='The internal_id of the study that you query by for getting a list of files'
-                           )
-
-    input_grp.add_argument('--study_acc_nr',
-                           help='The accession number of the study that you query by for getting a list of files'
-                           )
-
-    # Filters files by type
-    filter_grp = parser_all_files_metacheck.add_argument_group('FILTERS', 'Which files to exclude from the list')
-    filter_grp.add_argument('--file_types',
-                            choices=['bam', 'cram'],
-                            default=['bam', 'cram'],
-                            nargs='*',
-                            required=False,
-                            dest='file_types',
-                            #action='append',
-                            help='Options are: bam | cram, you can choose more than 1 param.')
-
-    filter_grp.add_argument('--filter_npg_qc',
-                            choices=["1", "0"],
-                            required=False,
-                            help='Filter based on npg qc field'
-                            )
-
-    filter_grp.add_argument('--filter_target',
-                            choices=["1", "0", "library"],
-                            required=False,
-                            help='This flag stopps the default filter on the target=1 irods metadata attribute'
-    )
 
     # Tests
-    tests_grp = parser.add_argument_group('TESTS', 'Choose which tests to run on your data')
-    tests_grp.add_argument('--all-tests',
-                           action='store_true',
-                           help='Run all the tests that can be run'
-    )
+    parent_parser = argparse.ArgumentParser(add_help=False)
+    tests_grp = parent_parser.add_argument_group('TESTS', 'Choose which tests to run on your data')
+    # tests_grp.add_argument('--all-tests',
+    #                        action='store_true',
+    #                        help='Run all the tests that can be run'
+    # )
 
     tests_grp.add_argument('--test-reference',
-                            dest='desired_reference',
-                            choices=[constants.HS37D5, constants.GRCH38, constants.G1K, constants.GRCH37],
-                            help='The desired reference, given by name'
+                           dest='desired_reference',
+                           choices=[constants.HS37D5, constants.GRCH38, constants.G1K, constants.GRCH37],
+                           help='The desired reference, given by name'
 
     )
 
@@ -118,8 +65,8 @@ def parse_args():
     # )
 
     # OUTPUT: how to output the results?
-    out = parser.add_argument_group('OUTPUT FORMAT', 'What output to return and how', )
-    output_grp = out.add_mutually_exclusive_group()    #(required=True)
+    out = parent_parser.add_argument_group('OUTPUT FORMAT', 'What output to return and how', )
+    output_grp = out.add_mutually_exclusive_group()  #(required=True)
     output_grp.add_argument('--output_as_json',
                             nargs='?',
                             dest='out_file_json',
@@ -127,7 +74,7 @@ def parse_args():
                             required=False,
                             help='write the output as json')
 
-    output_grp.add_argument('--output_as_report',
+    output_grp.add_argument('--output_as_text',
                             nargs='?',
                             dest='out_file',
                             default='output.txt',
@@ -136,13 +83,15 @@ def parse_args():
                             help='write the output as a text report')
 
 
+
     # ADDITIONALS:
-    additional_outputs_grp = parser.add_argument_group('INCLUDE IN OUTPUT', 'What to include in the output')
+    additional_outputs_grp = parent_parser.add_argument_group('INCLUDE IN OUTPUT', 'What to include in the output')
+    additional_outputs_grp.add_argument("-v", "--verbosity", action="count", help="increase output verbosity")
     additional_outputs_grp.add_argument('--dump_meta',
                                         dest='meta_dir',
                                         required=False,
                                         help='Dump all the metadata extracted to the directory given as parameter'
-                                        )
+    )
 
     additional_outputs_grp.add_argument('--dump_fnames_by_type',
                                         #default='report',
@@ -152,7 +101,64 @@ def parse_args():
                                         action='store_true',
                                         help='Output a list of files analyzed grouped by type to a file '
                                              '(by default if no param given - include in the report)'
-                                        )
+    )
+
+    subparsers = parser.add_subparsers(title='Fetch metadata in batch or per file', description='One subcommand required: fetch_by_path | fetch_by_metadata', help='Sub-commands',
+                                       dest='metadata_fetching_strategy')#, prog='You need to choose a metadata fetching strategy - choices: fetch_by_path or fetch_by_metadata')    # , metavar={'fetch_by_path', 'fetch_by_metadata'})
+    subparsers.required = True
+
+    parser_filecheck = subparsers.add_parser('fetch_by_path', parents=[parent_parser],
+                                             help='Fetch the metadata of a file by irods filepath')
+    parser_filecheck.add_argument('fpath_irods',
+                                  #required=True,
+                                  # nargs='+',
+                                  #dest='fpath_irods',
+                                  #action='append',
+                                  help='List of file paths in iRODS')
+
+    parser_all_files_metacheck = subparsers.add_parser('fetch_by_metadata', parents=[parent_parser],
+                                                       help='Fetch the files matching the meta query')
+    parser_all_files_metacheck.add_argument('--irods_zone',
+                                            help='The irods zone where the data is found',
+                                            required=True
+    )
+
+    input = parser_all_files_metacheck.add_argument_group('INPUT',
+                                                          'Choose one or more ways of getting the list of files to check'
+    )
+    input_grp = input.add_mutually_exclusive_group(required=True)
+    input_grp.add_argument('--study_name', required=False, help='Study name')
+    input_grp.add_argument('--study_internal_id',
+                           help='The internal_id of the study that you query by for getting a list of files'
+    )
+
+    input_grp.add_argument('--study_acc_nr',
+                           help='The accession number of the study that you query by for getting a list of files'
+    )
+
+    # Filters files by type
+    filter_grp = parser_all_files_metacheck.add_argument_group('FILTERS', 'Which files to include based on metadata filters')
+    filter_grp.add_argument('--file_types',
+                            choices=['bam', 'cram'],
+                            default=['bam', 'cram'],
+                            nargs='*',
+                            required=False,
+                            dest='file_types',
+                            #action='append',
+                            help='Options are: bam | cram, you can choose more than 1 param.')
+
+    filter_grp.add_argument('--filter_npg_qc',
+                            choices=["1", "0"],
+                            required=False,
+                            help='Filter based on npg qc field'
+    )
+
+    filter_grp.add_argument('--filter_target',
+                            choices=["1", "0", "library"],
+                            required=False,
+                            help='This flag stopps the default filter on the target=1 irods metadata attribute'
+    )
+
     #
     # additional_outputs_grp.add_argument('--output_header_sample_ids',
     #                                     #nargs='?',
@@ -326,7 +332,7 @@ def parse_args():
     #                        dest='fosn',
     #                        help='Path to a file of sample names')
 
-        # additional_outputs_grp.add_argument('--output_file_count', action='store_true')
+    # additional_outputs_grp.add_argument('--output_file_count', action='store_true')
     # additional_outputs_grp.add_argument('--output_problematic_files',
     #                                     dest='fofn_probl',
     #                                     required=False,
