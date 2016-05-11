@@ -20,7 +20,7 @@ This file has been created on Jun 23, 2015.
 """
 
 import re
-from collections import defaultdict
+from collections import defaultdict, Iterable
 from typing import List, Dict, Union, Set
 
 from mcheck.com.operators import Operators
@@ -204,7 +204,7 @@ class IrodsSeqFileMetadata(object):
         irods_metadata = IrodsSeqFileMetadata()
         irods_metadata.fname = raw_metadata.fname
         irods_metadata.dir_path = raw_metadata.dir_path
-        irods_metadata.checksum_at_upload = raw_metadata.file_replicas
+        irods_metadata.checksum_at_upload = {replica.checksum for replica in raw_metadata.file_replicas}
 
         # Sample
         irods_metadata.samples = {'name': raw_metadata.get_values_for_attribute('sample'),
@@ -265,7 +265,13 @@ class IrodsSeqFileMetadata(object):
     @wrappers.check_args_not_none
     def _is_checksum_valid(checksum):
         if not type(checksum) is str:
-            raise TypeError("WRONG TYPE: the checksum must be a string, and is: " + str(type(checksum)))
+            if isinstance(checksum, Iterable):
+                if len(checksum) > 1:
+                    raise ValueError("This file has more than 1 checksum: %s" % checksum)
+                else:
+                    checksum = list(checksum)[0]
+            else:
+                raise TypeError("WRONG TYPE: the checksum must be a string, and is: " + str(type(checksum)))
         r = re.compile(irods_consts.MD5_REGEX)
         return True if r.match(checksum) else False
 
@@ -347,6 +353,7 @@ class IrodsSeqFileMetadata(object):
         return problems
 
     def check_metadata(self, desired_reference: str=None) -> List[CheckResult]:
+        #print("In check_metadata, myself = %s " % self)
         problems = []
         problems.extend(self.validate_fields())
         problems.extend(self.check_checksum_calculated_vs_metadata())
