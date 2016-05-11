@@ -224,13 +224,13 @@ class SeqscapeRawMetadata(object):
         studies_set = set(self.get_entities_by_type('study'))
         diff_wrong_studies_for_samples_in_irods = studies_set.difference(studies_by_samples_set)
         if not studies_set.issubset(studies_by_samples_set):
-            error_msg = "For samples %s, the studies in iRODS: %s and the studies in Seqscape don't agree: %s" % ( self.get_entities_by_type('sample'), studies_set, studies_by_samples_set)
+            error_msg = "For the %s given seqscape samples, the studies in iRODS: %s and the studies in Seqscape don't agree: %s" % ( str(len(self.get_entities_by_type('sample'))), studies_set, studies_by_samples_set)
             problems.append(
                 CheckResult(check_name="Check the samples belong to the same studies in iRODS and Seqscape", error_message=error_msg,
                             severity=SEVERITY.WARNING))
         elif diff_wrong_studies_for_samples_in_irods:
-            error_msg = "Studies in Seqscape and in iRODS for samples %s don't agree. Studies in iRODS and not in Seqscape: %s" % (
-                self.get_entities_by_type('sample'), diff_wrong_studies_for_samples_in_irods)
+            error_msg = "Studies in Seqscape and in iRODS for %s samples don't agree. Studies in iRODS and not in Seqscape: %s" % (
+                str(len(self.get_entities_by_type('sample'))), diff_wrong_studies_for_samples_in_irods)
             problems.append(CheckResult(
                 check_name="Check the study in iRODS for the samples given are associated with same sample in Seqscape",
                 error_message=error_msg, severity=SEVERITY.IMPORTANT))
@@ -252,8 +252,8 @@ class SeqscapeRawMetadata(object):
         samples_set = set(self.get_entities_by_type('sample'))
         diff_not_sequenced_yet = samples_by_studies_set.difference(samples_set)
         if diff_not_sequenced_yet:
-            error_msg = "Not all the samples in this study have been sequenced, remaining: %s, with sample ids: %s" % (
-                str(len(diff_not_sequenced_yet)), diff_not_sequenced_yet)
+            error_msg = "Not all the samples in this study have been sequenced, remaining: %s" % (
+                str(len(diff_not_sequenced_yet)))
             problems.append(
                 CheckResult(check_name="Check if all samples sequenced", error_message=error_msg,
                             severity=SEVERITY.WARNING))
