@@ -29,6 +29,7 @@ from mcheck.metadata.seqscape_metadata.seqscape_meta_provider import SeqscapeRaw
 from mcheck.metadata.file_header_metadata.header_meta_provider import SAMFileHeaderMetadataProvider
 from mcheck.metadata.seqscape_metadata.seqscape_metadata import SeqscapeMetadata
 from mcheck.metadata.irods_metadata.irods_file_metadata import IrodsSeqFileMetadata
+from mcheck.results.checks_results import CheckResult
 
 def read_file_into_list(fofn_path):
     fofn_fd = open(fofn_path)
@@ -205,9 +206,7 @@ def main():
         seqsc_metadata_dict[fpath] = seqsc_metadata
         issues_to_report[fpath] = problems
 
-    print("Self-checks: %s" % str(issues_to_report))
-    for fpath in issues_to_report:
-        print("For path: %s nr of issues: %s" % (fpath, str(len(issues_to_report[fpath]))))
+
 
     for fpath, irods_metadata in irods_metadata_dict.items():
         header_metadata = header_metadata_dict[fpath]
@@ -219,16 +218,30 @@ def main():
         header_diff_irods = FileMetadataComparison.find_differences(header_metadata, irods_metadata, ['samples', 'libraries', 'studies'])
 
         if seqscape_diff_header:
-            print("Differences between what is in seqscape and not in the header: %s" % seqscape_diff_header)
+            error_msg = "Differences: %s" % seqscape_diff_header
+            #print(error_msg)
+            issues_to_report[fpath].append(CheckResult(check_name="Compare what is in seqscape and not in header", error_message=error_msg))
         if header_diff_seqscape:
-            print("Differences between what is in the header and not in seqscape: %s" % header_diff_seqscape)
+            error_msg = "Differences: %s" % header_diff_seqscape
+            #print(error_msg)
+            issues_to_report[fpath].append(CheckResult(check_name="Compare what is in the header and not in seqscape", error_message=error_msg))
         if irods_diff_header:
-            print("Differences between what is in iRODS and not in header: %s" % irods_diff_header)
+            error_msg = "Differences: %s" % irods_diff_header
+            #print(error_msg)
+            issues_to_report[fpath].append(CheckResult(check_name="Compare what is in iRODS and not in the header", error_message=error_msg))
         if header_diff_irods:
-            print("Differences between what is in the header and not in iRODS: %s" % header_diff_irods)
+            error_msg = "Differences between what is in the header and not in iRODS: %s" % header_diff_irods
+            #print()
+            issues_to_report[fpath].append(CheckResult(check_name="Compare what is in the header and not in iRODS", error_message=error_msg))
 
 
+    #print("Self-checks: %s" % str(issues_to_report))
+    print("Tests results: ")
+    for fpath in issues_to_report:
+        print("For path: %s nr of issues: %s" % (fpath, issues_to_report[fpath]))
 
+        # issues_to_report
+        # check_name, executed=True, result=RESULT.FAILURE, severity=SEVERITY.IMPORTANT, error_message=None):
 
 # ['samples', 'libraries', 'studies'] = entity_types_list
 
