@@ -175,6 +175,12 @@ class SeqscapeRawMetadata(object):
 
     def get_all_entities_by_association_by_type(self, query_entity_type: str, fetched_entity_type:str) -> List[
         SeqscapeEntityQueryAndResults]:
+        """
+        Gets all the entities of type 'fetched_entity_type', fetched by 'query_entity_type'
+        :param query_entity_type:
+        :param fetched_entity_type:
+        :return:
+        """
         query_results = self._entities_fetched_by_association[(query_entity_type, fetched_entity_type)]
         res = []
         for v in query_results:
