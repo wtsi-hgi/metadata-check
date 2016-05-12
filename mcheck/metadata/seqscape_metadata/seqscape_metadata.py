@@ -263,17 +263,13 @@ class SeqscapeRawMetadata(object):
             return problems
         samples_by_studies_set = set(self.get_all_entities_by_association_by_type('study', 'sample'))
         samples_set = set(self.get_entities_by_type('sample'))
-        # diff_not_sequenced_yet = samples_by_studies_set.difference(samples_set)
-        # if diff_not_sequenced_yet:
-        #     error_msg = "Not all the samples in this study have been sequenced, remaining: %s" % (
-        #         str(len(diff_not_sequenced_yet)))
-        #     problems.append(
-        #         CheckResult(check_name="Check if all samples sequenced", error_message=error_msg,
-        #                     severity=SEVERITY.WARNING))
         if not samples_set.issubset(samples_by_studies_set):
             diff_samples_wrong_study = samples_set.difference(samples_by_studies_set)
-            error_msg = "Some samples don't appear under study(s): %s in Sequencescape, but they appear under this study in iRODS. Number of samples: %s, and ids: %s" % (
-                self.get_entities_by_type('study'), str(len(diff_samples_wrong_study)), diff_samples_wrong_study)
+            error_msg = "Some samples don't appear under study(s): %s in Sequencescape, " \
+                        "but they appear under this study in iRODS. Number of samples: %s, " \
+                        "and ids: %s" % ([study.name for study in self.get_entities_by_type('study')],
+                                         str(len(diff_samples_wrong_study)),
+                                         [(s.name, s.accession_number) for s in diff_samples_wrong_study])
             problems.append(CheckResult(
                 check_name="Check if the sample ids in iRODS for a study belong to the same study in Sqeuencescape ",
                 error_message=error_msg, severity=SEVERITY.IMPORTANT))
