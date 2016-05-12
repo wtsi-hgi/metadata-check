@@ -50,6 +50,15 @@ class CheckResult:
     def __repr__(self):
         return self.__str__()
 
+    def __hash__(self):
+        return hash(str(self))
+
+    def __eq__(self, other):
+        if not type(other) == type(self):
+            return False
+        return self.check_name == other.check_name and self.error_message == other.error_message and \
+               self.severity == other.severity and self.executed == other.executed and self.result == other.result
+
 
 
 
