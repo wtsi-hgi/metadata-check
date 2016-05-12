@@ -139,13 +139,13 @@ class SeqscapeRawMetadata(object):
             self._entities_fetched_by_association[entity_type].append(query_results)
 
     def get_fetched_entities_by_type(self, entity_type: str):
-        return self._entities_dict_by_type[entity_type]
+        return list(set(self._entities_dict_by_type[entity_type]))
 
     def get_entities_by_type(self, entity_type: str):
-        results = []
+        results = set()
         for entities in self._entities_dict_by_type[entity_type]:
-            results.extend(entities.entities_fetched)
-        return results
+            results = results.union(entities.entities_fetched)
+        return list(results)
 
 
     def get_entities_without_duplicates_by_entity_type(self, entity_type: str) -> List[NamedModel]:
