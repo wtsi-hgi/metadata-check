@@ -111,7 +111,7 @@ class MetadataSelfChecks:
 class FileMetadataComparison:
 
     @staticmethod
-    def compare_entities(entity_set1: Dict[str, Set], entity_set2: Dict[str, Set]):
+    def are_entities_equal(entity_set1: Dict[str, Set], entity_set2: Dict[str, Set]):
         """
         Compares the entities in 2 different dicts that look like: {'accession_number': {'EGAN00001099700'}, 'name': {'SC_SEPI5488478'}, 'internal_id': {'1582333'}}
         :param entity_set1: dict of key = id_type, value = id_value
@@ -123,6 +123,29 @@ class FileMetadataComparison:
                 if values != entity_set2.get(id_type):
                     return False
         return True
+
+    @staticmethod
+    def find_differences(metadata1, metadata2, entity_types_list):
+        for entity_type in entity_types_list:
+            metadata_entities1 = getattr(metadata1, entity_type)    # header
+            metadata_entities2 = getattr(metadata2, entity_type) # seqsc
+            #if not FileMetadataComparison.are_entities_equal(header_entities, seqscape_entities):
+            # print("Seqscapem meta.%s = %s " % (entity_type, metadata_entities2))
+            # print("Header metadata.%s = %s" % (entity_type, metadata_entities1))
+            differences = []
+            for id_type, values in metadata_entities1.items():
+                if values and metadata_entities2.get(id_type):
+                    if values != metadata_entities2.get(id_type):
+                        differences[id_type] = set(values).difference(set(metadata_entities2.get(id_type)))
+            return differences
+                #         print("Some differences: seqscape = %s, header = %s" % (values, metadata_entities2.get(id_type)))
+                #     else:
+                #         print("Both header and seqscape have values, and they are the SAME")
+                # else:
+                #     print("One of the sources doesnt have values for metadata entity")
+
+
+
 
 
 
@@ -189,6 +212,42 @@ def main():
     for fpath, irods_metadata in irods_metadata_dict.items():
         header_metadata = header_metadata_dict[fpath]
         seqscape_metadata = seqsc_metadata_dict[fpath]
+        seqscape_diff_header = FileMetadataComparison.find_differences(seqscape_metadata, header_metadata, ['samples', 'libraries', 'studies'])
+        header_diff_seqscape = FileMetadataComparison.find_differences(header_metadata, seqscape_metadata, ['samples', 'libraries', 'studies'])
+
+        irods_diff_header = FileMetadataComparison.find_differences(irods_metadata, header_metadata, ['samples', 'libraries', 'studies'])
+        header_diff_irods = FileMetadataComparison.find_differences(header_metadata, irods_metadata, ['samples', 'libraries', 'studies'])
+
+        if seqscape_diff_header:
+            print("Differences between what is in seqscape and not in the header: %s" % seqscape_diff_header)
+        if header_diff_seqscape:
+            print("Differences between what is in the header and not in seqscape: %s" % header_diff_seqscape)
+        if irods_diff_header:
+            print("Differences between what is in iRODS and not in header: %s" % irods_diff_header)
+        if header_diff_irods:
+            print("Differences between what is in the header and not in iRODS: %s" % header_diff_irods)
+
+
+
+
+# ['samples', 'libraries', 'studies'] = entity_types_list
+
+# def find_differences(metadata1, metadata2, entity_types_list):
+#     for entity_type in entity_types_list:
+#         metadata_entities1 = getattr(metadata1, entity_type)    # header
+#         metadata_entities2 = getattr(metadata2, entity_type) # seqsc
+#         #if not FileMetadataComparison.are_entities_equal(header_entities, seqscape_entities):
+#         print("Seqscapem meta.%s = %s " % (entity_type, metadata_entities2))
+#         print("Header metadata.%s = %s" % (entity_type, metadata_entities1))
+#         for id_type, values in metadata_entities1.items():
+#             if values and metadata_entities2.get(id_type):
+#                 if values != metadata_entities2.get(id_type):
+#                     print("Some differences: seqscape = %s, header = %s" % (values, metadata_entities2.get(id_type)))
+#                 else:
+#                     print("Both header and seqscape have values, and they are the SAME")
+#             else:
+#                 print("One of the sources doesnt have values for metadata entity")
+#
 
 
 
