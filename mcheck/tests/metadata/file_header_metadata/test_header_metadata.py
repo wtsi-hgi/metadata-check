@@ -51,69 +51,69 @@ class TestSAMFileHeaderMetadata(unittest.TestCase):
 
 
     def test_filter_out_invalid_ids_1(self):
-        ids = [123, '']
-        expected_result = [123]
+        ids = {123, ''}
+        expected_result = {123}
         actual_result = SAMFileHeaderMetadata._filter_out_invalid_ids(ids)
-        self.assertListEqual(expected_result, actual_result)
+        self.assertSetEqual(expected_result, actual_result)
 
     def test_filter_out_invalid_ids_2(self):
-        ids = [123, -1]
-        expected_result = [123]
+        ids = {123, -1}
+        expected_result = {123}
         actual_result = SAMFileHeaderMetadata._filter_out_invalid_ids(ids)
-        self.assertListEqual(expected_result, actual_result)
+        self.assertSetEqual(expected_result, actual_result)
 
     def test_filter_out_invalid_ids_3(self):
-        ids = ['123']
-        expected_result = ['123']
+        ids = {'123'}
+        expected_result = {'123'}
         actual_result = SAMFileHeaderMetadata._filter_out_invalid_ids(ids)
-        self.assertListEqual(expected_result, actual_result)
+        self.assertSetEqual(expected_result, actual_result)
 
     def test_filter_out_invalid_ids_4(self):
-        ids = [None, 123]
-        expected_result = [123]
+        ids = {None, 123}
+        expected_result = {123}
         actual_result = SAMFileHeaderMetadata._filter_out_invalid_ids(ids)
-        self.assertListEqual(expected_result, actual_result)
+        self.assertSetEqual(expected_result, actual_result)
 
 
     def test_check_for_invalid_ids_1(self):
-        multi_ids = {'name': ['Ana', '']}
+        multi_ids = {'name': {'Ana', ''}}
         result = SAMFileHeaderMetadata._check_for_invalid_ids(multi_ids, 'sample')
         self.assertEqual(len(result), 1)
 
     def test_check_for_invalid_ids_2(self):
-        multi_ids = {'name': ['Ana', ''], 'ids': [-1, 0]}
+        multi_ids = {'name': {'Ana', ''}, 'ids': {-1, 0}}
         result = SAMFileHeaderMetadata._check_for_invalid_ids(multi_ids, 'sample')
         self.assertEqual(len(result), 2)
 
     def test_check_for_invalid_ids_3(self):
-        multi_ids = {'name': ['Ana']}
+        multi_ids = {'name': {'Ana'}}
         result = SAMFileHeaderMetadata._check_for_invalid_ids(multi_ids, 'sample')
         self.assertEqual(len(result), 0)
 
     def test_check_for_invalid_ids_4(self):
-        multi_ids = {'name': ['Ana', ''], 'id': [], 'accession_number': ['EGA1', None]}
+        multi_ids = {'name': {'Ana', ''}, 'id': set(), 'accession_number': {'EGA1', None}}
         result = SAMFileHeaderMetadata._check_for_invalid_ids(multi_ids, 'sample')
         self.assertEqual(len(result), 2)
 
 
     def test_fix_metadata_1(self):
         metadata = SAMFileHeaderMetadata(fpath='some_path', fname='some_name')
-        metadata.samples = {'name': ['sample1', 'sample2', 'sample3', None]}
-        metadata.libraries = {'internal_id': [-1, '', 123], 'name': ['', None]}
+        metadata.samples = {'name': {'sample1', 'sample2', 'sample3', None}}
+        metadata.libraries = {'internal_id': {-1, '', 123}, 'name': {'', None}}
         expected = SAMFileHeaderMetadata(fpath='some_path', fname='some_name')
-        expected.samples = {'name': ['sample1', 'sample2', 'sample3']}
-        expected.libraries = {'internal_id': [123], 'name': []}
+        expected.samples = {'name': {'sample1', 'sample2', 'sample3'}}
+        expected.libraries = {'internal_id': {123}, 'name': set()}
         metadata.fix_metadata()
         self.assertDictEqual(metadata.samples, expected.samples)
         self.assertDictEqual(metadata.libraries, expected.libraries)
 
     def test_fix_metadata_2(self):
         metadata = SAMFileHeaderMetadata(fpath='some_path', fname='some_name')
-        metadata.samples = {'name': ['sample1', 'sample2', 'sample3']}
-        metadata.libraries = {'internal_id': [-1, '', 123], 'name': []}
+        metadata.samples = {'name': {'sample1', 'sample2', 'sample3'}}
+        metadata.libraries = {'internal_id': {-1, '', 123}, 'name': set()}
         expected = SAMFileHeaderMetadata(fpath='some_path', fname='some_name')
-        expected.samples = {'name': ['sample1', 'sample2', 'sample3']}
-        expected.libraries = {'internal_id': [123], 'name': []}
+        expected.samples = {'name': {'sample1', 'sample2', 'sample3'}}
+        expected.libraries = {'internal_id': {123}, 'name': set()}
         metadata.fix_metadata()
         self.assertDictEqual(metadata.samples, expected.samples)
         self.assertDictEqual(metadata.libraries, expected.libraries)
