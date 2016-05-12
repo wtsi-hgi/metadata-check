@@ -43,7 +43,7 @@ class SAMFileHeaderMetadata(object):
 
     @classmethod
     def _filter_out_invalid_ids(cls, ids_list: typing.Sequence):
-        return [id for id in ids_list if cls._is_id_valid(id)]
+        return {id for id in ids_list if cls._is_id_valid(id)}
 
     @classmethod
     def _check_for_invalid_ids(cls, multi_ids_dict: typing.Dict, entity_type: str):
