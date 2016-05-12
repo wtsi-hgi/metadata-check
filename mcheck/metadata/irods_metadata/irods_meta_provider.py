@@ -59,7 +59,7 @@ class iRODSMetadataProvider:
         # Getting metadata from iRODS:
         try:
             connection = connect_to_irods_with_baton(config.BATON_BIN, skip_baton_binaries_validation=True) # type: Connection
-            list_of_data_objs_and_metadata = connection.data_object.get_by_metadata(search_crit_list, zone)
+            list_of_data_objs_and_metadata = connection.data_object.get_by_metadata(search_crit_list, zone=zone)
         except IOError as e:
             if str(e).find('KRB_ERROR_ACQUIRING_CREDS') != -1:
                 raise OSError("ERROR: you need to log into iRODS and aquire the KERBEROS credentials.")
@@ -79,5 +79,6 @@ class iRODSMetadataProvider:
 #     print(e)
 #     sys.exit(1)
 
-# objs = iRODSMetadataProvider.retrieve_raw_files_metadata_by_metadata({'file_type': 'tox'}, zone='Sanger1')
-# print("Objects found by metadata: %s" % objs)
+#objs = iRODSMetadataProvider.retrieve_raw_files_metadata_by_metadata({'study': 'SCG_sperm'}, zone='seq')
+#objs = iRODSMetadataProvider.retrieve_raw_files_metadata_by_metadata({'file_type': 'tox'}, zone='Sanger1')
+#print("Objects found by metadata: %s" % str(len(objs)))
