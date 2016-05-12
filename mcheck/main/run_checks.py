@@ -21,6 +21,7 @@ This file has been created on May 05, 2016.
 
 import os
 from collections import defaultdict
+from typing import Dict, Set
 
 from mcheck.main import arg_parser
 from mcheck.metadata.irods_metadata.irods_meta_provider import iRODSMetadataProvider
@@ -79,7 +80,7 @@ class FileMetadataRetrieval:
         return SAMFileHeaderMetadataProvider.fetch_metadata(fpath, irods=True)
 
     @staticmethod
-    def fetch_irods_metadata_by_path(fpath, reference):
+    def fetch_irods_metadata_by_path(fpath):
          return iRODSMetadataProvider.fetch_raw_file_metadata_by_path(fpath)
 
 
@@ -105,6 +106,23 @@ class MetadataSelfChecks:
         problems.extend(file_metadata.check_metadata(reference))
         return file_metadata, problems
 
+
+
+class FileMetadataComparison:
+
+    @staticmethod
+    def compare_entities(entity_set1: Dict[str, Set], entity_set2: Dict[str, Set]):
+        """
+        Compares the entities in 2 different dicts that look like: {'accession_number': {'EGAN00001099700'}, 'name': {'SC_SEPI5488478'}, 'internal_id': {'1582333'}}
+        :param entity_set1: dict of key = id_type, value = id_value
+        :param entity_set2: dict of key = id_type, value = id_value
+        :return:
+        """
+        for id_type, values in entity_set1.items():
+            if values and entity_set2.get(id_type):
+                if values != entity_set2.get(id_type):
+                    return False
+        return True
 
 
 
@@ -164,27 +182,36 @@ def main():
         seqsc_metadata_dict[fpath] = seqsc_metadata
         issues_to_report[fpath] = problems
 
+    print("Self-checks: %s" % str(issues_to_report))
+    for fpath in issues_to_report:
+        print("For path: %s nr of issues: %s" % (fpath, str(len(issues_to_report[fpath]))))
+
+    for fpath, irods_metadata in irods_metadata_dict.items():
+        header_metadata = header_metadata_dict[fpath]
+        seqscape_metadata = seqsc_metadata_dict[fpath]
+
+
 
 main()
 
 
-
-fpath = '/seq/illumina/library_merge/13841100.CCXX.paired310.4199421624/13841100.CCXX.paired310.4199421624.cram'
-h_meta = FileMetadataRetrieval.fetch_and_check_header_metadata(fpath)
-seqsc_meta, errs = FileMetadataRetrieval.fetch_and_check_seqscape_metadata(samples=h_meta.samples, libraries=h_meta.libraries, studies=h_meta.studies )
-irods_meta = FileMetadataRetrieval.fetch_and_check_irods_metadata_by_path(fpath)
-print("H METAAAAA: %s\n" % h_meta)
-print("Seqscape meta: %s\n" % str(seqsc_meta))
-print("Irods meta: %s\n" % irods_meta)
-
-
-print("\nSamples from H META:     %s" % h_meta.samples)
-print("\nSamples from IRODS META: %s" % irods_meta.samples)
-print("\nSamples from SEQSCAPE:   %s" % seqsc_meta.samples)
-
-print("\nLibraries from H META:     %s" % h_meta.libraries)
-print("\nLibraries from IRODS META: %s" % irods_meta.libraries)
-print("\nLibraries from SEQSCAPE:   %s" % seqsc_meta.libraries)
+#
+# fpath = '/seq/illumina/library_merge/13841100.CCXX.paired310.4199421624/13841100.CCXX.paired310.4199421624.cram'
+# h_meta = FileMetadataRetrieval.fetch_and_check_header_metadata(fpath)
+# seqsc_meta, errs = FileMetadataRetrieval.fetch_and_check_seqscape_metadata(samples=h_meta.samples, libraries=h_meta.libraries, studies=h_meta.studies )
+# irods_meta = FileMetadataRetrieval.fetch_and_check_irods_metadata_by_path(fpath)
+# print("H METAAAAA: %s\n" % h_meta)
+# print("Seqscape meta: %s\n" % str(seqsc_meta))
+# print("Irods meta: %s\n" % irods_meta)
+#
+#
+# print("\nSamples from H META:     %s" % h_meta.samples)
+# print("\nSamples from IRODS META: %s" % irods_meta.samples)
+# print("\nSamples from SEQSCAPE:   %s" % seqsc_meta.samples)
+#
+# print("\nLibraries from H META:     %s" % h_meta.libraries)
+# print("\nLibraries from IRODS META: %s" % irods_meta.libraries)
+# print("\nLibraries from SEQSCAPE:   %s" % seqsc_meta.libraries)
 
 # print("Metadata comparison head vs irod: %s" % FileMetadataComparison.compare_entities(h_meta.libraries, irods_meta.libraries))
 # print("Metadata comparison irod vs seqs: %s" % FileMetadataComparison.compare_entities(irods_meta.libraries, seqsc_meta.libraries))
