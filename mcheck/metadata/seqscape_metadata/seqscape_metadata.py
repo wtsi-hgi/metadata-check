@@ -421,17 +421,17 @@ class SeqscapeMetadata:
             for id in mandatory_ids:
                 if not getattr(sample, id):
                     problems.append(CheckResult(check_name='Check for all sample id types',
-                                                error_message='Missing sample id %s from sample: %s' % (id, sample)))
+                                                error_message='Missing sample %s from sample: %s' % (id, sample)))
         return problems
 
     def check_studies_have_all_types_of_ids(self):
         problems = []
         mandatory_ids = ['name', 'accession_number', 'internal_id']
-        for sample in self._samples:
+        for study in self._studies:
             for id in mandatory_ids:
-                if not getattr(sample, id):
-                    problems.append(CheckResult(check_name='Check for all sample id types', severity=SEVERITY.WARNING,
-                                                error_message='Missing sample id %s from sample: %s' % (id, sample)))
+                if not getattr(study, id):
+                    problems.append(CheckResult(check_name='Check for all study id types', severity=SEVERITY.WARNING,
+                                                error_message='Missing study %s from study: %s' % (id, study)))
         return problems
 
     def check_metadata(self):
