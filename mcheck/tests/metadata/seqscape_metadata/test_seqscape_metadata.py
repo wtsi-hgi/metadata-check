@@ -197,7 +197,7 @@ class TestSeqscapeEntitiesFetched(unittest.TestCase):
                                                        query_id_type='internal_id', query_entity_type='sample',
                                                        fetched_entity_type='sample')
         raw_metadata.add_fetched_entities(entities_fetched_obj2)
-        self.assertEqual(len(raw_metadata.get_entities_by_type('sample')), 2)
+        self.assertEqual(len(raw_metadata.get_entities_by_type('sample')), 1)
 
         result = raw_metadata.get_entities_without_duplicates_by_entity_type('sample')
         self.assertEqual(1, len(result))
@@ -386,7 +386,7 @@ class TestSamplesAndStudiesFetched(unittest.TestCase):
 
     def test_samples_fetched_by_studies(self):
         result = self.raw_metadata.check_samples_fetched_by_studies()
-        self.assertEqual(len(result), 2)
+        self.assertEqual(len(result), 1)
 
 
 class TestCheckEntitiesFetched(unittest.TestCase):
