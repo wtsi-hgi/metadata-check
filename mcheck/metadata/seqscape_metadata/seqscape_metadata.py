@@ -280,14 +280,15 @@ class SeqscapeRawMetadata(object):
         :param raw_metadata:
         :return:
         """
+        print("Check_metadata from RAW meta called")
         problems = []
         entity_types = self.get_all_fetched_entity_types()
         for ent_type in entity_types:
             entities_fetched = self.get_fetched_entities_by_type(ent_type)
             problems.extend(self._check_entities_fetched(entities_fetched))
             problems.extend(self._check_by_comparison_entities_fetched_by_different_id_types(entities_fetched))
-            problems.extend(self.check_studies_fetched_by_samples())
-            problems.extend(self.check_samples_fetched_by_studies())
+        problems.extend(self.check_studies_fetched_by_samples())
+        problems.extend(self.check_samples_fetched_by_studies())
         return problems
 
 
