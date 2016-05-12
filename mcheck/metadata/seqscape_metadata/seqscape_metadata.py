@@ -245,8 +245,11 @@ class SeqscapeRawMetadata(object):
                 error_message=error_msg, severity=SEVERITY.IMPORTANT))
         diff_sam_belongs2more_studies = studies_by_samples_set.difference(studies_set)
         if diff_sam_belongs2more_studies:
-            error_msg = "Some samples belong to more than one study. For samples: %s we found in Seqscape these studies: %s" % (
-                self.get_entities_by_type('sample'), diff_sam_belongs2more_studies)
+            error_msg = "Some samples belong to more than one study. For samples: %s we had these studies as metadata: %s and we found in Seqscape these studies: %s => difference with current set of studies: %s" % (
+                [(sample.name, sample.accession_number) for sample in self.get_entities_by_type('sample')],
+                [study.name for study in studies_set],
+                [study.name for study in studies_by_samples_set],
+                [study.name for study in diff_sam_belongs2more_studies])
             problems.append(CheckResult(check_name="Check the studies found in Seqscape when querying by samples",
                                         error_message=error_msg, severity=SEVERITY.WARNING))
 
