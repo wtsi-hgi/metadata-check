@@ -251,18 +251,19 @@ class SeqscapeRawMetadata(object):
 
 
     def check_samples_fetched_by_studies(self):
+        print("Calling samples_fetched_by_Studies")
         problems = []
         if not self.get_entities_by_type('study'):
             return problems
         samples_by_studies_set = set(self.get_all_entities_by_association_by_type('study', 'sample'))
         samples_set = set(self.get_entities_by_type('sample'))
-        diff_not_sequenced_yet = samples_by_studies_set.difference(samples_set)
-        if diff_not_sequenced_yet:
-            error_msg = "Not all the samples in this study have been sequenced, remaining: %s" % (
-                str(len(diff_not_sequenced_yet)))
-            problems.append(
-                CheckResult(check_name="Check if all samples sequenced", error_message=error_msg,
-                            severity=SEVERITY.WARNING))
+        # diff_not_sequenced_yet = samples_by_studies_set.difference(samples_set)
+        # if diff_not_sequenced_yet:
+        #     error_msg = "Not all the samples in this study have been sequenced, remaining: %s" % (
+        #         str(len(diff_not_sequenced_yet)))
+        #     problems.append(
+        #         CheckResult(check_name="Check if all samples sequenced", error_message=error_msg,
+        #                     severity=SEVERITY.WARNING))
         if not samples_set.issubset(samples_by_studies_set):
             diff_samples_wrong_study = samples_set.difference(samples_by_studies_set)
             error_msg = "Some samples don't appear under study(s): %s in Sequencescape, but they appear under this study in iRODS. Number of samples: %s, and ids: %s" % (
