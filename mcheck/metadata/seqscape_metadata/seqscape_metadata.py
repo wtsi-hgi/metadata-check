@@ -228,6 +228,9 @@ class SeqscapeRawMetadata(object):
             return problems
         studies_by_samples_set = set(self.get_all_entities_by_association_by_type('sample', 'study'))
         studies_set = set(self.get_entities_by_type('study'))
+
+        print("Studies fetched by samples: %s" % studies_by_samples_set)
+        print("Studies: %s" % studies_set)
         diff_wrong_studies_for_samples_in_irods = studies_set.difference(studies_by_samples_set)
         if not studies_set.issubset(studies_by_samples_set):
             error_msg = "For the %s given seqscape samples, the studies in iRODS: %s and the studies in Seqscape don't agree: %s" % ( str(len(self.get_entities_by_type('sample'))), studies_set, studies_by_samples_set)
