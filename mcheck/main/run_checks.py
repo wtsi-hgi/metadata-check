@@ -59,6 +59,16 @@ def write_tuples_to_file(tuples, output_file, header_tuple=None):
         out_fd.write("\n")
     out_fd.close()
 
+def write_dict_to_file(input_dict, output_file):
+    out_fd = open(output_file, 'a')
+    for k, v in input_dict.items():
+        out_fd.write(str(k))
+        out_fd.write("\n")
+        out_fd.write(str(v))
+        out_fd.write("\n")
+    out_fd.close()
+
+
 class BulkMetadataRetrieval:
 
     @staticmethod
@@ -157,7 +167,6 @@ def main():
     issues_to_report = defaultdict(list)
     # Getting iRODS metadata for files and checking before bringing it a "normalized" form:
     # TODO: add the option of getting the metadata as a json from the command line...
-    print('args: %s' %args)
     irods_metadata_dict = {}    # key = filepath, value = metadata (avus + checksum and others)
     reference = args.desired_reference if args.desired_reference else None
     if args.metadata_fetching_strategy == 'fetch_by_metadata':
@@ -207,8 +216,7 @@ def main():
         seqsc_metadata_dict[fpath] = seqsc_metadata
         issues_to_report[fpath] = problems
 
-
-
+    # Running checks to compare metadata obtained from different sources:
     for fpath, irods_metadata in irods_metadata_dict.items():
         header_metadata = header_metadata_dict[fpath]
         seqscape_metadata = seqsc_metadata_dict[fpath]
@@ -236,7 +244,7 @@ def main():
     # for fpath in issues_to_report:
     #     print("For path: %s nr of issues: %s" % (fpath, issues_to_report[fpath]))
 
-
+    # Reporting the results grouped by severity of issues:
     def group_by_severity(issues):
         severity_dict = defaultdict(dict)
         for fpath, issues in issues_to_report.items():
