@@ -21,16 +21,14 @@ This file has been created on Jun 26, 2015.
 
 import unittest
 
-from mcheck.irods.constants import IrodsPermission
-from mcheck.irods.data_types import MetaAVU
+from mcheck.metadata.irods_metadata.constants import IrodsPermission
+from mcheck.metadata.irods_metadata.data_types import MetaAVU
 from mcheck.metadata.irods_metadata.irods_file_metadata import IrodsSeqFileMetadata, IrodsRawFileMetadata
 from mcheck.metadata.irods_metadata.file_replica import IrodsFileReplica
 from mcheck.results.constants import RESULT
 from mcheck.metadata.irods_metadata.acl import IrodsACL
-
 from baton import models as baton_models
 from baton import collections as baton_coll
-
 from mcheck.metadata.common.attribute_count import AttributeCount
 
 

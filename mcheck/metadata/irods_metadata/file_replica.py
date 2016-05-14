@@ -21,7 +21,7 @@ This file has been created on Nov 30, 2015.
 
 import re
 
-import mcheck.irods.constants as irods_consts
+import mcheck.metadata.irods_metadata.constants as irods_consts
 from mcheck.results.checks_results import CheckResult
 from mcheck.results.constants import SEVERITY
 

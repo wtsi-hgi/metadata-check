@@ -24,7 +24,7 @@ import subprocess
 import os
 
 import config
-from mcheck.irods import constants
+from mcheck.metadata.irods_metadata import constants
 
 
 class BatonAPI:

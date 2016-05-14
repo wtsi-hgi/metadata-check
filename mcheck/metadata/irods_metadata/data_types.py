@@ -25,12 +25,12 @@ This file has been created on Oct 28, 2014
 from collections import namedtuple
 
 
-FileLine = namedtuple('FileLine', ['owner', 'replica_id', 'resc_name','size', 'timestamp', 'is_paired', 'fname'])
-CollLine = namedtuple('CollLine', ['coll_name'])
-
-
-CollListing = namedtuple('CollListing', ['coll_list', 'files_list'])    # where files_list = list of FileLine
-                                                                        # coll_list = list of CollLine
-ChecksumResult = namedtuple('ChecksumResult', ['md5'])
+# FileLine = namedtuple('FileLine', ['owner', 'replica_id', 'resc_name','size', 'timestamp', 'is_paired', 'fname'])
+# CollLine = namedtuple('CollLine', ['coll_name'])
+#
+#
+# CollListing = namedtuple('CollListing', ['coll_list', 'files_list'])    # where files_list = list of FileLine
+#                                                                         # coll_list = list of CollLine
+# ChecksumResult = namedtuple('ChecksumResult', ['md5'])
 
 MetaAVU = namedtuple('MetaAVU', ['attribute', 'value'])    # list of attribute-value tuples

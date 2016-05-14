@@ -26,8 +26,8 @@ import os
 import subprocess
 
 from mcheck.com import wrappers
-from mcheck.irods import data_types as irods_types
-from . import constants
+
+
 
 
 
@@ -35,6 +35,7 @@ from . import constants
 ######################## UTILS ##########################################
 from mcheck.com import utils
 from mcheck.irods import exceptions
+from mcheck.metadata.irods_metadata import constants
 
 
 def assemble_new_irods_fpath(fpath, irods_coll):

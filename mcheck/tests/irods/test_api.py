@@ -23,7 +23,8 @@ import unittest
 
 import config
 from mcheck.irods.api import iRODSAPI
-from mcheck.irods import  data_types
+from mcheck.metadata.irods_metadata import data_types
+
 
 @unittest.skip
 class TestiRODSAPI(unittest.TestCase):

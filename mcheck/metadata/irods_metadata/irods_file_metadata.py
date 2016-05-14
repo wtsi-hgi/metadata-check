@@ -26,12 +26,11 @@ from typing import List, Dict, Union, Set
 from mcheck.com.operators import Operators
 from mcheck.main import error_types
 from mcheck.com import wrappers
-from mcheck.irods import data_types
 from mcheck.metadata.common.identifiers import EntityIdentifier
 from mcheck.metadata.common.attribute_count import AttributeCount
+from mcheck.metadata.irods_metadata import constants as irods_consts, data_types
 from mcheck.results.checks_results import CheckResult
 from mcheck.com import utils as common_utils
-from mcheck.irods import constants as irods_consts
 from mcheck.results.constants import SEVERITY
 from mcheck.metadata.irods_metadata.acl import IrodsACL
 from mcheck.metadata.irods_metadata.file_replica import IrodsFileReplica
