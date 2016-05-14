@@ -28,7 +28,7 @@ from mcheck.main import error_types
 from mcheck.com import wrappers
 from mcheck.metadata.common.identifiers import EntityIdentifier
 from mcheck.metadata.common.attribute_count import AttributeCount
-from mcheck.metadata.irods_metadata import constants as irods_consts, data_types
+from mcheck.metadata.irods_metadata import constants as irods_consts, avu
 from mcheck.results.checks_results import CheckResult
 from mcheck.com import utils as common_utils
 from mcheck.results.constants import SEVERITY
@@ -57,7 +57,7 @@ class IrodsRawFileMetadata:
         return raw_meta
 
 
-    def set_attributes_from_avus(self, avus_list: Set[data_types.MetaAVU]) -> None:
+    def set_attributes_from_avus(self, avus_list: Set[avu.MetaAVU]) -> None:
         self._attributes = IrodsRawFileMetadata._group_avus_per_attribute(avus_list)
 
     def set_attributes_from_dict(self, avus_dict: Dict[str, Set[str]]) -> None:
@@ -74,7 +74,7 @@ class IrodsRawFileMetadata:
         return len(self.get_values_for_attribute(attribute))
 
     @staticmethod
-    def _group_avus_per_attribute(avus: List[data_types.MetaAVU]) -> Dict[str, Set[str]]:
+    def _group_avus_per_attribute(avus: List[avu.MetaAVU]) -> Dict[str, Set[str]]:
         avus_grouped = defaultdict(set)
         for avu in avus:
             avus_grouped[avu.attribute].add(avu.value)
