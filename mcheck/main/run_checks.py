@@ -20,6 +20,7 @@ This file has been created on May 05, 2016.
 """
 
 import os
+import sys
 from collections import defaultdict
 from typing import Dict, Set
 
@@ -184,7 +185,11 @@ def main():
         elif args.study_internal_id:
             search_criteria['study_internal_id'] = args.study_internal_id
 
-        all_files_metadata_objs_list = iRODSMetadataProvider.retrieve_raw_files_metadata_by_metadata(search_criteria, args.irods_zone)
+        try:
+            all_files_metadata_objs_list = iRODSMetadataProvider.retrieve_raw_files_metadata_by_metadata(search_criteria, args.irods_zone)
+        except Exception as e:
+            print(e)
+            sys.exit(1)
         for raw_metadata in all_files_metadata_objs_list:
             fpath = os.path.join(raw_metadata.dir_path, raw_metadata.fname)
             file_metadata, problems = MetadataSelfChecks.check_and_convert_irods_metadata(raw_metadata, reference)
@@ -193,7 +198,11 @@ def main():
 
     elif args.metadata_fetching_strategy == 'fetch_by_path':
         for fpath in args.fpaths_irods:
-            raw_metadata = iRODSMetadataProvider.fetch_raw_file_metadata_by_path(fpath)
+            try:
+                raw_metadata = iRODSMetadataProvider.fetch_raw_file_metadata_by_path(fpath)
+            except Exception as e:
+                print(e)
+                sys.exit(1)
             file_metadata, problems = MetadataSelfChecks.check_and_convert_irods_metadata(raw_metadata, reference)
             irods_metadata_dict[fpath] = file_metadata
             issues_to_report[fpath].extend(problems)

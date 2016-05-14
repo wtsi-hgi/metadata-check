@@ -40,7 +40,7 @@ class iRODSMetadataProvider:
             baton_file_metadata_as_list = connection.data_object.get_by_path(fpath)
         except Exception as e:
             if str(e).find('KRB_ERROR_ACQUIRING_CREDS') != -1:
-                raise OSError("ERROR: you need to log into iRODS and aquire the KERBEROS credentials.")
+                raise OSError("ERROR: you need to log into iRODS and aquire the KERBEROS credentials.") from None
             else:
                 raise e from None
         else:
@@ -62,7 +62,7 @@ class iRODSMetadataProvider:
             list_of_data_objs_and_metadata = connection.data_object.get_by_metadata(search_crit_list, zone=zone)
         except IOError as e:
             if str(e).find('KRB_ERROR_ACQUIRING_CREDS') != -1:
-                raise OSError("ERROR: you need to log into iRODS and aquire the KERBEROS credentials.")
+                raise OSError("ERROR: you need to log into iRODS and aquire the KERBEROS credentials.") from None
             else:
                 raise e from None
         print("List of data objs: %s" % list_of_data_objs_and_metadata)
