@@ -101,8 +101,8 @@ class TestIrodsACL(unittest.TestCase):
     def test_is_irods_zone_valid_2(self):
         self.assertTrue(IrodsACL._is_irods_zone_valid('humgen'))
 
-    def test_is_irods_zone_valid_3(self):
-        self.assertFalse(IrodsACL._is_irods_zone_valid(''))
+    # def test_is_irods_zone_valid_3(self):
+    #     self.assertFalse(IrodsACL._is_irods_zone_valid(''))
 
     def test_is_irods_zone_valid_4(self):
         self.assertFalse(IrodsACL._is_irods_zone_valid('blah'))
