@@ -165,6 +165,9 @@ def main():
             search_criteria['manual_qc'] = args.filter_npg_qc
         if args.filter_target:
             search_criteria['target'] = args.filter_target
+        if args.file_types:
+            for ftype in args.file_types:
+                search_criteria['type'] = ftype
 
         # Parse input parameters and obtain files+metadata:
         if args.study_name:
