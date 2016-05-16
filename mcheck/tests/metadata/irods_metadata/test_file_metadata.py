@@ -34,27 +34,6 @@ from mcheck.metadata.common.attribute_count import AttributeCount
 
 
 class TestRawFileMetadataFromBaton(unittest.TestCase):
-    # def __init__(self, fname: str, dir_path: str, file_replicas: List[IrodsFileReplica]=None,
-    # acls: List[IrodsACL]=None):
-    #        self.fname = fname
-    #        self.dir_path = dir_path
-    #        self.file_replicas = file_replicas
-    #        self.acls = acls
-    #        self._attributes = defaultdict(set)
-
-
-    # def from_baton_wrapper(data_object):
-    #      fname = data_object.get_name()
-    #      collection = data_object.get_collection_path()
-    #      replicas = [IrodsFileReplica.from_baton_wrapper(replica) for replica in data_object.replicas]
-    #      acls = [IrodsACL.from_baton_wrapper(ac_item) for ac_item in data_object.acl]
-    #      raw_meta = IrodsRawFileMetadata(fname=fname, dir_path=collection, file_replicas=replicas, acls=acls)
-    #      raw_meta.set_attributes_from_dict(data_object.metadata.to_dict())
-    #      return raw_meta
-
-    # self.access_group = access_group
-    #     self.zone = zone
-    #     self.permission = permission
 
     def test_from_baton_wrapper_fname_and_path_1(self):
         data_obj = baton_models.DataObject(path='/seq/123/123.bam.bai')

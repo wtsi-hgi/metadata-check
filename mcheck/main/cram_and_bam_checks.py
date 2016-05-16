@@ -62,33 +62,6 @@ def check_irods_vs_header_metadata(irods_path, header_dict, irods_dict, entity_t
 
 
 
-def read_file_into_list(fofn_path):
-    fofn_fd = open(fofn_path)
-    files_list = [f.strip() for f in fofn_fd]
-    fofn_fd.close()
-    return files_list
-
-
-def write_list_to_file(input_list, output_file, header=None):
-    out_fd = open(output_file, 'a')
-    if header:
-        out_fd.write(header+'\n')
-    for entry in input_list:
-        out_fd.write(entry+'\n')
-    out_fd.write('\n')
-    out_fd.close()
-
-def write_tuples_to_file(tuples, output_file, header_tuple=None):
-    out_fd = open(output_file, 'a')
-    for elem in header_tuple:
-        out_fd.write(str(elem)+"\t")
-    out_fd.write("\n")
-    for tup in tuples:
-        for elem in tup:
-            out_fd.write(str(elem)+"\t")
-        out_fd.write("\n")
-    out_fd.close()
-
 
 
 def collect_fpaths_by_study_name(study_name):
@@ -363,10 +336,10 @@ def main():
 
 
             # FETCH Seqscape raw metadata:
-            raw_ss_meta = SeqscapeRawMetadataProvider.fetch_raw_metadata(i_meta.samples, i_meta.libraries, i_meta.studies)
+            raw_ss_meta = SeqscapeRawMetadataProvider.fetch_raw_file_metadata_by_path(i_meta.samples, i_meta.libraries, i_meta.studies)
 
             # RUN CHECKS:
-            SeqscapeRawMetadataChecks.check_raw_metadata(raw_ss_meta)
+            SeqscapeRawMetadataChecks.check_metadata(raw_ss_meta)
 
             # Convert raw metadata to usable metadata:
             ss_meta = SeqscapeMetadata.from_raw_metadata(raw_ss_meta)

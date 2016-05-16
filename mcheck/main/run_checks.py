@@ -142,24 +142,13 @@ class FileMetadataComparison:
         for entity_type in entity_types_list:
             metadata_entities1 = getattr(metadata1, entity_type)    # header
             metadata_entities2 = getattr(metadata2, entity_type) # seqsc
-            #if not FileMetadataComparison.are_entities_equal(header_entities, seqscape_entities):
-            # print("Seqscapem meta.%s = %s " % (entity_type, metadata_entities2))
-            # print("Header metadata.%s = %s" % (entity_type, metadata_entities1))
-            differences = []
+            differences = {}
             for id_type, values in metadata_entities1.items():
                 if values and metadata_entities2.get(id_type):
                     if values != metadata_entities2.get(id_type):
                         differences[id_type] = set(values).difference(set(metadata_entities2.get(id_type)))
             return differences
-                #         print("Some differences: seqscape = %s, header = %s" % (values, metadata_entities2.get(id_type)))
-                #     else:
-                #         print("Both header and seqscape have values, and they are the SAME")
-                # else:
-                #     print("One of the sources doesnt have values for metadata entity")
-
-
-
-
+            
 
 
 def main():
@@ -264,34 +253,17 @@ def main():
                     severity_dict[iss.severity][fpath].append(iss)
         return severity_dict
 
+
     sorted_by_severity = group_by_severity(issues_to_report)
     for severity, fpaths_issues in sorted_by_severity.items():
         print("SEVERITY: %s" %severity)
+        write_dict_to_file(fpaths_issues, '/lustre/scratch113/teams/hgi/users/ic4/mercury/ddd/fy5/'+severity+'.txt')
         for path, issues in fpaths_issues.items():
             print("For path: %s issues: %s" % (path, issues))
 
-
-        # issues_to_report
-        # check_name, executed=True, result=RESULT.FAILURE, severity=SEVERITY.IMPORTANT, error_message=None):
-
-# ['samples', 'libraries', 'studies'] = entity_types_list
-
-# def find_differences(metadata1, metadata2, entity_types_list):
-#     for entity_type in entity_types_list:
-#         metadata_entities1 = getattr(metadata1, entity_type)    # header
-#         metadata_entities2 = getattr(metadata2, entity_type) # seqsc
-#         #if not FileMetadataComparison.are_entities_equal(header_entities, seqscape_entities):
-#         print("Seqscapem meta.%s = %s " % (entity_type, metadata_entities2))
-#         print("Header metadata.%s = %s" % (entity_type, metadata_entities1))
-#         for id_type, values in metadata_entities1.items():
-#             if values and metadata_entities2.get(id_type):
-#                 if values != metadata_entities2.get(id_type):
-#                     print("Some differences: seqscape = %s, header = %s" % (values, metadata_entities2.get(id_type)))
-#                 else:
-#                     print("Both header and seqscape have values, and they are the SAME")
-#             else:
-#                 print("One of the sources doesnt have values for metadata entity")
-#
+    # OUTPUTTING the data in the requested format:
+    if args.out_file_json:
+        pass
 
 
 
