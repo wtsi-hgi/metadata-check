@@ -195,7 +195,7 @@ class SeqscapeRawMetadata(object):
         for i in range(1, len(query_results)):
             entities_1 = query_results[i - 1]
             entities_2 = query_results[i]
-            if not set(entities_1.entities_fetched) == set(entities_2.entities_fetched):
+            if not (set(entities_1.entities_fetched).issubset(set(entities_2.entities_fetched)) or set(entities_2.entities_fetched).issubset(set(entities_1.entities_fetched))):
                 id_type_1 = entities_1.query_id_type
                 id_type_2 = entities_2.query_id_type
                 diff_1 = set(entities_1.entities_fetched).difference(set(entities_2.entities_fetched))
