@@ -23,12 +23,12 @@ This file has been created on Nov 27, 2015.
 
 
 class SEVERITY:
-    INFO = 'info'
-    WARNING = 'warning'
-    IMPORTANT = 'important'
-    CRITICAL = 'critical'
+    INFO = 'INFO'
+    WARNING = 'WARNING'
+    IMPORTANT = 'IMPORTANT'
+    CRITICAL = 'CRITICAL'
 
 
 class RESULT:
-    SUCCESS = 'success'
-    FAILURE = 'failure'
+    SUCCESS = 'SUCCESS'
+    FAILURE = 'FAILURE'
