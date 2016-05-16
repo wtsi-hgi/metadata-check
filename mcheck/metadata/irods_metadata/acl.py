@@ -89,6 +89,9 @@ class IrodsACL:
 
     @staticmethod
     def _is_irods_zone_valid(zone):
+        # Dirty hack to get over the issue of not getting the zone from baton
+        if not zone:
+            return True
         if zone and not type(zone) is str:
             raise TypeError("This zone is not a string, it is a: %s " % str(type(zone)))
         try:
@@ -102,10 +105,10 @@ class IrodsACL:
         problems = []
         if not self._is_irods_zone_valid(self.zone):
             problems.append(CheckResult(check_name="Check that iRODS zone is valid ", severity=SEVERITY.WARNING,
-                                        error_message="The iRODS zone seems wrong: " + str(self.zone)))
+                                        error_message="The iRODS zone seems wrong: " + str(self.zone) + " in acl = " + str(self)))
         if not self._is_permission_valid(self.permission):
             problems.append(CheckResult(check_name="Check that the permission is valid ", severity=SEVERITY.WARNING,
-                                        error_message="The iRODS permission seems wrong: " + str(self.permission)))
+                                        error_message="The iRODS permission seems wrong: " + str(self.permission) + " in  acl = " + str(self)))
         return problems
 
     def __eq__(self, other):
