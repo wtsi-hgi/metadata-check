@@ -188,6 +188,7 @@ def main():
             irods_metadata_dict[fpath] = file_metadata
             issues_to_report[fpath].extend(problems)
 
+
     elif args.metadata_fetching_strategy == 'fetch_by_path':
         for fpath in args.fpaths_irods:
             try:
@@ -196,6 +197,7 @@ def main():
                 print(e)
                 sys.exit(1)
             file_metadata, problems = MetadataSelfChecks.check_and_convert_irods_metadata(raw_metadata, reference)
+
             irods_metadata_dict[fpath] = file_metadata
             issues_to_report[fpath].extend(problems)
 
@@ -215,7 +217,7 @@ def main():
         raw_metadata = SeqscapeRawMetadataProvider.fetch_raw_metadata(irods_metadata.samples, irods_metadata.libraries, irods_metadata.studies)
         seqsc_metadata, problems = MetadataSelfChecks.check_and_convert_seqscape_metadata(raw_metadata)
         seqsc_metadata_dict[fpath] = seqsc_metadata
-        issues_to_report[fpath] = problems
+        issues_to_report[fpath].extend(problems)
 
     # Running checks to compare metadata obtained from different sources:
     for fpath, irods_metadata in irods_metadata_dict.items():
