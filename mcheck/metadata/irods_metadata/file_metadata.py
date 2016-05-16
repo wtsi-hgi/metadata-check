@@ -50,7 +50,7 @@ class IrodsRawFileMetadata:
         fname = data_object.get_name()
         collection = data_object.get_collection_path()
         replicas = [IrodsFileReplica.from_baton_wrapper(replica) for replica in data_object.replicas]
-        acls = [IrodsACL.from_baton_wrapper(ac_item) for ac_item in data_object.acl if ac_item]
+        acls = [IrodsACL.from_baton_wrapper(ac_item) for ac_item in data_object.access_controls if ac_item]
         raw_meta = IrodsRawFileMetadata(fname=fname, dir_path=collection, file_replicas=replicas, acls=acls)
         if data_object.metadata:
             raw_meta.set_attributes_from_dict(dict(data_object.metadata))
