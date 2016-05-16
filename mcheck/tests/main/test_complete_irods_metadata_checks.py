@@ -22,7 +22,7 @@ This file has been created on Jul 09, 2015.
 import os
 import unittest
 
-from mcheck.metadata.irods_metadata.data_types import MetaAVU
+from mcheck.metadata.irods_metadata.avu import MetaAVU
 from mcheck.main import complete_irods_metadata_checks as target_module
 
 
