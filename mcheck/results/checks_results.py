@@ -42,9 +42,9 @@ class CheckResult:
 
     def __str__(self):
         msg = "Check name: " + str(self.check_name) + ", severity = " + str(self.severity) + ", "
-        msg = msg + " executed: " + str(self.executed) + ", "
+        msg = msg + " executed: " + str(self.executed) + ", result = "
         msg += str(self.result)
-        msg = (msg + " error message: " + self.error_message) if self.error_message else msg
+        msg = (msg + ": " + self.error_message) if self.error_message else msg
         return msg
 
     def __repr__(self):
