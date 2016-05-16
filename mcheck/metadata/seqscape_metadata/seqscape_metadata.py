@@ -195,7 +195,8 @@ class SeqscapeRawMetadata(object):
         for i in range(1, len(query_results)):
             entities_1 = query_results[i - 1]
             entities_2 = query_results[i]
-            if not (set(entities_1.entities_fetched).issubset(set(entities_2.entities_fetched)) or set(entities_2.entities_fetched).issubset(set(entities_1.entities_fetched))):
+            if not (set(entities_1.entities_fetched).issubset(set(entities_2.entities_fetched)) or
+                        set(entities_2.entities_fetched).issubset(set(entities_1.entities_fetched))):
                 id_type_1 = entities_1.query_id_type
                 id_type_2 = entities_2.query_id_type
                 diff_1 = set(entities_1.entities_fetched).difference(set(entities_2.entities_fetched))
@@ -247,11 +248,10 @@ class SeqscapeRawMetadata(object):
                 error_message=error_msg, severity=SEVERITY.IMPORTANT))
         diff_sam_belongs2more_studies = studies_by_samples_set.difference(studies_set)
         if diff_sam_belongs2more_studies:
-            error_msg = "Some samples belong to more than one study. For samples: %s we had these studies as metadata: %s and we found in Seqscape these studies: %s => difference with current set of studies: %s" % (
+            error_msg = "Some samples belong to more than one study. For samples: %s we had these studies as metadata: %s and we found in Seqscape these studies: %s" % (
                 sample_set_ids,
                 studies_set_names,
-                studies_by_samples_set_names,
-                [study.name for study in diff_sam_belongs2more_studies])
+                studies_by_samples_set_names)
             problems.append(CheckResult(check_name="Check the studies found in Seqscape when querying by samples",
                                         error_message=error_msg, severity=SEVERITY.WARNING))
         return problems
