@@ -22,7 +22,7 @@ This file has been created on Nov 16, 2015.
 from mcheck.main import metadata_utils
 #from mcheck.irods_baton import baton_wrapper as baton
 
-from mcheck.metadata.irods_metadata.irods_file_metadata import IrodsRawFileMetadata, IrodsSeqFileMetadata
+from mcheck.metadata.irods_metadata.file_metadata import IrodsRawFileMetadata, IrodsSeqFileMetadata
 
 import config
 from baton.api import connect_to_irods_with_baton, Connection

@@ -23,7 +23,7 @@ import unittest
 
 from mcheck.metadata.irods_metadata.constants import IrodsPermission
 from mcheck.metadata.irods_metadata.avu import MetaAVU
-from mcheck.metadata.irods_metadata.irods_file_metadata import IrodsSeqFileMetadata, IrodsRawFileMetadata
+from mcheck.metadata.irods_metadata.file_metadata import IrodsSeqFileMetadata, IrodsRawFileMetadata
 from mcheck.metadata.irods_metadata.file_replica import IrodsFileReplica
 from mcheck.results.constants import RESULT
 from mcheck.metadata.irods_metadata.acl import IrodsACL
