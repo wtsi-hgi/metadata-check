@@ -451,16 +451,6 @@ class TestCheckRawMetadata(unittest.TestCase):
 
 class TestSeqscapeMetadata(unittest.TestCase):
 
-    # def check_samples_have_all_types_of_ids(self):
-        # problems = []
-        # mandatory_ids = ['name', 'accession_number', 'internal_id']
-        # for sample in self._samples:
-        #     for id in mandatory_ids:
-        #         if not getattr(sample, id):
-        #             problems.append(CheckResult(check_name='Check for all sample id types',
-        #                                         error_message='Missing sample id %s from sample: %s' % (id, sample)))
-        # return problems
-
     def test_check_samples_have_all_types_of_ids_when_ok(self):
         sam1 = Sample(name='sam1', accession_number='ega1', internal_id='1')
         sam2 = Sample(name='sam2', accession_number='ega2', internal_id='2')
@@ -577,9 +567,9 @@ class TestSeqscapeMetadata(unittest.TestCase):
         sam1 = Sample(accession_number='ega1', internal_id='1')
         sam2 = Sample(accession_number='ega2', internal_id='2')
         seqsc_metadata = SeqscapeMetadata(samples=[sam1, sam2])
-        result = set(seqsc_metadata.samples)
-        expected = set(seqsc_metadata._group_entity_ids_by_id_type(seqsc_metadata._samples))
-        self.assertSetEqual(result, expected)
+        result = seqsc_metadata.samples
+        expected = {'accession_number': set(['ega1', 'ega2']), 'internal_id': set(['1', '2']), 'name': set()}
+        self.assertDictEqual(result, expected)
 
 
     def test_set_sample(self):
@@ -587,3 +577,25 @@ class TestSeqscapeMetadata(unittest.TestCase):
         sam2 = Sample(accession_number='ega2', internal_id='2')
         seqsc_metadata = SeqscapeMetadata()
         seqsc_metadata.samples = [sam1, sam2]
+
+    def test_studies(self):
+        std1 = Study(accession_number='ega1', name='MyStudy')
+        seqscape_metadata = SeqscapeMetadata(studies=[std1])
+        result = seqscape_metadata.studies
+        expected = {'accession_number': set(['ega1']), 'name': set(['MyStudy']), 'internal_id': set()}
+        self.assertDictEqual(result, expected)
+
+    def test_check_metadata_when_missing(self):
+        std = Study(name='MyStudy', internal_id='1')
+        sample = Sample(name='sam2', internal_id='2')
+        seqsc_metadata = SeqscapeMetadata(samples=[sample], studies=[std])
+        result = seqsc_metadata.check_metadata()
+        self.assertEqual(len(result), 2)
+
+    def test_check_metadata_when_ok(self):
+        std = Study(name='MyStudy', internal_id='1', accession_number='ega1')
+        sample = Sample(name='sam2', internal_id='2', accession_number='ega2')
+        seqsc_metadata = SeqscapeMetadata(samples=[sample], studies=[std])
+        result = seqsc_metadata.check_metadata()
+        self.assertEqual(len(result), 0)
+
