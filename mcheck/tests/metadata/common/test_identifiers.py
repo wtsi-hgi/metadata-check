@@ -141,3 +141,5 @@ class TestEntityIdentifier(unittest.TestCase):
         self.assertDictEqual({'internal_id': set(['123']), 'name': set(['MYNAME']), 'accession_number': set(['ERP123'])}, ids_dict)
 
 
+if __name__ == "__main__":
+    unittest.main()
