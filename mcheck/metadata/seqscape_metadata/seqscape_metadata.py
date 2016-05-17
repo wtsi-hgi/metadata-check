@@ -406,9 +406,6 @@ class SeqscapeMetadata:
     def set_study_objects(self, studies):
         self._studies = studies
 
-    def get_studies_as_objects(self):
-        return self._studies
-
     def set_study_objects(self, studies):
         self._studies = studies
 
