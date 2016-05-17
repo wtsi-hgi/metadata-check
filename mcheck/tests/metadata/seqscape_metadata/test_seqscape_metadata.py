@@ -487,7 +487,7 @@ class TestSeqscapeMetadata(unittest.TestCase):
         sam2 = Sample()
         metadata = SeqscapeMetadata(samples=[sam1, sam2])
         result = metadata.check_samples_have_all_types_of_ids()
-        self.assertEqual(len(result), 6)
+        self.assertEqual(len(result), 2)
 
 
     def test_from_raw_metadata(self):

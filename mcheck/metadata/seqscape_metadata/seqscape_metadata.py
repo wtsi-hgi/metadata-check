@@ -412,27 +412,25 @@ class SeqscapeMetadata:
     def get_study_ids_by_id_type(self, id_type) -> List:
         return self._group_entity_ids_by_id_type(self._studies).get(id_type)
 
-    def check_samples_have_all_types_of_ids(self):
+    @staticmethod
+    def _check_entities_have_all_types_of_ids(entity_list, mandatory_id_types, entity_type):
         problems = []
-        mandatory_ids = ['name', 'accession_number', 'internal_id']
-        for sample in self._samples:
-            for id in mandatory_ids:
-                sample_ids = (sample.name, sample.accession_number, sample.internal_id)
-                if not getattr(sample, id):
-                    problems.append(CheckResult(check_name='Check for all sample id types',
-                                                error_message='Missing sample %s from sample: %s' % (id, sample_ids)))
+        for entity in entity_list:
+            missing_id_types = []
+            for id_type in mandatory_id_types:
+                if not getattr(entity, id_type):
+                    missing_id_types.append(id_type)
+            if missing_id_types:
+                present_ids = tuple(set(mandatory_id_types).difference(set(missing_id_types)))
+                problems.append(CheckResult(check_name='Check for all %s(s) id types' % entity_type,
+                                                error_message='Missing %s %s from %s: %s' % (entity_type, missing_id_types, entity_type, present_ids)))
         return problems
 
+    def check_samples_have_all_types_of_ids(self):
+        return self._check_entities_have_all_types_of_ids(self._samples, ['name', 'accession_number', 'internal_id'], 'sample')
+
     def check_studies_have_all_types_of_ids(self):
-        problems = []
-        mandatory_ids = ['name', 'accession_number', 'internal_id']
-        for study in self._studies:
-            for id in mandatory_ids:
-                if not getattr(study, id):
-                    study_ids = (study.name, study.accession_number, study.internal_id)
-                    problems.append(CheckResult(check_name='Check for all study id types', severity=SEVERITY.WARNING,
-                                                error_message='Missing study %s from study: %s' % (id, study_ids)))
-        return problems
+        return self._check_entities_have_all_types_of_ids(self._studies, ['name', 'accession_number', 'internal_id'], 'study')
 
     def check_metadata(self):
         problems = []
