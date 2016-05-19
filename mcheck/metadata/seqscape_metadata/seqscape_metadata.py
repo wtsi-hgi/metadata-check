@@ -422,8 +422,9 @@ class SeqscapeMetadata:
                     missing_id_types.append(id_type)
             if missing_id_types:
                 present_ids = tuple(set(mandatory_id_types).difference(set(missing_id_types)))
-                problems.append(CheckResult(check_name='Check for all %s(s) id types' % entity_type,
-                                                error_message='Missing %s %s from %s: %s' % (entity_type, missing_id_types, entity_type, present_ids)))
+                present_id_vals = [getattr(entity, id) for id in present_ids]
+                problems.append(CheckResult(check_name='Check that a %s has all id types' % entity_type,
+                                                error_message='Missing %s %s from %s: %s' % (entity_type, missing_id_types, entity_type, present_id_vals)))
         return problems
 
     def check_samples_have_all_types_of_ids(self):
