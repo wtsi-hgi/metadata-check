@@ -29,7 +29,7 @@ from mcheck.metadata.irods_metadata.irods_meta_provider import iRODSMetadataProv
 from mcheck.metadata.seqscape_metadata.seqscape_meta_provider import SeqscapeRawMetadataProvider
 from mcheck.metadata.file_header_metadata.header_meta_provider import SAMFileHeaderMetadataProvider
 from mcheck.metadata.seqscape_metadata.seqscape_metadata import SeqscapeMetadata
-from mcheck.metadata.irods_metadata.irods_file_metadata import IrodsSeqFileMetadata
+from mcheck.metadata.irods_metadata.file_metadata import IrodsSeqFileMetadata
 from mcheck.results.checks_results import CheckResult
 from mcheck.results.constants import SEVERITY
 
@@ -262,7 +262,8 @@ def main():
     sorted_by_severity = group_by_severity(issues_to_report)
     for severity, fpaths_issues in sorted_by_severity.items():
         print("SEVERITY: %s" %severity)
-        write_dict_to_file(fpaths_issues, '/lustre/scratch113/teams/hgi/users/ic4/mercury/ddd/fy5/'+severity+'.txt')
+        #write_dict_to_file(fpaths_issues, '/lustre/scratch113/teams/hgi/users/ic4/mercury/meta-checks/testing-outputs/greeks.'+severity+'.txt')
+        write_dict_to_file(fpaths_issues, os.path.join(args.output_dir, severity+'.txt'))
         for path, issues in fpaths_issues.items():
             print("For path: %s issues: %s" % (path, issues))
 

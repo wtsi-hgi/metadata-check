@@ -61,19 +61,26 @@ def parse_args():
     out = parent_parser.add_argument_group('OUTPUT FORMAT', 'What output to return and how', )
     output_grp = out.add_mutually_exclusive_group()  #(required=True)
     output_grp.add_argument('--output_as_json',
-                            nargs='?',
-                            dest='out_file_json',
+                            #nargs='?',
+                            #dest='out_file_json',
+                            action='store_true',
                             #default='stdout',
                             required=False,
                             help='write the output as json')
 
     output_grp.add_argument('--output_as_text',
-                            nargs='?',
-                            dest='out_file',
-                            default='output.txt',
+                            action='store_true',
+                            #nargs='?',
+                            #dest='out_file',
+                            #default='output.txt',
                             #default='stdout',
                             required=False,
                             help='write the output as a text report')
+
+    parent_parser.add_argument('--output_dir',
+                            dest='out_dir',
+                            required=True,
+                            help='write the output to this directory')
 
 
 
@@ -110,6 +117,7 @@ def parse_args():
                                                        help='Fetch the files matching the meta query')
     parser_all_files_metacheck.add_argument('--irods_zone',
                                             help='The irods zone where the data is found',
+                                            choices=['seq', 'humgen', 'Sanger1'],
                                             required=True
     )
 
