@@ -61,27 +61,21 @@ def parse_args():
     out = parent_parser.add_argument_group('OUTPUT FORMAT', 'What output to return and how', )
     output_grp = out.add_mutually_exclusive_group()  #(required=True)
     output_grp.add_argument('--output_as_json',
-                            #nargs='?',
-                            #dest='out_file_json',
+                            dest='json_output',
                             action='store_true',
-                            #default='stdout',
                             required=False,
                             help='write the output as json')
 
     output_grp.add_argument('--output_as_text',
                             action='store_true',
-                            #nargs='?',
-                            #dest='out_file',
-                            #default='output.txt',
-                            #default='stdout',
+                            dest='text_output',
                             required=False,
                             help='write the output as a text report')
 
     parent_parser.add_argument('--output_dir',
-                            dest='out_dir',
+                            dest='output_dir',
                             required=True,
                             help='write the output to this directory')
-
 
 
     # ADDITIONALS:
@@ -94,8 +88,6 @@ def parse_args():
     )
 
     additional_outputs_grp.add_argument('--dump_fnames_by_type',
-                                        #default='report',
-                                        #nargs='*',
                                         required=False,
                                         dest='fnames_by_ftype',
                                         action='store_true',
