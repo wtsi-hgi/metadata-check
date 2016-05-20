@@ -25,6 +25,7 @@ import time
 import unicodedata
 import datetime
 import collections
+import string
 
 from os.path import isfile, join
 from collections import defaultdict
@@ -292,6 +293,7 @@ def check_all_keys_have_the_same_value(my_dict, my_value=None):
 #    return os.path.join(irods_coll_path, src_file_name)
 
 
+
 def is_field_empty(obj, field):
     return not (hasattr(obj, field) and getattr(obj, field) != None)
 
@@ -322,6 +324,8 @@ def get_date_and_time_now():
     return time.strftime("%H:%M on %d/%m/%Y")
     
     
+def is_hexadecimal_string(s):
+    return all(c in string.hexdigits for c in s)
 
     # Working - gets both date and time:
     #    now = datetime.datetime.now()
