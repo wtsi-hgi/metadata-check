@@ -59,7 +59,7 @@ class TestIrodsFileReplica(unittest.TestCase):
 
     def test_is_checksum_valid_2(self):
         checksum = 'AAAA'
-        self.assertFalse(IrodsFileReplica._is_checksum_valid(checksum))
+        self.assertTrue(IrodsFileReplica._is_checksum_valid(checksum))
 
     def test_is_checksum_valid_3(self):
         checksum = None

@@ -276,57 +276,26 @@ class TestIrodsRawFileMetadata(unittest.TestCase):
         self.assertEqual(len(result), 1)
 
 
+    def test_check_more_than_one_replicas_when_1(self):
+        replicas = [baton_models.DataObjectReplica(number=2, checksum="abc")]
+        raw_metadata = IrodsRawFileMetadata(fname='123.bam', dir_path='/seq', file_replicas=replicas)
+        result = raw_metadata.check_more_than_one_replicas()
+        self.assertEqual(len(result), 1)
 
-# class IrodsACL:
-#     def __init__(self, access_group: str, zone: str, permission: str):
-#         self.access_group = access_group
-#         self.zone = zone
-#         self.permission = permission
+    def test_check_more_than_one_replicas_when_no_replica(self):
+        replicas = []
+        raw_metadata = IrodsRawFileMetadata(fname='123.bam', dir_path='/seq', file_replicas=replicas)
+        result = raw_metadata.check_more_than_one_replicas()
+        self.assertEqual(len(result), 1)
 
-    #MetaAVU = namedtuple('MetaAVU', ['attribute', 'value'])    # list of attribute-value tuples
+    def test_check_more_than_one_replicas_when_ok(self):
+        replicas = [
+            baton_models.DataObjectReplica(number=1, checksum="123abc"),
+            baton_models.DataObjectReplica(number=2, checksum="abc"),]
+        raw_metadata = IrodsRawFileMetadata(fname='123.bam', dir_path='/seq', file_replicas=replicas)
+        result = raw_metadata.check_more_than_one_replicas()
+        self.assertEqual(len(result), 0)
 
-    # class IrodsRawFileMetadata:
-    #     def __init__(self, fname: str, dir_path: str, file_replicas: List[IrodsFileReplica]=None,
-    #                  acls: List[IrodsACL]=None):
-    #         self.fname = fname
-    #         self.dir_path = dir_path
-    #         self.file_replicas = file_replicas
-    #         self.acls = acls
-    #         self._attributes = {}
-    #
-
-    # def validate_fields(self) -> List[CheckResult]:
-    #     problems = []
-    #     for replica in self.replicas:
-    #         problems.extend(replica.validate_fields())
-    #     for acl in self.acls:
-    #         problems.extend(acl.validate_fields())
-    #     return problems
-
-    # def check_attribute_count(self, avu_counts: List[AttributeCount]) -> List[CheckResult]:
-    #     problems = []
-    #     for avu_count in avu_counts:
-    #         actual_count = self.get_values_count_for_attribute(avu_counts.attribute)
-    #         threshold = avu_count.count
-    #         if not self._is_true_comparison(actual_count, threshold, avu_count.operator):
-    #             error_msg = "Attribute: " + str(avu_count.attribute) + " appears: " + str(actual_count) + \
-    #                         " and should appear: " + str(avu_count.operator) + " " + str(threshold)
-    #             problems.append(CheckResult(check_name="Check attribute count is as configured",
-    #                                         severity=SEVERITY.IMPORTANT, error_message=error_msg))
-    #     return problems
-    #
-    # def check_all_replicas_have_same_checksum(self) -> List[CheckResult]:
-    #     if not self.replicas:
-    #         return []
-    #     problems = []
-    #     first_replica = self.replicas[0]
-    #     for replica in self.replicas:
-    #         if not replica.checksum == first_replica.checksum:
-    #             problems.append(CheckResult(check_name="Check all replicas have the same checksum",
-    #                                         error_message="Replica: " + str(replica) +
-    #                                                       " has different checksum than replica: " + str(
-    #                                             first_replica)))
-    #     return problems
 
 
 class TestIrodsSeqFileMetadata(unittest.TestCase):
@@ -357,32 +326,32 @@ class TestIrodsSeqFileMetadata(unittest.TestCase):
 
     def test_is_checksum_valid_1(self):
         checksum = 'abcdref123asssssdaf'
-        result = IrodsSeqFileMetadata._is_checksum_valid(checksum)
-        self.assertTrue(result)
+        result = IrodsSeqFileMetadata._check_checksum(checksum)
+        self.assertEqual(len(result), 0)
 
     def test_is_checksum_valid_2(self):
         checksum = 'abcdref123asssssdafAAA'
-        result = IrodsSeqFileMetadata._is_checksum_valid(checksum)
-        self.assertFalse(result)
+        result = IrodsSeqFileMetadata._check_checksum(checksum)
+        self.assertEqual(len(result), 0)
 
     def test_is_checksum_valid_3(self):
         checksum = ''
-        result = IrodsSeqFileMetadata._is_checksum_valid(checksum)
-        self.assertFalse(result)
+        result = IrodsSeqFileMetadata._check_checksum(checksum)
+        self.assertEqual(len(result), 1)
 
-    def test_is_checksum_valid_4(self):
+    def test_is_checksum_valid_when_valid(self):
         checksum = '123'
-        result = IrodsSeqFileMetadata._is_checksum_valid(checksum)
-        self.assertTrue(result)
+        result = IrodsSeqFileMetadata._check_checksum(checksum)
+        self.assertEqual(len(result), 0)
 
-    def test_is_checksum_valid_5(self):
+    def test_is_checksum_valid_when_invalid_because_capitals(self):
         checksum = 'AAA'
-        result = IrodsSeqFileMetadata._is_checksum_valid(checksum)
-        self.assertFalse(result)
+        result = IrodsSeqFileMetadata._check_checksum(checksum)
+        self.assertEqual(len(result), 0)
 
     def test_is_checksum_valid_6(self):
         checksum = 123
-        self.assertRaises(TypeError, IrodsSeqFileMetadata._is_checksum_valid, checksum)
+        self.assertRaises(TypeError, IrodsSeqFileMetadata._check_checksum, checksum)
 
 
     def test_is_npg_qc_valid_1(self):
@@ -423,46 +392,47 @@ class TestIrodsSeqFileMetadata(unittest.TestCase):
     def test_check_checksum_calculated_vs_metadata_1(self):
         irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam', fname='1234_5#6.bam',
                                               checksum_in_meta='123abc', checksum_at_upload='123abc')
-        result = irods_metadata.check_checksum_calculated_vs_metadata()
+        result = irods_metadata.validate_checksums()
         self.assertEqual(len(result), 0)
 
     def test_check_checksum_calculated_vs_metadata_2(self):
         irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam', fname='1234_5#6.bam',
                                               checksum_in_meta='123abc123', checksum_at_upload='123abc')
-        result = irods_metadata.check_checksum_calculated_vs_metadata()
+        result = irods_metadata.validate_checksums()
         self.assertEqual(len(result), 1)
-        self.assertEqual(result[0].result, RESULT.FAILURE)
+#        self.assertEqual(result[0].result, RESULT.FAILURE)
 
     def test_check_checksum_calculated_vs_metadata_3(self):
         irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam', fname='1234_5#6.bam',
                                               checksum_in_meta='123abc')
-        result = irods_metadata.check_checksum_calculated_vs_metadata()
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result[0].executed, False)
+        result = irods_metadata.validate_checksums()
+        self.assertEqual(len(result), 2)
+        #self.assertEqual(result[0].executed, False)
 
     def test_check_checksum_calculated_vs_metadata_4(self):
         irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam', fname='1234_5#6.bam',
                                               checksum_at_upload='123abc')
-        result = irods_metadata.check_checksum_calculated_vs_metadata()
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result[0].executed, False)
+        result = irods_metadata.validate_checksums()
+        self.assertEqual(len(result), 2)
+        #self.assertEqual(result[0].executed, False)
 
 
     def test_validate_fields_1(self):
         irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam', fname='1234_5#6.bam',
                                               checksum_in_meta='aaAAA')
         result = irods_metadata.validate_fields()
-        self.assertEqual(len(result), 1)
+        self.assertEqual(len(result), 2)
 
     def test_validate_fields_2(self):
         irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam', fname='1234_5#6.bam')
         result = irods_metadata.validate_fields()
-        self.assertEqual(len(result), 0)
+        print("RESUlts: %s" % result)
+        self.assertEqual(len(result), 3)
 
-    def test_validate_fields_3(self):
-        irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam', fname='1234_5#6.bam', npg_qc='aaAAA')
+    def test_validate_fields_when_wrong_npg_qc(self):
+        irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam', fname='1234_5#6.bam', npg_qc='aaAAA',
+                                              checksum_at_upload='123abc', checksum_in_meta='123abc')
         result = irods_metadata.validate_fields()
-        print("Result- validate with npgqc:%s" % result)
         self.assertEqual(len(result), 1)
 
     def test_is_target_valid_when_valid_1(self):
@@ -499,7 +469,18 @@ class TestIrodsSeqFileMetadata(unittest.TestCase):
         result = irods_metadata.check_reference('')
         self.assertEqual(len(result), 2)
 
-
+    def test_from_raw_metadata_only_replicas(self):
+        replicas = [
+            baton_models.DataObjectReplica(number=1, checksum="123abc"),
+            baton_models.DataObjectReplica(number=2, checksum="abc"),]
+        raw_metadata = IrodsRawFileMetadata(fname='123.bam', dir_path='/seq', file_replicas=replicas)
+        seq_metadata = IrodsSeqFileMetadata.from_raw_metadata(raw_metadata)
+        expected = {'name': set(), 'accession_number': set(), 'internal_id': set()}
+        self.assertEqual(seq_metadata.samples, expected)
+        self.assertEqual(seq_metadata.libraries, expected)
+        self.assertEqual(seq_metadata.checksum_in_meta, set())
+        check_results = seq_metadata.check_metadata()
+        self.assertEqual(len(check_results), 3)
 
 if __name__ == "__main__":
     unittest.main()
