@@ -65,7 +65,7 @@ class iRODSMetadataProvider:
                 raise OSError("ERROR: you need to log into iRODS and aquire the KERBEROS credentials.") from None
             else:
                 raise e from None
-        print("List of data objs: %s" % list_of_data_objs_and_metadata)
+        #print("List of data objs: %s" % list_of_data_objs_and_metadata)
         raw_meta_objects = [IrodsRawFileMetadata.from_baton_wrapper(data_obj) for data_obj in list_of_data_objs_and_metadata]
         return raw_meta_objects
 
