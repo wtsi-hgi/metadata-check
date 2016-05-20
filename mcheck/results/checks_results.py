@@ -33,7 +33,7 @@ from mcheck.results.constants import SEVERITY, RESULT
 
 class CheckResult:
 
-    def __init__(self, check_name, executed=True, result=RESULT.FAILURE, severity=SEVERITY.IMPORTANT, error_message=None):
+    def __init__(self, check_name, executed=True, result=RESULT.SUCCESS, severity=SEVERITY.IMPORTANT, error_message=None):
         self.check_name = check_name
         self.severity = severity
         self.error_message = error_message
