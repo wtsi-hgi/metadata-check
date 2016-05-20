@@ -31,7 +31,7 @@ from mcheck.metadata.common.attribute_count import AttributeCount
 from mcheck.metadata.irods_metadata import constants as irods_consts, avu
 from mcheck.results.checks_results import CheckResult
 from mcheck.com import utils as common_utils
-from mcheck.results.constants import SEVERITY
+from mcheck.results.constants import SEVERITY, RESULT
 from mcheck.metadata.irods_metadata.acl import IrodsACL
 from mcheck.metadata.irods_metadata.file_replica import IrodsFileReplica
 
@@ -200,6 +200,12 @@ class IrodsSeqFileMetadata(object):
 
     @classmethod
     def from_raw_metadata(cls, raw_metadata: IrodsRawFileMetadata):
+        """
+        I am relying on the fact that the raw_metadata is a valid object, ie it contains valid values for its fields.
+        Hence I am not going to redo the checks on the field values, just take the data for good.
+        :param raw_metadata:
+        :return:
+        """
         irods_metadata = IrodsSeqFileMetadata()
         irods_metadata.fname = raw_metadata.fname
         irods_metadata.dir_path = raw_metadata.dir_path
@@ -260,19 +266,28 @@ class IrodsSeqFileMetadata(object):
             raise ValueError("Not a reference file: " + str(ref_path))
 
 
+
+    #@wrappers.check_args_not_none
     @staticmethod
-    @wrappers.check_args_not_none
-    def _is_checksum_valid(checksum):
+    def _check_checksum(checksum):
+        problems = []
+        if not checksum:
+            problems.append(CheckResult(check_name="Checksum present", error_message="No checksum found"))
+            return problems
         if not type(checksum) is str:
             if isinstance(checksum, Iterable):
                 if len(checksum) > 1:
-                    raise ValueError("This file has more than 1 checksum: %s" % checksum)
+                    problems.append(CheckResult(check_name="Check there is only 1 checksum", error_message="This file has more than 1 checksum %s" % checksum))
+                    return problems
                 else:
                     checksum = list(checksum)[0]
             else:
                 raise TypeError("WRONG TYPE: the checksum must be a string, and is: " + str(type(checksum)))
-        r = re.compile(irods_consts.MD5_REGEX)
-        return True if r.match(checksum) else False
+        # if not common_utils.is_hexadecimal_string(checksum):
+        #     problems.append(CheckResult(check_name="Checksum string validity check",
+        #                                 error_message="The checksum looks weird: %s" % checksum))
+        return problems
+
 
     @staticmethod
     @wrappers.check_args_not_none
@@ -292,17 +307,7 @@ class IrodsSeqFileMetadata(object):
 
     def validate_fields(self) -> List:
         problems = []
-        if self.checksum_in_meta and not self._is_checksum_valid(self.checksum_in_meta):
-            problems.append(
-                CheckResult(check_name="Check that checksum in metadata is valid",
-                            error_message="The checksum looks invalid: " +
-                                          str(self.checksum_in_meta)))
-
-        if self.checksum_at_upload and not self._is_checksum_valid(self.checksum_at_upload):
-            problems.append(
-                CheckResult(check_name="Check that checksum at upload is valid",
-                            error_message="The checksum looks invalid: " + str(self.checksum_at_upload)))
-
+        problems.extend(self.validate_checksums())
         if not self.get_npg_qc() is None and not self._is_npg_qc_valid(self.get_npg_qc()):
             problems.append(CheckResult(check_name="Check that the NPG QC field is valid",
                                         error_message="This npg_qc field looks invalid: " + str(self.get_npg_qc())))
@@ -313,24 +318,39 @@ class IrodsSeqFileMetadata(object):
         return problems
 
 
-    def check_checksum_calculated_vs_metadata(self):
+    def validate_checksums(self):
         problems = []
+        impossible_to_test = False
+        if self.checksum_in_meta:
+            checksum_in_meta_pbs = self._check_checksum(self.checksum_in_meta)
+            if checksum_in_meta_pbs:
+                problems.extend(checksum_in_meta_pbs)
+                impossible_to_test = True
+        else:
+            impossible_to_test = True
+            problems.append(CheckResult(check_name="Check that checksum present within metadata",
+                                        error_message="Missing checksum from metadata", severity=SEVERITY.WARNING))
+
+        if self.checksum_at_upload:
+            checksum_at_upl_pbs = self._check_checksum(self.checksum_at_upload)
+            if checksum_at_upl_pbs:
+                problems.extend(checksum_at_upl_pbs)
+                impossible_to_test = True
+        else:
+            impossible_to_test = True
+            problems.append(CheckResult(check_name="Check that checksum at upload(ichksum) is present",
+                                        error_message="Missing checksum in ichksum"))
+
         check_name = "Check that the checksum in metadata = checksum at upload"
-        if self.checksum_in_meta and self.checksum_at_upload:
+        if impossible_to_test:
+            problems.append(CheckResult(check_name=check_name, executed=False, result=None,
+                                        error_message="Impossible to compare checksum in metadata with the ichksum"))
+        else:
             if self.checksum_in_meta != self.checksum_at_upload:
                 problems.append(CheckResult(check_name=check_name,
                                             error_message="The checksum in metadata = %s different than checksum at "
                                                           "upload = %s" % (
                                                               self.checksum_at_upload, self.checksum_in_meta)))
-        else:
-            if not self.checksum_in_meta:
-                problems.append(CheckResult(check_name=check_name,
-                                            executed=False, result=None,
-                                            error_message="The checksum in metadata is missing"))
-            if not self.checksum_at_upload:
-                problems.append((CheckResult(check_name=check_name,
-                                             executed=False, result=None,
-                                             error_message="The checksum at upload is missing")))
         return problems
 
 
@@ -354,7 +374,7 @@ class IrodsSeqFileMetadata(object):
     def check_metadata(self, desired_reference: str=None) -> List[CheckResult]:
         problems = []
         problems.extend(self.validate_fields())
-        problems.extend(self.check_checksum_calculated_vs_metadata())
+        problems.extend(self.validate_checksums())
         if desired_reference:
             problems.extend(self.check_reference(desired_reference))
         return problems
