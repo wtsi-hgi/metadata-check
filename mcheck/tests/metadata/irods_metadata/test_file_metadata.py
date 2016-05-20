@@ -275,6 +275,13 @@ class TestIrodsRawFileMetadata(unittest.TestCase):
         result = raw_metadata.check_has_read_permission_ss_group()
         self.assertEqual(len(result), 1)
 
+    def test_check_has_read_permission_ss_group_no_ss_grp(self):
+        acl1 = IrodsACL(access_group='public#seq', zone='seq', permission='read')
+        acl2 = IrodsACL(access_group='npg#seq', zone='seq', permission='own')
+        raw_metadata = IrodsRawFileMetadata(fname='myfile', dir_path='/home', acls=[acl1, acl2])
+        result = raw_metadata.check_has_read_permission_ss_group()
+        self.assertEqual(len(result), 1)
+
 
     def test_check_more_than_one_replicas_when_1(self):
         replicas = [baton_models.DataObjectReplica(number=2, checksum="abc")]
@@ -481,6 +488,29 @@ class TestIrodsSeqFileMetadata(unittest.TestCase):
         self.assertEqual(seq_metadata.checksum_in_meta, set())
         check_results = seq_metadata.check_metadata()
         self.assertEqual(len(check_results), 3)
+
+    def test_check_more_than_one_replicas_when_ok(self):
+        replicas = [
+            baton_models.DataObjectReplica(number=1, checksum="123abc"),
+            baton_models.DataObjectReplica(number=2, checksum="abc")]
+        raw_metadata = IrodsRawFileMetadata(fname='123.cram', dir_path='/seq/123', file_replicas=replicas)
+        result = raw_metadata.check_more_than_one_replicas()
+        self.assertEqual(len(result), 0)
+
+    def test_check_more_than_one_replicas_when_1_replica(self):
+        replicas = [
+            baton_models.DataObjectReplica(number=1, checksum="123abc")]
+        raw_metadata = IrodsRawFileMetadata(fname='123.cram', dir_path='/seq/123', file_replicas=replicas)
+        result = raw_metadata.check_more_than_one_replicas()
+        self.assertEqual(len(result), 1)
+
+    def test_check_more_than_one_replicas_when_no_replica(self):
+        replicas = []
+        raw_metadata = IrodsRawFileMetadata(fname='123.cram', dir_path='/seq/123', file_replicas=replicas)
+        result = raw_metadata.check_more_than_one_replicas()
+        self.assertEqual(len(result), 1)
+
+
 
 if __name__ == "__main__":
     unittest.main()
