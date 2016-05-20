@@ -23,8 +23,10 @@ import re
 
 import mcheck.metadata.irods_metadata.constants as irods_consts
 from mcheck.results.checks_results import CheckResult
-from mcheck.results.constants import SEVERITY
+from mcheck.results.constants import SEVERITY, RESULT
 from mcheck.com import utils
+from mcheck.check_names import CHECK_NAMES
+
 
 
 class IrodsFileReplica:
@@ -54,15 +56,22 @@ class IrodsFileReplica:
         return utils.is_hexadecimal_string(checksum)
 
     def validate_fields(self):
-        problems = []
+        check_results = []
+        checksum_check_result = CheckResult(check_name=CHECK_NAMES.valid_replica_checksum_check,
+                                            severity=SEVERITY.IMPORTANT)
         if not self._is_checksum_valid(self.checksum):
-            problems.append(
-                CheckResult(check_name="Check that the replica checksum field is valid", severity=SEVERITY.IMPORTANT,
-                            error_message="The checksum looks invalid: " + str(self.checksum)))
+            checksum_check_result.result = RESULT.FAILURE
+            checksum_check_result.error_message = "The checksum looks invalid: " + str(self.checksum)
+
+        valid_replicas_check_result = CheckResult(check_name=CHECK_NAMES.valid_replica_number_check,
+                                                  severity=SEVERITY.WARNING)
         if not self._is_replica_nr_valid(self.replica_nr):
-            problems.append(CheckResult(check_name="Check that the replica nr is valid", severity=SEVERITY.WARNING,
-                                        error_message="The replica number looks invalid: " + str(self.replica_nr)))
-        return problems
+            valid_replicas_check_result.result = RESULT.FAILURE
+            valid_replicas_check_result.error_message = "The replica number looks invalid: " + str(self.replica_nr)
+
+        check_results.append(checksum_check_result)
+        check_results.append(valid_replicas_check_result)
+        return check_results
 
     def __eq__(self, other):
         return self.checksum == other.checksum and self.replica_nr == other.replica_nr

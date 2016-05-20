@@ -22,6 +22,8 @@ This file has been created on Dec 01, 2015.
 import unittest
 
 from mcheck.metadata.irods_metadata.file_replica import IrodsFileReplica
+from mcheck.results.checks_results import SEVERITY, RESULT
+from mcheck.check_names import CHECK_NAMES
 
 
 class TestIrodsFileReplica(unittest.TestCase):
@@ -70,21 +72,44 @@ class TestIrodsFileReplica(unittest.TestCase):
         self.assertFalse(IrodsFileReplica._is_checksum_valid(checksum))
 
 
-
-    def test_validate_fields_1(self):
-        replica = IrodsFileReplica(checksum='123abc', replica_nr=1)
-        expected_result = []
-        actual_result = replica.validate_fields()
-        self.assertEqual(expected_result, actual_result)
-
-    def test_validate_fields_2(self):
+    def test_validate_fields_when_all_ok(self):
         replica = IrodsFileReplica(checksum='123abc', replica_nr=1)
         actual_result = replica.validate_fields()
-        self.assertEqual(len(actual_result), 0)
+        self.assertEqual(len(actual_result), 2)
+        for result in actual_result:
+            if result.check_name == CHECK_NAMES.valid_replica_checksum_check:
+                self.assertEqual(result.result, RESULT.SUCCESS)
+            if result.check_name == CHECK_NAMES.valid_replica_number_check:
+                self.assertEqual(result.result, RESULT.SUCCESS)
 
-    def test_validate_fields_3(self):
+    def test_validate_fields_when_replica_nr_wrong(self):
         replica = IrodsFileReplica(checksum='123abc', replica_nr=-1)
         actual_result = replica.validate_fields()
-        self.assertEqual(1, len(actual_result))
+        self.assertEqual(2, len(actual_result))
+        for result in actual_result:
+            if result.check_name == CHECK_NAMES.valid_replica_checksum_check:
+                self.assertEqual(result.result, RESULT.SUCCESS)
+            if result.check_name == CHECK_NAMES.valid_replica_number_check:
+                self.assertEqual(result.result, RESULT.FAILURE)
+
+
+    # def validate_fields(self):
+        # check_results = []
+        # checksum_check_result = CheckResult(check_name="Check that the replica checksum field is valid",
+        #                                     severity=SEVERITY.IMPORTANT)
+        # if not self._is_checksum_valid(self.checksum):
+        #     checksum_check_result.result = RESULT.FAILURE
+        #     checksum_check_result.error_message = "The checksum looks invalid: " + str(self.checksum)
+        #
+        # valid_replicas_check_result = CheckResult(check_name="Check that the replica nr is valid",
+        #                                           severity=SEVERITY.WARNING)
+        # if not self._is_replica_nr_valid(self.replica_nr):
+        #     valid_replicas_check_result.result = RESULT.FAILURE
+        #     valid_replicas_check_result.error_message = "The replica number looks invalid: " + str(self.replica_nr)
+        #
+        # check_results.append(checksum_check_result)
+        # check_results.append(valid_replicas_check_result)
+        # return check_results
+
 
 
