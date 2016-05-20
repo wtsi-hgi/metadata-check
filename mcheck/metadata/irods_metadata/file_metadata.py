@@ -34,6 +34,7 @@ from mcheck.com import utils as common_utils
 from mcheck.results.constants import SEVERITY, RESULT
 from mcheck.metadata.irods_metadata.acl import IrodsACL
 from mcheck.metadata.irods_metadata.file_replica import IrodsFileReplica
+from mcheck.check_names import CHECK_NAMES
 
 
 class IrodsRawFileMetadata:
@@ -100,36 +101,40 @@ class IrodsRawFileMetadata:
             raise ValueError("Operator not defined: %s. It needs to be one of: <>=" % str(operator))
 
     def check_attribute_count(self, avu_counts: List[AttributeCount]) -> List[CheckResult]:
-        problems = []
+        check_result = CheckResult(check_name=CHECK_NAMES.attribute_count_check,
+                                            severity=SEVERITY.IMPORTANT)
+        wrong_counts = []
         for avu_count in avu_counts:
             actual_count = self.get_values_count_for_attribute(avu_count.attribute)
             threshold = avu_count.count
             if not self._is_true_comparison(actual_count, threshold, avu_count.operator):
-                error_msg = "Attribute: " + str(avu_count.attribute) + " appears: " + str(actual_count) + \
-                            " and should appear: " + str(avu_count.operator) + " " + str(threshold)
-                problems.append(CheckResult(check_name="Check attribute count is as configured",
-                                            severity=SEVERITY.IMPORTANT, error_message=error_msg))
-        return problems
+                wrong_counts.append("attribute %s should appear %s %s times and appears %s" % (avu_count.attribute, avu_count.operator, threshold, actual_count))
+        if wrong_counts:
+            check_result.result = RESULT.FAILURE
+            check_result.error_message = ','.join(wrong_counts)
+        return [check_result]
 
     def check_all_replicas_have_same_checksum(self) -> List[CheckResult]:
+        result = CheckResult(check_name=CHECK_NAMES.check_all_replicas_same_checksum, severity=SEVERITY.IMPORTANT)
         if not self.file_replicas:
-            return []
-        problems = []
+            result.result = RESULT.FAILURE
+            return [result]
         first_replica = self.file_replicas[0]
+        error_message = ''
         for replica in self.file_replicas:
             if not replica.checksum == first_replica.checksum:
-                problems.append(CheckResult(check_name="Check all replicas have the same checksum",
-                                            error_message="Replica: " + str(replica) +
-                                                          " has different checksum than replica: " + str(
-                                                first_replica)))
-        return problems
+                result.result = RESULT.FAILURE
+                error_message += "Replica: " + str(replica) + " has different checksum than replica: " + str(first_replica)
+        if error_message:
+            result.error_message = error_message
+        return [result]
 
     def check_more_than_one_replicas(self) -> List[CheckResult]:
-        problems = []
+        check_result = CheckResult(check_name=CHECK_NAMES.check_more_than_one_replica, severity=SEVERITY.WARNING)
         if len(self.file_replicas) <= 1:
-            problems.append(CheckResult(check_name="Check that file has more than 1 replica", error_message="File has "
-                                                                            + str(len(self.file_replicas)) + " replicas", severity=SEVERITY.WARNING))
-        return problems
+            check_result.result = RESULT.FAILURE
+            check_result.error_message="File has " + str(len(self.file_replicas)) + " replicas"
+        return [check_result]
 
     def check_non_public_acls(self) -> List[CheckResult]:
         """
@@ -137,12 +142,14 @@ class IrodsRawFileMetadata:
         :param acls:
         :return:
         """
-        problems = []
+        #problems = []
+        check_result = CheckResult(check_name=CHECK_NAMES.check_no_public_acl, severity=SEVERITY.WARNING)
         for acl in self.acls:
             if acl.provides_public_access():
-                problems.append(CheckResult(check_name="Check there are no public ACLS",
-                                            error_message="The following ACL was found: " + str(acl), severity=SEVERITY.WARNING))
-        return problems
+                check_result.error_message = error_message="The following ACL was found: " + str(acl)
+                check_result.result = RESULT.FAILURE
+                break
+        return [check_result]
 
 
     def check_has_read_permission_ss_group(self) -> List[CheckResult]:
@@ -151,18 +158,20 @@ class IrodsRawFileMetadata:
         :param acls:
         :return:
         """
-        problems = []
+        #problems = []
+        check_result_read_permission = CheckResult(check_name=CHECK_NAMES.check_ss_irods_group_read_permission, severity=SEVERITY.WARNING)
+        check_result_ss_group_present = CheckResult(check_name=CHECK_NAMES.check_there_is_ss_irods_group, severity=SEVERITY.WARNING)
         found_ss_gr_acl = False
         for acl in self.acls:
             if acl.provides_access_for_ss_group():
                 found_ss_gr_acl = True
                 if not acl.provides_read_permission():
-                    problems.append(CheckResult(check_name="Check that the permission for ss_<id> group is READ",
-                                                error_message="ACL found: " + str(acl), severity=SEVERITY.WARNING))
+                    check_result_read_permission.result = RESULT.FAILURE
+                    check_result_read_permission.error_message="ACL found: " + str(acl)
                 break
         if not found_ss_gr_acl:
-            problems.append(CheckResult(check_name="Check there is at least one ss_<id> group that has access to data", severity=SEVERITY.WARNING))
-        return problems
+            check_result_ss_group_present.result = RESULT.FAILURE
+        return [check_result_ss_group_present, check_result_read_permission]
 
     def check_metadata(self):
         problems = []
