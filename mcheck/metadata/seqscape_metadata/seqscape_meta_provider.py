@@ -212,5 +212,4 @@ class SeqscapeRawMetadataProvider:
                 cls._fetch_libraries(ss_connection, libraries.get('name'), libraries.get('internal_id'))
             raw_meta.add_fetched_entities(libraries_fetched_by_names)
             raw_meta.add_fetched_entities(libraries_fetched_by_ids)
-
         return raw_meta
