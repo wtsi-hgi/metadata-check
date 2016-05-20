@@ -36,18 +36,6 @@ class IrodsFileReplica:
     def from_baton_wrapper(replica):
         return IrodsFileReplica(checksum=replica.checksum, replica_nr=replica.number)
 
-    def __eq__(self, other):
-        return self.checksum == other.checksum and self.replica_nr == other.replica_nr
-
-    def __str__(self):
-        return "Replica nr =  " + str(self.replica_nr) + ", checksum = " + str(self.checksum)
-
-    def __repr__(self):
-        return self.__str__()
-
-    def __hash__(self):
-        return hash(self.checksum) + hash(self.replica_nr)
-
     @staticmethod
     def _is_replica_nr_valid(replica_nr):
         if not type(replica_nr) in [str, int]:
@@ -64,8 +52,6 @@ class IrodsFileReplica:
         if not type(checksum) is str:
             raise TypeError("WRONG TYPE: the checksum must be a string, and is: " + str(type(checksum)))
         return utils.is_hexadecimal_string(checksum)
-        # r = re.compile(irods_consts.MD5_REGEX)
-        # return True if r.match(checksum) else False
 
     def validate_fields(self):
         problems = []
@@ -77,6 +63,18 @@ class IrodsFileReplica:
             problems.append(CheckResult(check_name="Check that the replica nr is valid", severity=SEVERITY.WARNING,
                                         error_message="The replica number looks invalid: " + str(self.replica_nr)))
         return problems
+
+    def __eq__(self, other):
+        return self.checksum == other.checksum and self.replica_nr == other.replica_nr
+
+    def __str__(self):
+        return "Replica nr =  " + str(self.replica_nr) + ", checksum = " + str(self.checksum)
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __hash__(self):
+        return hash(self.checksum) + hash(self.replica_nr)
 
 # EXAMPLE OF FILE REPLICAS:
 # OWNED:
