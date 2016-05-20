@@ -22,7 +22,7 @@ from enum import Enum
 
 LANLET_NAME_REGEX = '^(?P<run_id>[0-9]{4,5})_(?P<lane_id>[0-9]{1})((?:#(?P<tag_id>[0-9]{1,2}))|$|\.)'
 IRODS_SEQ_LANELET_PATH_REGEX = '^/seq/(?P<run_id>[0-9]{4,5})/(?P=run_id)_(?P<lane_id>[0-9]{1})(?:#?(?P<tag_id>[0-9]{1,2})?)\.'
-MD5_REGEX = '^[0-9a-z]+$'
+#MD5_REGEX = '^[0-9a-z]+$'
 RUN_ID_REGEX = '^[0-9]{4,5}$'
 LANE_ID_REGEX = '^[0-9]{1}$'
 NPG_QC_REGEX = '^0|1$'
