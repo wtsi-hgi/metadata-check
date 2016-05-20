@@ -55,61 +55,44 @@ from mcheck.com import wrappers
 #    return simplejson.loads(data)
 
 
-######################### UNICODE processing ####################################
+# ######################### UNICODE processing ####################################
+#
+# def __ucode2str__(ucode):
+#     if type(ucode) == str:
+#         return unicodedata.normalize('NFKD', ucode).encode('ascii','ignore')
+#     return ucode
+#
+# def __ucode2str_list__(ucode_list):
+#     str_list = []
+#     for elem in ucode_list:
+#         elem = unicode2string(elem)
+#         str_list.append(elem)
+#     return str_list
+#
+#
+# def __ucode2str_dict__(ucode_dict):
+#     ''' This function takes a dict of unicode characters
+#         and returns a dict of strings.
+#     '''
+#     str_dict = dict()
+#     for key, val in list(ucode_dict.items()):
+#         key = unicode2string(key)
+#         val = unicode2string(val)
+#         str_dict[key] = val
+#     return str_dict
+#
+# def unicode2string(ucode):
+#     ''' This function converts a unicode type into string.
+#         The input type can be a dict, list, or unicode characters.
+#     '''
+#     if type(ucode) == dict:
+#         return __ucode2str_dict__(ucode)
+#     elif type(ucode) == list:
+#         return __ucode2str_list__(ucode)
+#     elif type(ucode) == str:
+#         return __ucode2str__(ucode)
+#     return ucode
 
-def __ucode2str__(ucode):
-    if type(ucode) == str:
-        return unicodedata.normalize('NFKD', ucode).encode('ascii','ignore')
-    return ucode
-
-def __ucode2str_list__(ucode_list):
-    str_list = []
-    for elem in ucode_list:
-        elem = unicode2string(elem)
-        str_list.append(elem)
-    return str_list
-    
-
-def __ucode2str_dict__(ucode_dict):
-    ''' This function takes a dict of unicode characters
-        and returns a dict of strings.
-    '''
-    str_dict = dict()
-    for key, val in list(ucode_dict.items()):
-        key = unicode2string(key)
-        val = unicode2string(val)
-        str_dict[key] = val
-    return str_dict
-
-def unicode2string(ucode):
-    ''' This function converts a unicode type into string.
-        The input type can be a dict, list, or unicode characters.
-    '''
-    if type(ucode) == dict:
-        return __ucode2str_dict__(ucode)
-    elif type(ucode) == list:
-        return __ucode2str_list__(ucode)
-    elif type(ucode) == str:
-        return __ucode2str__(ucode)
-    return ucode
-
-
-############## CHECK ON FILES TIMESTAMPS #####################
-
-    
-def cmp_timestamp_files(file_path1, file_path2):
-    ''' This function receives 2 files and compares their
-        timestamp. 
-        Returns:
-            -1 if file1 is older than file2
-             0 if they have the same timestamp
-             1 if file1 is newer than files2.
-    '''
-    tstamp1 = os.path.getmtime(file_path1)
-    tstamp2 = os.path.getmtime(file_path2)
-    tstamp1 = datetime.datetime.fromtimestamp(tstamp1)
-    tstamp2 = datetime.datetime.fromtimestamp(tstamp2)
-    return cmp(tstamp1, tstamp2)
 
 
 ############## FILE NAME/PATH/EXTENSION PROCESSING ###########
@@ -273,26 +256,6 @@ def check_all_keys_have_the_same_value(my_dict, my_value=None):
 
 ###########################################################################
 
-# MOVED TO files.py
-# def build_irods_staging_path(submission_id):
-#     ''' This function returns the path to the corresponding staging area
-#         collection, given the submission id. 
-#     '''
-#     return os.path.join(configs.IRODS_STAGING_AREA, submission_id)
-# 
-# def build_irods_file_staging_path(submission_id, file_path_client):
-#     ''' 
-#         This function puts together the path where a file is stored in irods_metadata staging area.
-#     '''
-#     (_, fname) = os.path.split(file_path_client)
-#     return os.path.join(configs.IRODS_STAGING_AREA, submission_id, fname)
-#         
-
-#def build_file_path_irods(client_file_path, irods_coll_path):
-#    (_, src_file_name) = os.path.split(client_file_path)  
-#    return os.path.join(irods_coll_path, src_file_name)
-
-
 
 def is_field_empty(obj, field):
     return not (hasattr(obj, field) and getattr(obj, field) != None)
@@ -326,32 +289,6 @@ def get_date_and_time_now():
     
 def is_hexadecimal_string(s):
     return all(c in string.hexdigits for c in s)
-
-    # Working - gets both date and time:
-    #    now = datetime.datetime.now()
-    #    return now.isoformat()
-    
-    #today = datetime.date.today()
-    #    year = str(today.year)
-    #    month = str(today.month)
-    #    day = str(today.day)
-    #    if len(month) == 1:
-    #        month = "0" + month
-    #    if len(day) == 1:
-    #        day = "0" + day
-    #    return str(year) + str(month) + str(day)
-    
-    # Working - Martin's format
-    #    today = datetime.date.today()
-    #    year = str(today.year)
-    #    month = str(today.month)
-    #    day = str(today.day)
-    #    if len(month) == 1:
-    #        month = "0" + month
-    #    if len(day) == 1:
-    #        day = "0" + day
-    #    return str(year) + str(month) + str(day)
-
 
 def levenshtein(a,b):
     "Calculates the Levenshtein distance between a and b."
