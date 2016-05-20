@@ -374,7 +374,6 @@ class IrodsSeqFileMetadata(object):
     def check_metadata(self, desired_reference: str=None) -> List[CheckResult]:
         problems = []
         problems.extend(self.validate_fields())
-        problems.extend(self.validate_checksums())
         if desired_reference:
             problems.extend(self.check_reference(desired_reference))
         return problems
