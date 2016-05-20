@@ -24,6 +24,7 @@ import re
 import mcheck.metadata.irods_metadata.constants as irods_consts
 from mcheck.results.checks_results import CheckResult
 from mcheck.results.constants import SEVERITY
+from mcheck.com import utils
 
 
 class IrodsFileReplica:
@@ -62,8 +63,9 @@ class IrodsFileReplica:
     def _is_checksum_valid(checksum):
         if not type(checksum) is str:
             raise TypeError("WRONG TYPE: the checksum must be a string, and is: " + str(type(checksum)))
-        r = re.compile(irods_consts.MD5_REGEX)
-        return True if r.match(checksum) else False
+        return utils.is_hexadecimal_string(checksum)
+        # r = re.compile(irods_consts.MD5_REGEX)
+        # return True if r.match(checksum) else False
 
     def validate_fields(self):
         problems = []
