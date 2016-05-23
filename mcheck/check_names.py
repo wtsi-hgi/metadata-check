@@ -29,5 +29,11 @@ class CHECK_NAMES:
     check_no_public_acl = "Check that there are no public ACLS"
     check_ss_irods_group_read_permission = "Check that the permission for iRODS ss_<id> user group is READ"
     check_there_is_ss_irods_group = "Check ACLs contain at least one ss_<id> group"
+    check_checksum_in_metadata_present = "Check that checksum present within metadata"
+    check_checksum_at_upload_present = "Check that checksum at upload(ichksum) present"
+    check_by_comparison_checksum_in_meta_with_checksum_at_upload = "Compare checksum in metadata with checksum at upload"
+    check_npg_qc_field = "Check that the NPG QC field is valid"
+    check_target_field = "Check that the target field is valid"
+
 
 
