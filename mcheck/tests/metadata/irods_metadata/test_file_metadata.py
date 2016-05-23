@@ -548,6 +548,26 @@ class TestIrodsSeqFileMetadata(unittest.TestCase):
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0].result, RESULT.FAILURE)
 
+    def test_check_checksum_at_upload_present_when_present(self):
+        irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam', fname='1234_5#6.bam', checksum_at_upload='aaa')
+        result = irods_metadata.check_checksum_at_upload_present()
+        self.assertEqual(result.result, RESULT.SUCCESS)
+
+    def test_check_checksum_at_upload_present_when_absent(self):
+        irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam', fname='1234_5#6.bam')
+        result = irods_metadata.check_checksum_at_upload_present()
+        self.assertEqual(result.result, RESULT.FAILURE)
+
+    def test_check_checksum_in_meta_present(self):
+        irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam', fname='1234_5#6.bam', checksum_in_meta='aaa')
+        result = irods_metadata.check_checksum_in_meta_present()
+        self.assertEqual(result.result, RESULT.SUCCESS)
+
+    def test_check_checksum_in_meta_present_when_absent(self):
+        irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam', fname='1234_5#6.bam')
+        result = irods_metadata.check_checksum_in_meta_present()
+        self.assertEqual(result.result, RESULT.FAILURE)
+
 
 
 if __name__ == "__main__":
