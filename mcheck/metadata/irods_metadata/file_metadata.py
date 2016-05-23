@@ -275,78 +275,24 @@ class IrodsSeqFileMetadata(object):
             raise ValueError("Not a reference file: " + str(ref_path))
 
 
-    #@wrappers.check_args_not_none
     @staticmethod
     def _is_npg_qc_valid(npg_qc):
         if not type(npg_qc) in [str, int]:
-            #raise TypeError("WRONG TYPE: the npg_qc must be either string or int and is: " + str(npg_qc))
             return False
         r = re.compile(irods_consts.NPG_QC_REGEX)
         return True if r.match(str(npg_qc)) else False
 
 
-    #@wrappers.check_args_not_none
     @staticmethod
     def _is_target_valid(target):
         if not type(target) in [str, int]:
             return False
-            #raise TypeError("WRONG TYPE: the target must be either string or int and is: " + str(target))
         r = re.compile(irods_consts.TARGET_REGEX)
         return True if r.match(str(target)) else False
 
 
-    # #@wrappers.check_args_not_none
-    # @staticmethod
-    # def _check_checksum(checksum):
-    #     """
-    #     This checks that there is only 1 checksum. The validity of the checksum falls within the responsibility of the
-    #     FileReplica object, which keeps the checksum value itself.
-    #     :param checksum: str or Iterable
-    #     :return: list of CheckResults
-    #     """
-    #     problems = []
-    #     # if not checksum:
-    #     #     problems.append(CheckResult(check_name="Checksum present", error_message="No checksum found"))
-    #     #     return problems
-    #     if not type(checksum) is str:
-    #         if isinstance(checksum, Iterable):
-    #             check_result = CheckResult(check_name="Check there is only 1 checksum")
-    #             if len(checksum) > 1:
-    #                 check_result.result = RESULT.FAILURE
-    #                 check_result.error_message = "This file has more than 1 checksum %s" % checksum
-    #                 #problems.append()
-    #                 #return problems
-    #             #else:
-    #
-    #                 # problems.append()
-    #                 # checksum = list(checksum)[0]
-    #         else:
-    #             raise TypeError("WRONG TYPE: the checksum must be a string, and is: " + str(type(checksum)))
-    #     # if not common_utils.is_hexadecimal_string(checksum):
-    #     #     problems.append(CheckResult(check_name="Checksum string validity check",
-    #     #                                 error_message="The checksum looks weird: %s" % checksum))
-    #     return problems
-
-
-        #     checksum_check_result = self._check_checksum(self.checksum_in_meta)
-        #     if checksum_check_result[0].result == RESULT.FAILURE:
-        #     # if checksum_in_meta_pbs:
-        #     #     problems.extend(checksum_in_meta_pbs)
-        #         impossible_to_test = True
-        #
-        #
-        # check_name = "Check that the checksum in metadata = checksum at upload"
-        # if impossible_to_test:
-        #     check_results.append(CheckResult(check_name=check_name, executed=False, result=None,
-        #                                 error_message="Impossible to compare checksum in metadata with the ichksum"))
-        # else:
-        #     if self.checksum_in_meta != self.checksum_at_upload:
-        #         check_results.append()
-        # return check_results
-
     def check_npg_qc_field(self):
         check_npg_qc = CheckResult(check_name=CHECK_NAMES.check_npg_qc_field)
-        print("NPG QC = %s" % self.get_npg_qc())
         if not self.get_npg_qc():
             check_npg_qc.result = RESULT.FAILURE
             check_npg_qc.error_message = "Missing npg_qc field"
@@ -357,7 +303,6 @@ class IrodsSeqFileMetadata(object):
 
     def check_target_field(self):
         check_target_field = CheckResult(check_name=CHECK_NAMES.check_target_field)
-        print("TARGET = %s" % self.get_target())
         if not self.get_target():
             check_target_field.result = RESULT.FAILURE
             check_target_field.error_message = "Missing target field"
@@ -385,15 +330,9 @@ class IrodsSeqFileMetadata(object):
                 check_result.error_message = "Different checksum values at upload (ichksum)"
             else:
                 check_result.result = RESULT.SUCCESS
-            # checksum_at_upl_pbs = self._check_checksum(self.checksum_at_upload)
-            # if checksum_at_upl_pbs:
-            #     check_results.extend(checksum_at_upl_pbs)
-            #     impossible_to_test = True
         else:
             check_result.result = RESULT.FAILURE
             check_result.error_message = "Missing checksum from ichksum result"
-            #impossible_to_test = True
-            #check_results.append(     error_message="Missing checksum in ichksum")
         return check_result
 
 
