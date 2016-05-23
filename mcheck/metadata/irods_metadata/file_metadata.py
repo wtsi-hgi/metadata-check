@@ -400,143 +400,143 @@ class IrodsSeqFileMetadata(object):
         return self.__str__()
 
 
-
-
-# NOT USED - tests to be excluded, too specific, irelevant
-class IrodsSeqLaneletFileMetadata(IrodsSeqFileMetadata):
-    @classmethod
-    def extract_lanelet_name_from_irods_fpath(cls, irods_fpath):
-        """
-        This method extracts the lanelet name (without extension) from an irods_metadata path.
-        It checks first that it is an iRODS seq lanelet.
-        :raises ValueError if the irods_path param is not a seq/run_id/lanelet.
-        :param irods_fpath:
-        :return:
-        """
-        cls.check_is_irods_lanelet_fpath(irods_fpath)
-        fname_without_ext = common_utils.extract_fname_without_ext(irods_fpath)
-        return fname_without_ext
-
-
-    @classmethod
-    def get_run_from_irods_path(cls, irods_fpath):
-        """
-            This function extracts the run_id from the filename of the irods_path given as parameter.
-        :param irods_fpath:
-        :return:
-        :raises: ValueError if the path doesnt look like an irods_metadata sequencing path or the file is not a lanelet.
-        """
-        fname = cls.extract_lanelet_name_from_irods_fpath(irods_fpath)
-        return cls.get_run_from_irods_fname(fname)
-
-
-    @classmethod
-    def get_run_from_irods_fname(cls, fname):
-        cls.check_is_lanelet_filename(fname)
-        r = re.compile(irods_consts.LANLET_NAME_REGEX)
-        matched_groups = r.match(fname).groupdict()
-        return matched_groups['run_id']
-
-
-    @classmethod
-    def get_lane_from_irods_path(cls, irods_fpath):
-        cls.check_is_irods_seq_fpath(irods_fpath)
-        fname = common_utils.extract_fname_without_ext(irods_fpath)
-        return cls.get_lane_from_irods_fname(fname)
-
-
-    @classmethod
-    def get_lane_from_irods_fname(cls, fname):
-        cls.check_is_lanelet_filename(fname)
-        r = re.compile(irods_consts.LANLET_NAME_REGEX)
-        matched_groups = r.match(fname).groupdict()
-        return matched_groups['lane_id']
-
-
-    def test_lane_from_fname_vs_metadata(self):
-        if not self.lane_id:
-            raise error_types.TestImpossibleToRunError(fpath=self.fpath,
-                                                       reason='The lane id in the iRODS metadata is either missing or more than 1 ',
-                                                       test_name='Check lane id from filename vs iRODS metadata')
-        try:
-            lane_from_fname = self.get_lane_from_irods_fname(self.fname)
-        except ValueError as e:
-            raise error_types.TestImpossibleToRunError(fpath=self.fpath,
-                                                       reason=str(e),
-                                                       test_name='Check lane id from filename vs iRODS metadata')
-        else:
-            if str(lane_from_fname) != str(self.lane_id):
-                raise error_types.IrodsMetadataAttributeVsFileNameError(fpath=self.fpath, attribute='lane',
-                                                                        irods_value=self.lane_id,
-                                                                        filename_value=lane_from_fname)
-
-    def test_run_id_from_fname_vs_metadata(self):
-        """
-        This test assumes that all the files in iRODS have exactly 1 run (=LANELETS)
-        """
-        if not self.run_id:
-            raise error_types.TestImpossibleToRunError(fpath=self.fpath,
-                                                       reason='The run_id in iRODS metadata is either missing or more than 1.',
-                                                       test_name='Check run_id from filename vs. iRODS metadata.')
-        try:
-            run_id_from_fname = self.get_run_from_irods_fname(self.fname)
-        except ValueError as e:
-            raise error_types.TestImpossibleToRunError(fpath=self.fpath, reason=str(e),
-                                                       test_name='Check run_id from filename vs. run_id from iRODS metadata')  # 'Cant extract the run id from file name. Not a sequencing file?'
-        else:
-            if str(self.run_id) != str(run_id_from_fname):
-                raise error_types.IrodsMetadataAttributeVsFileNameError(fpath=self.fpath, attribute='run_id',
-                                                                        irods_value=self.run_id,
-                                                                        filename_value=run_id_from_fname)
-
-    @staticmethod
-    def check_is_irods_seq_fpath(fpath):
-        r = re.compile(irods_consts.IRODS_SEQ_LANELET_PATH_REGEX)
-        if not r.match(fpath):
-            raise ValueError("Not an iRODS seq path: " + str(fpath))
-
-
-    @staticmethod
-    def check_is_lanelet_filename(fname):
-        """
-        Checks if a filename looks like: 1234_5.* or 1234_5#6.*
-        :param fname: file name
-        :return: bool
-        """
-        r = re.compile(irods_consts.LANLET_NAME_REGEX)
-        if not r.match(fname):
-            raise ValueError("Not a lanelet filename: " + str(fname))
-
-
-    @classmethod
-    def check_is_irods_lanelet_fpath(cls, fpath):
-        """
-        Checks if a given file path is an irods_metadata seq path and that it is a lanelet. e.g. 1234_5.bam, 1234_5#6.cram
-        :param fpath:
-        :return:
-        """
-        cls.check_is_irods_seq_fpath(fpath)
-        fname = common_utils.extract_fname_without_ext(fpath)
-        cls.check_is_lanelet_filename(fname)
-
-    def check_metadata(self, desired_reference: str):
-        problems = []
-        try:
-            self.test_lane_from_fname_vs_metadata(self)
-        except error_types.TestImpossibleToRunError as e:
-            # problems.append(e)
-            pass
-            # TODO: not sure
-        except error_types.IrodsMetadataAttributeVsFileNameError as e:
-            problems.append(e)
-
-        try:
-            self.test_run_id_from_fname_vs_metadata(self)
-        except error_types.TestImpossibleToRunError as e:
-            # problems.append(e)
-            # TODO: not sure where to save these...
-            pass
-        except error_types.IrodsMetadataAttributeVsFileNameError as e:
-            problems.append(e)
-
-        return problems
+#
+#
+# # NOT USED - tests to be excluded, too specific, irelevant
+# class IrodsSeqLaneletFileMetadata(IrodsSeqFileMetadata):
+#     @classmethod
+#     def extract_lanelet_name_from_irods_fpath(cls, irods_fpath):
+#         """
+#         This method extracts the lanelet name (without extension) from an irods_metadata path.
+#         It checks first that it is an iRODS seq lanelet.
+#         :raises ValueError if the irods_path param is not a seq/run_id/lanelet.
+#         :param irods_fpath:
+#         :return:
+#         """
+#         cls.check_is_irods_lanelet_fpath(irods_fpath)
+#         fname_without_ext = common_utils.extract_fname_without_ext(irods_fpath)
+#         return fname_without_ext
+#
+#
+#     @classmethod
+#     def get_run_from_irods_path(cls, irods_fpath):
+#         """
+#             This function extracts the run_id from the filename of the irods_path given as parameter.
+#         :param irods_fpath:
+#         :return:
+#         :raises: ValueError if the path doesnt look like an irods_metadata sequencing path or the file is not a lanelet.
+#         """
+#         fname = cls.extract_lanelet_name_from_irods_fpath(irods_fpath)
+#         return cls.get_run_from_irods_fname(fname)
+#
+#
+#     @classmethod
+#     def get_run_from_irods_fname(cls, fname):
+#         cls.check_is_lanelet_filename(fname)
+#         r = re.compile(irods_consts.LANLET_NAME_REGEX)
+#         matched_groups = r.match(fname).groupdict()
+#         return matched_groups['run_id']
+#
+#
+#     @classmethod
+#     def get_lane_from_irods_path(cls, irods_fpath):
+#         cls.check_is_irods_seq_fpath(irods_fpath)
+#         fname = common_utils.extract_fname_without_ext(irods_fpath)
+#         return cls.get_lane_from_irods_fname(fname)
+#
+#
+#     @classmethod
+#     def get_lane_from_irods_fname(cls, fname):
+#         cls.check_is_lanelet_filename(fname)
+#         r = re.compile(irods_consts.LANLET_NAME_REGEX)
+#         matched_groups = r.match(fname).groupdict()
+#         return matched_groups['lane_id']
+#
+#
+#     def test_lane_from_fname_vs_metadata(self):
+#         if not self.lane_id:
+#             raise error_types.TestImpossibleToRunError(fpath=self.fpath,
+#                                                        reason='The lane id in the iRODS metadata is either missing or more than 1 ',
+#                                                        test_name='Check lane id from filename vs iRODS metadata')
+#         try:
+#             lane_from_fname = self.get_lane_from_irods_fname(self.fname)
+#         except ValueError as e:
+#             raise error_types.TestImpossibleToRunError(fpath=self.fpath,
+#                                                        reason=str(e),
+#                                                        test_name='Check lane id from filename vs iRODS metadata')
+#         else:
+#             if str(lane_from_fname) != str(self.lane_id):
+#                 raise error_types.IrodsMetadataAttributeVsFileNameError(fpath=self.fpath, attribute='lane',
+#                                                                         irods_value=self.lane_id,
+#                                                                         filename_value=lane_from_fname)
+#
+#     def test_run_id_from_fname_vs_metadata(self):
+#         """
+#         This test assumes that all the files in iRODS have exactly 1 run (=LANELETS)
+#         """
+#         if not self.run_id:
+#             raise error_types.TestImpossibleToRunError(fpath=self.fpath,
+#                                                        reason='The run_id in iRODS metadata is either missing or more than 1.',
+#                                                        test_name='Check run_id from filename vs. iRODS metadata.')
+#         try:
+#             run_id_from_fname = self.get_run_from_irods_fname(self.fname)
+#         except ValueError as e:
+#             raise error_types.TestImpossibleToRunError(fpath=self.fpath, reason=str(e),
+#                                                        test_name='Check run_id from filename vs. run_id from iRODS metadata')  # 'Cant extract the run id from file name. Not a sequencing file?'
+#         else:
+#             if str(self.run_id) != str(run_id_from_fname):
+#                 raise error_types.IrodsMetadataAttributeVsFileNameError(fpath=self.fpath, attribute='run_id',
+#                                                                         irods_value=self.run_id,
+#                                                                         filename_value=run_id_from_fname)
+#
+#     @staticmethod
+#     def check_is_irods_seq_fpath(fpath):
+#         r = re.compile(irods_consts.IRODS_SEQ_LANELET_PATH_REGEX)
+#         if not r.match(fpath):
+#             raise ValueError("Not an iRODS seq path: " + str(fpath))
+#
+#
+#     @staticmethod
+#     def check_is_lanelet_filename(fname):
+#         """
+#         Checks if a filename looks like: 1234_5.* or 1234_5#6.*
+#         :param fname: file name
+#         :return: bool
+#         """
+#         r = re.compile(irods_consts.LANLET_NAME_REGEX)
+#         if not r.match(fname):
+#             raise ValueError("Not a lanelet filename: " + str(fname))
+#
+#
+#     @classmethod
+#     def check_is_irods_lanelet_fpath(cls, fpath):
+#         """
+#         Checks if a given file path is an irods_metadata seq path and that it is a lanelet. e.g. 1234_5.bam, 1234_5#6.cram
+#         :param fpath:
+#         :return:
+#         """
+#         cls.check_is_irods_seq_fpath(fpath)
+#         fname = common_utils.extract_fname_without_ext(fpath)
+#         cls.check_is_lanelet_filename(fname)
+#
+#     def check_metadata(self, desired_reference: str):
+#         problems = []
+#         try:
+#             self.test_lane_from_fname_vs_metadata(self)
+#         except error_types.TestImpossibleToRunError as e:
+#             # problems.append(e)
+#             pass
+#             # TODO: not sure
+#         except error_types.IrodsMetadataAttributeVsFileNameError as e:
+#             problems.append(e)
+#
+#         try:
+#             self.test_run_id_from_fname_vs_metadata(self)
+#         except error_types.TestImpossibleToRunError as e:
+#             # problems.append(e)
+#             # TODO: not sure where to save these...
+#             pass
+#         except error_types.IrodsMetadataAttributeVsFileNameError as e:
+#             problems.append(e)
+#
+#         return problems
