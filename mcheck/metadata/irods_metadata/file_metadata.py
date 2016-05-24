@@ -81,14 +81,6 @@ class IrodsRawFileMetadata:
             avus_grouped[avu.attribute].add(avu.value)
         return avus_grouped
 
-    def validate_fields(self) -> List[CheckResult]:
-        check_results = []
-        for replica in self.file_replicas:
-            check_results.extend(replica.validate_fields())
-        for acl in self.acls:
-            check_results.extend(acl.validate_fields())
-        return check_results
-
     @staticmethod
     def _is_true_comparison(left_operand: int, right_operand: int, operator: str) -> bool:
         if operator == Operators.EQUAL:
@@ -112,74 +104,120 @@ class IrodsRawFileMetadata:
         if wrong_counts:
             check_result.result = RESULT.FAILURE
             check_result.error_message = ','.join(wrong_counts)
-        return [check_result]
+        return check_result
 
-    def check_all_replicas_have_same_checksum(self) -> List[CheckResult]:
-        result = CheckResult(check_name=CHECK_NAMES.check_all_replicas_same_checksum, severity=SEVERITY.IMPORTANT)
-        if not self.file_replicas:
-            result.result = RESULT.FAILURE
-            return [result]
-        first_replica = self.file_replicas[0]
-        error_message = ''
-        for replica in self.file_replicas:
-            if not replica.checksum == first_replica.checksum:
+
+    class ReplicasChecks:
+
+        @classmethod
+        def validate_replicas_individually(cls, replicas):
+            check_results = []
+            for replica in replicas:
+                check_results.extend(replica.validate_fields())
+            return check_results
+
+        @classmethod
+        def check_all_replicas_have_same_checksum(cls, replicas) -> List[CheckResult]:
+            result = CheckResult(check_name=CHECK_NAMES.check_all_replicas_same_checksum, severity=SEVERITY.IMPORTANT)
+            if not replicas:
                 result.result = RESULT.FAILURE
-                error_message += "Replica: " + str(replica) + " has different checksum than replica: " + str(first_replica)
-        if error_message:
-            result.error_message = error_message
-        return [result]
+                return [result]
+            first_replica = replicas[0]
+            error_message = ''
+            for replica in replicas:
+                if not replica.checksum == first_replica.checksum:
+                    result.result = RESULT.FAILURE
+                    error_message += "Replica: " + str(replica) + " has different checksum than replica: " + str(first_replica)
+            if error_message:
+                result.error_message = error_message
+            return result
 
-    def check_more_than_one_replicas(self) -> List[CheckResult]:
-        check_result = CheckResult(check_name=CHECK_NAMES.check_more_than_one_replica, severity=SEVERITY.WARNING)
-        if len(self.file_replicas) <= 1:
-            check_result.result = RESULT.FAILURE
-            check_result.error_message="File has " + str(len(self.file_replicas)) + " replicas"
-        return [check_result]
-
-    def check_non_public_acls(self) -> List[CheckResult]:
-        """
-        Checks that the iRODS object doesn't have associated an ACL giving public access to users to it.
-        :param acls:
-        :return:
-        """
-        #problems = []
-        check_result = CheckResult(check_name=CHECK_NAMES.check_no_public_acl, severity=SEVERITY.WARNING)
-        for acl in self.acls:
-            if acl.provides_public_access():
-                check_result.error_message = error_message="The following ACL was found: " + str(acl)
+        @classmethod
+        def check_more_than_one_replicas(cls, replicas) -> List[CheckResult]:
+            check_result = CheckResult(check_name=CHECK_NAMES.check_more_than_one_replica, severity=SEVERITY.WARNING)
+            if len(replicas) <= 1:
                 check_result.result = RESULT.FAILURE
-                break
-        return [check_result]
+                check_result.error_message="File has " + str(len(replicas)) + " replicas"
+            return check_result
+
+        # Checking the replicas:
+        @classmethod
+        def check(cls, replicas):
+            check_results = []
+            check_results.extend(cls.validate_replicas_individually(replicas))
+            check_results.append(cls.check_all_replicas_have_same_checksum(replicas))
+            check_results.append(cls.check_more_than_one_replicas(replicas))
+            return check_results
 
 
-    def check_has_read_permission_ss_group(self) -> List[CheckResult]:
-        """
-        Checks if any of the ACLs is for an ss group.
-        :param acls:
-        :return:
-        """
-        #problems = []
-        check_result_read_permission = CheckResult(check_name=CHECK_NAMES.check_ss_irods_group_read_permission, severity=SEVERITY.WARNING)
-        check_result_ss_group_present = CheckResult(check_name=CHECK_NAMES.check_there_is_ss_irods_group, severity=SEVERITY.WARNING)
-        found_ss_gr_acl = False
-        for acl in self.acls:
-            if acl.provides_access_for_ss_group():
-                found_ss_gr_acl = True
-                if not acl.provides_read_permission():
-                    check_result_read_permission.result = RESULT.FAILURE
-                    check_result_read_permission.error_message="ACL found: " + str(acl)
-                break
-        if not found_ss_gr_acl:
-            check_result_ss_group_present.result = RESULT.FAILURE
-        return [check_result_ss_group_present, check_result_read_permission]
+    class ACLsChecks:
+        @classmethod
+        def check_non_public_acls(cls, acls) -> List[CheckResult]:
+            """
+            Checks that the iRODS object doesn't have associated an ACL giving public access to users to it.
+            :param acls:
+            :return:
+            """
+            #problems = []
+            check_result = CheckResult(check_name=CHECK_NAMES.check_no_public_acl, severity=SEVERITY.WARNING)
+            for acl in acls:
+                if acl.provides_public_access():
+                    check_result.error_message = error_message="The following ACL was found: " + str(acl)
+                    check_result.result = RESULT.FAILURE
+                    break
+            return check_result
 
-    def check_metadata(self):
+        @classmethod
+        def check_read_permission_exists_for_ss_group(cls, acls) -> List[CheckResult]:
+            """
+            Checks if any of the ACLs is for an ss group.
+            :param acls:
+            :return:
+            """
+            #problems = []
+            check_result_read_permission = CheckResult(check_name=CHECK_NAMES.check_ss_irods_group_read_permission, severity=SEVERITY.WARNING)
+            check_result_ss_group_present = CheckResult(check_name=CHECK_NAMES.check_there_is_ss_irods_group, severity=SEVERITY.WARNING)
+            found_ss_gr_acl = False
+            for acl in acls:
+                if acl.provides_access_for_ss_group():
+                    found_ss_gr_acl = True
+                    if not acl.provides_read_permission():
+                        check_result_read_permission.result = RESULT.FAILURE
+                        check_result_read_permission.error_message="ACL found: " + str(acl)
+                    break
+            if not found_ss_gr_acl:
+                check_result_ss_group_present.result = RESULT.FAILURE
+            return [check_result_ss_group_present, check_result_read_permission]
+
+        @classmethod
+        def check_acls_individually(cls, acls):
+            check_results = []
+            for acl in acls:
+                check_results.extend(acl.validate_fields())
+            return check_results
+
+        # Check the acls:
+        @classmethod
+        def check(cls, acls):
+            check_results = []
+            check_results.extend(cls.check_acls_individually(acls))
+            check_results.append(cls.check_non_public_acls(acls))
+            check_results.extend(cls.check_read_permission_exists_for_ss_group(acls))
+            return check_results
+
+
+
+    def check_metadata(self, avu_counts):
         check_results = []
-        check_results.extend(self.validate_fields())
-        check_results.extend(self.check_has_read_permission_ss_group())
-        check_results.extend(self.check_non_public_acls())
-        check_results.extend(self.check_more_than_one_replicas())
-        check_results.extend(self.check_all_replicas_have_same_checksum())
+        #check_results.extend(self.validate_fields())
+        check_results.extend(self.ACLsChecks.check())
+        check_results.extend(self.ReplicasChecks.check())
+        # check_results.extend(self.check_read_permission_exists_for_ss_group())
+        # check_results.append(self.check_non_public_acls())
+        # check_results.extend(self.check_more_than_one_replicas())
+        # check_results.append(self.check_all_replicas_have_same_checksum())
+        if avu_counts:
+            check_results.append(self.check_attribute_count(avu_counts))
         return check_results
 
     def __str__(self):
