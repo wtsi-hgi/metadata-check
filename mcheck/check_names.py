@@ -37,5 +37,6 @@ class CHECK_NAMES:
     check_desired_reference = "Check that the reference for this file is the one desired"
     check_irods_zone_within_acl = "Check valid iRODS zone in ACL"
     check_irods_permission_within_acl = "Check valid permission in ACL"
+    check_valid_ids = "Check valid id strings"
 
 
