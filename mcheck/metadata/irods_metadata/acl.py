@@ -23,7 +23,8 @@ import re
 
 import mcheck.metadata.irods_metadata.constants as irods_consts
 from mcheck.results.checks_results import CheckResult
-from mcheck.results.constants import SEVERITY
+from mcheck.results.constants import SEVERITY, RESULT
+from mcheck.check_names import CHECK_NAMES
 
 
 class IrodsACL:
@@ -102,14 +103,19 @@ class IrodsACL:
             return True
 
     def validate_fields(self):
-        problems = []
+        check_results = []
+        zone_check_result = CheckResult(check_name=CHECK_NAMES.check_irods_zone_within_acl, severity=SEVERITY.WARNING)
         if not self._is_irods_zone_valid(self.zone):
-            problems.append(CheckResult(check_name="Check that iRODS zone is valid ", severity=SEVERITY.WARNING,
-                                        error_message="The iRODS zone seems wrong: " + str(self.zone) + " in acl = " + str(self)))
+            zone_check_result.result = RESULT.FAILURE
+            zone_check_result.error_message="The iRODS zone seems wrong: " + str(self.zone) + " in acl = " + str(self)
+        check_results.append(zone_check_result)
+
+        permission_check_result = CheckResult(check_name=CHECK_NAMES.check_irods_permission_within_acl, severity=SEVERITY.WARNING)
         if not self._is_permission_valid(self.permission):
-            problems.append(CheckResult(check_name="Check that the permission is valid ", severity=SEVERITY.WARNING,
-                                        error_message="The iRODS permission seems wrong: " + str(self.permission) + " in  acl = " + str(self)))
-        return problems
+            permission_check_result.result = RESULT.FAILURE
+            permission_check_result.error_message = "The iRODS permission seems wrong: " + str(self.permission) + " in  acl = " + str(self)
+        check_results.append(permission_check_result)
+        return check_results
 
     def __eq__(self, other):
         return self.access_group == other.access_group and self.zone == other.zone and \
