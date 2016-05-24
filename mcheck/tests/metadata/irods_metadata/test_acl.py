@@ -22,6 +22,8 @@ This file has been created on Nov 30, 2015.
 import unittest
 
 from mcheck.metadata.irods_metadata.acl import IrodsACL
+from mcheck.results.checks_results import RESULT
+from mcheck.check_names import CHECK_NAMES
 
 
 class TestIrodsACL(unittest.TestCase):
@@ -114,18 +116,18 @@ class TestIrodsACL(unittest.TestCase):
 
     def test_validate_fields_1(self):
         acl = IrodsACL(access_group='hgi', zone='seq', permission='read')
-        self.assertEqual([], acl.validate_fields())
+        check_results = acl.validate_fields()
+        self.assertEqual(2, len(check_results))
+        for res in check_results:
+            self.assertEqual(res.result, RESULT.SUCCESS)
 
     def test_validate_fields_2(self):
         acl = IrodsACL(access_group='hgi', zone='seqhumgen', permission='read')
-        self.assertEqual(len(acl.validate_fields()), 1)
-
-    # def test_validate_fields_3(self):
-    #     acl = IrodsACL(access_group='hgi', zone='seqhumgen', permission='smthelse')
-    #     self.assertEqual(len(acl.validate_fields()), 2)
-    #
-    # def test_validate_fields_4(self):
-    #     acl = IrodsACL(access_group='hgi', zone='seq', permission='')
-    #     self.assertRaises(ValueError, acl.validate_fields)
-    #
+        check_results = acl.validate_fields()
+        self.assertEqual(len(check_results), 2)
+        for res in check_results:
+            if res.check_name == CHECK_NAMES.check_irods_zone_within_acl:
+                self.assertEqual(res.result, RESULT.FAILURE)
+            else:
+                self.assertEqual(res.result, RESULT.SUCCESS)
 
