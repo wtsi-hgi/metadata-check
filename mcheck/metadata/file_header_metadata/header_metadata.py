@@ -21,6 +21,8 @@ This file has been created on Jun 30, 2015.
 
 #from . import error_types
 import typing
+from mcheck.check_names import CHECK_NAMES
+from mcheck.results.checks_results import RESULT
 
 from mcheck.results.checks_results import CheckResult
 
@@ -47,19 +49,18 @@ class SAMFileHeaderMetadata(object):
 
     @classmethod
     def _check_for_invalid_ids(cls, multi_ids_dict: typing.Dict, entity_type: str):
-        errors = []
+        check_result = CheckResult(check_name=CHECK_NAMES.check_valid_ids, error_message=[])
         for k, values in multi_ids_dict.items():
             wrong_ids = [id for id in values if not cls._is_id_valid(id)]
             if wrong_ids:
-                check_name = "Test the validity of " + str(k)
-                error_msg = "Invalid " + str(k) + "(s) for " + str(entity_type) + ": " + str(wrong_ids)
-                errors.append(CheckResult(check_name=check_name, error_message=error_msg))
-        return errors
+                check_result.error_message.append("Invalid " + str(k) + "(s) for " + str(entity_type) + ": " + str(wrong_ids))
+                check_result.result = RESULT.FAILURE
+        return check_result
 
     def check_metadata(self):
         errors = []
-        errors.extend(self._check_for_invalid_ids(self.samples, 'sample'))
-        errors.extend(self._check_for_invalid_ids(self.libraries, 'library'))
+        errors.append(self._check_for_invalid_ids(self.samples, 'sample'))
+        errors.append(self._check_for_invalid_ids(self.libraries, 'library'))
         return errors
 
     def fix_metadata(self):
