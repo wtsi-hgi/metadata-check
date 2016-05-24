@@ -34,6 +34,6 @@ class CHECK_NAMES:
     check_by_comparison_checksum_in_meta_with_checksum_at_upload = "Compare checksum in metadata with checksum at upload"
     check_npg_qc_field = "Check that the NPG QC field is valid"
     check_target_field = "Check that the target field is valid"
-
+    check_desired_reference = "Check that the reference for this file is the one desired"
 
 
