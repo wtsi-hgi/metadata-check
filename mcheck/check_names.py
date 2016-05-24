@@ -35,5 +35,7 @@ class CHECK_NAMES:
     check_npg_qc_field = "Check that the NPG QC field is valid"
     check_target_field = "Check that the target field is valid"
     check_desired_reference = "Check that the reference for this file is the one desired"
+    check_irods_zone_within_acl = "Check valid iRODS zone in ACL"
+    check_irods_permission_within_acl = "Check valid permission in ACL"
 
 
