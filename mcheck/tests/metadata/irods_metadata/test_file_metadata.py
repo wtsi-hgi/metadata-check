@@ -492,22 +492,24 @@ class TestIrodsSeqFileMetadata(unittest.TestCase):
         self.assertFalse(result)
 
 
-    def test_check_reference_1(self):
+    def test_check_reference_when_ok(self):
         irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.cram', fname='1234_5#6.cram',
                                               references=['/lustre/hs37d5.fa'])
         result = irods_metadata.check_reference('hs37d5')
-        self.assertEqual(result, [])
+        self.assertEqual(result.result, RESULT.SUCCESS)
 
     def test_check_reference_2(self):
         irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.cram', fname='1234_5#6.cram',
                                               references=['/lustre/hs37d5.fa'])
         result = irods_metadata.check_reference('')
-        self.assertEqual(len(result), 1)
+        self.assertEqual(result.result, None)
+        self.assertEqual(result.executed, False)
 
     def test_check_reference_3(self):
         irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.cram', fname='1234_5#6.cram')
         result = irods_metadata.check_reference('')
-        self.assertEqual(len(result), 2)
+        self.assertEqual(result.result, None)
+        self.assertEqual(result.executed, False)
 
     def test_from_raw_metadata_only_replicas(self):
         replicas = [
