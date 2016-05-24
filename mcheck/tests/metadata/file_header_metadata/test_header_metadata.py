@@ -20,6 +20,7 @@ This file has been created on Jan 19, 2016.
 """
 
 import unittest
+from mcheck.results.checks_results import RESULT
 
 from mcheck.metadata.file_header_metadata.header_metadata import SAMFileHeaderMetadata
 
@@ -78,22 +79,22 @@ class TestSAMFileHeaderMetadata(unittest.TestCase):
     def test_check_for_invalid_ids_1(self):
         multi_ids = {'name': {'Ana', ''}}
         result = SAMFileHeaderMetadata._check_for_invalid_ids(multi_ids, 'sample')
-        self.assertEqual(len(result), 1)
+        self.assertEqual(result.result, RESULT.FAILURE)
 
     def test_check_for_invalid_ids_2(self):
         multi_ids = {'name': {'Ana', ''}, 'ids': {-1, 0}}
         result = SAMFileHeaderMetadata._check_for_invalid_ids(multi_ids, 'sample')
-        self.assertEqual(len(result), 2)
+        self.assertEqual(result.result, RESULT.FAILURE)
 
     def test_check_for_invalid_ids_3(self):
         multi_ids = {'name': {'Ana'}}
         result = SAMFileHeaderMetadata._check_for_invalid_ids(multi_ids, 'sample')
-        self.assertEqual(len(result), 0)
+        self.assertEqual(result.result, RESULT.SUCCESS)
 
     def test_check_for_invalid_ids_4(self):
         multi_ids = {'name': {'Ana', ''}, 'id': set(), 'accession_number': {'EGA1', None}}
         result = SAMFileHeaderMetadata._check_for_invalid_ids(multi_ids, 'sample')
-        self.assertEqual(len(result), 2)
+        self.assertEqual(result.result, RESULT.FAILURE)
 
 
     def test_fix_metadata_1(self):
