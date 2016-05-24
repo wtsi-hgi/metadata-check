@@ -367,28 +367,29 @@ class IrodsSeqFileMetadata(object):
 
 
     def check_reference(self, desired_ref_name: str) -> List[CheckResult]:
-        problems = []
-        check_name = "Check that the reference for this file is the one desired"
+        check_result = CheckResult(check_name=CHECK_NAMES.check_desired_reference)
+        check_result.error_message = []
         if not self.get_references():
-            problems.append(CheckResult(check_name=check_name, executed=False, result=None,
-                                        error_message="There is no reference for this file in the metadata"))
+            check_result.result = None
+            check_result.executed = False
+            check_result.error_message.append("Missing reference from the metadata")
         if not desired_ref_name:
-            problems.append(CheckResult(check_name=check_name, executed=False, result=None,
-                                        error_message="The desired reference wasn't provided in order "
-                                                      "to compare it with the reference in metadata."))
-        for ref in self.get_references():
-            if ref.find(desired_ref_name) == -1:
-                problems.append(CheckResult(check_name=check_name,
-                                            error_message="The desired reference is: %s is different thant the metadata "
-                                                          "reference: %s" % (desired_ref_name, ref)))
-        return problems
+            check_result.result = None
+            check_result.executed = False
+            check_result.error_message.append("Missing desired reference parameter")
+        if not check_result.error_message:
+            for ref in self.get_references():
+                if ref.find(desired_ref_name) == -1:
+                    check_result.result = RESULT.FAILURE
+                    check_result.error_message = "The desired reference is: %s is different thant the metadata reference: %s" % (desired_ref_name, ref)
+        return check_result
 
     def check_metadata(self, desired_reference: str=None) -> List[CheckResult]:
-        problems = []
-        problems.extend(self.validate_fields())
+        check_results = []
+        check_results.extend(self.validate_fields())
         if desired_reference:
-            problems.extend(self.check_reference(desired_reference))
-        return problems
+            check_results.append(self.check_reference(desired_reference))
+        return check_results
 
 
     def __str__(self):
