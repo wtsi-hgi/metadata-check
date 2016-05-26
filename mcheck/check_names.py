@@ -47,5 +47,8 @@ class CHECK_NAMES:
     check_samples_in_irods_same_as_samples_fetched_by_study_from_seqscape = "Check that the samples in iRODS are the same as the samples fetched by study from Seqscape"
     check_for_samples_in_more_studies = "Check if a set of samples is in more studies within Seqscape"
     check_all_id_types_present = 'Check that all id types are present'
-
+    check_seqscape_ids_compared_to_header_ids = "Compare what is in seqscape and not in header"
+    check_header_ids_compared_to_seqscape_ids = "Compare what is in the header and not in seqscape"
+    check_irods_ids_compared_to_header_ids = "Compare what is in iRODS and not in the header"
+    check_header_ids_compared_to_irods_ids = "Compare what is in the header and not in iRODS"
 
