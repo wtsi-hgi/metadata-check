@@ -207,11 +207,11 @@ class IrodsRawFileMetadata:
 
 
 
-    def check_metadata(self, avu_counts):
+    def check_metadata(self, avu_counts=None):
         check_results = []
         #check_results.extend(self.validate_fields())
-        check_results.extend(self.ACLsChecks.check())
-        check_results.extend(self.ReplicasChecks.check())
+        check_results.extend(self.ACLsChecks.check(self.acls))
+        check_results.extend(self.ReplicasChecks.check(self.file_replicas))
         # check_results.extend(self.check_read_permission_exists_for_ss_group())
         # check_results.append(self.check_non_public_acls())
         # check_results.extend(self.check_more_than_one_replicas())
