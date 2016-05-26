@@ -32,6 +32,8 @@ from mcheck.metadata.seqscape_metadata.seqscape_metadata import SeqscapeMetadata
 from mcheck.metadata.irods_metadata.file_metadata import IrodsSeqFileMetadata
 from mcheck.results.checks_results import CheckResult
 from mcheck.results.constants import SEVERITY
+from mcheck.check_names import CHECK_NAMES
+from mcheck.results.checks_results import RESULT
 
 def read_file_into_list(fofn_path):
     fofn_fd = open(fofn_path)
@@ -194,8 +196,6 @@ def main():
             file_metadata, problems = MetadataSelfChecks.check_and_convert_irods_metadata(raw_metadata, reference)
             irods_metadata_dict[fpath] = file_metadata
             issues_to_report[fpath].extend(problems)
-
-
     elif args.metadata_fetching_strategy == 'fetch_by_path':
         for fpath in args.fpaths_irods:
             try:
@@ -236,18 +236,33 @@ def main():
         irods_diff_header = FileMetadataComparison.find_differences(irods_metadata, header_metadata, ['samples', 'libraries', 'studies'])
         header_diff_irods = FileMetadataComparison.find_differences(header_metadata, irods_metadata, ['samples', 'libraries', 'studies'])
 
+        ss_vs_h_check_result = CheckResult(check_name=CHECK_NAMES.check_seqscape_ids_compared_to_header_ids)
         if seqscape_diff_header:
             error_msg = "Differences: %s" % seqscape_diff_header
-            issues_to_report[fpath].append(CheckResult(check_name="Compare what is in seqscape and not in header", error_message=error_msg))
+            ss_vs_h_check_result.error_message=error_msg
+            ss_vs_h_check_result.result = RESULT.FAILURE
+        issues_to_report[fpath].append(ss_vs_h_check_result)
+
+        h_vs_ss_check_result = CheckResult(check_name=CHECK_NAMES.check_header_ids_compared_to_seqscape_ids)
         if header_diff_seqscape:
             error_msg = "Differences: %s" % header_diff_seqscape
-            issues_to_report[fpath].append(CheckResult(check_name="Compare what is in the header and not in seqscape", error_message=error_msg))
+            h_vs_ss_check_result.result = RESULT.FAILURE
+            h_vs_ss_check_result.error_message = error_msg
+        issues_to_report[fpath].append(h_vs_ss_check_result)
+
+        i_vs_h_check_result = CheckResult(check_name=CHECK_NAMES.check_irods_ids_compared_to_header_ids)
         if irods_diff_header:
             error_msg = "Differences: %s" % irods_diff_header
-            issues_to_report[fpath].append(CheckResult(check_name="Compare what is in iRODS and not in the header", error_message=error_msg))
+            i_vs_h_check_result.error_message = error_msg
+            i_vs_h_check_result.result = RESULT.FAILURE
+        issues_to_report[fpath].append(i_vs_h_check_result)
+
+        h_vs_i_check_result = CheckResult(check_name=CHECK_NAMES.check_header_ids_compared_to_irods_ids)
         if header_diff_irods:
             error_msg = "Differences between what is in the header and not in iRODS: %s" % header_diff_irods
-            issues_to_report[fpath].append(CheckResult(check_name="Compare what is in the header and not in iRODS", error_message=error_msg))
+            h_vs_i_check_result.error_message = error_msg
+            h_vs_i_check_result.result = RESULT.FAILURE
+        issues_to_report[fpath].append(h_vs_i_check_result)
 
 
     # print("Tests results: ")
