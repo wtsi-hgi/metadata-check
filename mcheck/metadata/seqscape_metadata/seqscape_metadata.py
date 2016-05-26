@@ -25,7 +25,8 @@ from typing import List
 
 from sequencescape import NamedModel, Sample, Study, Library
 from mcheck.results.checks_results import CheckResult
-from mcheck.results.constants import SEVERITY
+from mcheck.results.constants import SEVERITY, RESULT
+from mcheck.check_names import CHECK_NAMES
 
 
 class SeqscapeEntityQueryAndResults:
@@ -59,23 +60,21 @@ class SeqscapeEntityQueryAndResults:
         return ids_duplicated
 
     def check_all_ids_were_found(self) -> List:
-        problems = []
         ids_missing = self._find_missing_ids()
+        check_result = CheckResult(check_name=CHECK_NAMES.check_all_irods_ids_found_in_seqscape)
         if ids_missing:
-            problems.append(CheckResult(check_name="Check all ids were found",
-                                        error_message="The following ids weren't found in SequencescapeDB: %s " %
-                                                      ids_missing))
-        return problems
+            check_result.error_message="The following ids weren't found in SequencescapeDB: %s " % ids_missing
+            check_result.result = RESULT.FAILURE
+        return check_result
 
     def check_no_duplicates_found(self) -> List:
-        problems = []
+        check_result = CheckResult(check_name=CHECK_NAMES.check_for_duplicated_ids_within_seqscape)
         ids_dupl = self._find_duplicated_ids()
         if ids_dupl:
             entities_dupl = [ent for ent in self.entities_fetched if getattr(ent, self.query_id_type) in ids_dupl]
-            problems.append(CheckResult("Check for duplicated ids",
-                                        error_message="The following ids: %s are duplicated - entities: %s" % (
-                                            ids_dupl, entities_dupl)))
-        return problems
+            check_result.error_message="The following ids: %s are duplicated - entities: %s" % (ids_dupl, entities_dupl)
+            check_result.result = RESULT.FAILURE
+        return check_result
 
 
     def __str__(self):
@@ -191,7 +190,7 @@ class SeqscapeRawMetadata(object):
     @classmethod
     def _check_by_comparison_entities_fetched_by_different_id_types(cls, query_results: List[
         SeqscapeEntityQueryAndResults]) -> List:
-        problems = []
+        check_result = CheckResult(check_name=CHECK_NAMES.check_entities_in_seqscape_fetched_by_different_ids)
         for i in range(1, len(query_results)):
             entities_1 = query_results[i - 1]
             entities_2 = query_results[i]
@@ -211,22 +210,30 @@ class SeqscapeRawMetadata(object):
                 if not diff_2 and not diff_1:
                     raise ValueError("Somehow the entity sets are different, but I can't detect any difference.")
 
-                problems.append(CheckResult(check_name="Check entities fetched by different types of ids",
-                                            error_message=error_message))
-        return problems
+                check_result.error_message=error_message
+                check_result.result = RESULT.FAILURE
+        return check_result
 
     @classmethod
     def _check_entities_fetched(cls, query_results: List[SeqscapeEntityQueryAndResults]) -> None:
         problems = []
         for entity_fetched in query_results:
-            problems.extend(entity_fetched.check_all_ids_were_found())
-            problems.extend(entity_fetched.check_no_duplicates_found())
+            problems.append(entity_fetched.check_all_ids_were_found())
+            problems.append(entity_fetched.check_no_duplicates_found())
         return problems
 
     def check_studies_fetched_by_samples(self):
-        problems = []
+        check_results = []
+        same_study_for_samples_check = CheckResult(check_name=CHECK_NAMES.check_studies_in_irods_with_studies_in_seqscape_fetched_by_samples, severity=SEVERITY.WARNING)
+        check_for_samples_in_more_studies = CheckResult(check_name=CHECK_NAMES.check_for_samples_in_more_studies, severity=SEVERITY.WARNING)
         if not self.get_entities_by_type('sample'):
-            return problems
+            same_study_for_samples_check.executed = False
+            same_study_for_samples_check.result = None
+            check_for_samples_in_more_studies.executed = False
+            check_for_samples_in_more_studies.result = None
+            check_results.append(check_for_samples_in_more_studies)
+            check_results.append(same_study_for_samples_check)
+            return check_results
         studies_by_samples_set = set(self.get_all_entities_by_association_by_type('sample', 'study'))
         studies_set = set(self.get_entities_by_type('study'))
 
@@ -234,33 +241,38 @@ class SeqscapeRawMetadata(object):
         studies_by_samples_set_names = [study.name for study in studies_by_samples_set]
 
         sample_set_ids = [(sample.name, sample.accession_number) for sample in self.get_entities_by_type('sample')]
-        diff_wrong_studies_for_samples_in_irods = studies_set.difference(studies_by_samples_set)
         if not studies_set.issubset(studies_by_samples_set):
             error_msg = "For the %s given seqscape samples, the studies in iRODS: %s and the studies in Seqscape don't agree: %s" % (str(len(sample_set_ids)), studies_set_names, studies_by_samples_set_names)
-            problems.append(
-                CheckResult(check_name="Check the samples belong to the same studies in iRODS and Seqscape", error_message=error_msg,
-                            severity=SEVERITY.WARNING))
-        elif diff_wrong_studies_for_samples_in_irods:
-            error_msg = "Studies in Seqscape and in iRODS for %s samples don't agree. Studies in iRODS and not in Seqscape: %s" % (
-                str(len(sample_set_ids)), diff_wrong_studies_for_samples_in_irods)
-            problems.append(CheckResult(
-                check_name="Check the study in iRODS for the samples given are associated with same sample in Seqscape",
-                error_message=error_msg, severity=SEVERITY.IMPORTANT))
+            same_study_for_samples_check.result = RESULT.FAILURE
+            same_study_for_samples_check.error_message=error_msg
+        else:
+            diff_wrong_studies_for_samples_in_irods = studies_set.difference(studies_by_samples_set)
+            if diff_wrong_studies_for_samples_in_irods:
+                error_msg = "Studies in Seqscape and in iRODS for %s samples don't agree. Studies in iRODS and not in Seqscape: %s" % (
+                    str(len(sample_set_ids)), diff_wrong_studies_for_samples_in_irods)
+                same_study_for_samples_check.result = RESULT.FAILURE
+                same_study_for_samples_check.error_message = error_msg
+        check_results.append(same_study_for_samples_check)
+
         diff_sam_belongs2more_studies = studies_by_samples_set.difference(studies_set)
         if diff_sam_belongs2more_studies:
             error_msg = "Some samples belong to more than one study. For samples: %s we had these studies as metadata: %s and we found in Seqscape these studies: %s" % (
                 sample_set_ids,
                 studies_set_names,
                 studies_by_samples_set_names)
-            problems.append(CheckResult(check_name="Check the studies found in Seqscape when querying by samples",
-                                        error_message=error_msg, severity=SEVERITY.WARNING))
-        return problems
+            check_for_samples_in_more_studies.result = RESULT.FAILURE
+            check_for_samples_in_more_studies.error_message = error_msg
+        check_results.append(check_for_samples_in_more_studies)
+        return check_results
 
 
     def check_samples_fetched_by_studies(self):
-        problems = []
+        check_result = CheckResult(check_name=CHECK_NAMES.check_samples_in_irods_same_as_samples_fetched_by_study_from_seqscape)
+        #"Check if the sample ids in iRODS for a study belong to the same study in Sqeuencescape ")
         if not self.get_entities_by_type('study'):
-            return problems
+            check_result.executed = False
+            check_result.result = None
+            return check_result
         samples_by_studies_set = set(self.get_all_entities_by_association_by_type('study', 'sample'))
         samples_set = set(self.get_entities_by_type('sample'))
         if not samples_set.issubset(samples_by_studies_set):
@@ -270,10 +282,9 @@ class SeqscapeRawMetadata(object):
                         "and ids: %s" % ([study.name for study in self.get_entities_by_type('study')],
                                          str(len(diff_samples_wrong_study)),
                                          [(s.name, s.accession_number) for s in diff_samples_wrong_study])
-            problems.append(CheckResult(
-                check_name="Check if the sample ids in iRODS for a study belong to the same study in Sqeuencescape ",
-                error_message=error_msg, severity=SEVERITY.IMPORTANT))
-        return problems
+            check_result.error_message = error_msg
+            check_result.result = RESULT.FAILURE
+        return check_result
 
 
     def check_metadata(self) -> List:
@@ -282,15 +293,15 @@ class SeqscapeRawMetadata(object):
         :param raw_metadata:
         :return:
         """
-        problems = []
+        check_results = []
         entity_types = self.get_all_fetched_entity_types()
         for ent_type in entity_types:
             entities_fetched = self.get_fetched_entities_by_type(ent_type)
-            problems.extend(self._check_entities_fetched(entities_fetched))
-            problems.extend(self._check_by_comparison_entities_fetched_by_different_id_types(entities_fetched))
-        problems.extend(self.check_studies_fetched_by_samples())
-        problems.extend(self.check_samples_fetched_by_studies())
-        return problems
+            check_results.extend(self._check_entities_fetched(entities_fetched))
+            check_results.append(self._check_by_comparison_entities_fetched_by_different_id_types(entities_fetched))
+        check_results.extend(self.check_studies_fetched_by_samples())
+        check_results.append(self.check_samples_fetched_by_studies())
+        return check_results
 
 
     def __str__(self):
@@ -414,7 +425,7 @@ class SeqscapeMetadata:
 
     @staticmethod
     def _check_entities_have_all_types_of_ids(entity_list, mandatory_id_types, entity_type):
-        problems = []
+        check_result = CheckResult(check_name=CHECK_NAMES.check_all_id_types_present)
         for entity in entity_list:
             missing_id_types = []
             for id_type in mandatory_id_types:
@@ -423,9 +434,9 @@ class SeqscapeMetadata:
             if missing_id_types:
                 present_ids = tuple(set(mandatory_id_types).difference(set(missing_id_types)))
                 present_id_vals = [getattr(entity, id) for id in present_ids]
-                problems.append(CheckResult(check_name='Check that a %s has all id types' % entity_type,
-                                                error_message='Missing %s %s from %s: %s' % (entity_type, missing_id_types, entity_type, present_id_vals)))
-        return problems
+                check_result.error_message='Missing %s %s from %s: %s' % (entity_type, missing_id_types, entity_type, present_id_vals)
+                check_result.result = RESULT.FAILURE
+        return check_result
 
     def check_samples_have_all_types_of_ids(self):
         return self._check_entities_have_all_types_of_ids(self._samples, ['name', 'accession_number', 'internal_id'], 'sample')
@@ -435,8 +446,8 @@ class SeqscapeMetadata:
 
     def check_metadata(self):
         problems = []
-        problems.extend(self.check_samples_have_all_types_of_ids())
-        problems.extend(self.check_studies_have_all_types_of_ids())
+        problems.append(self.check_samples_have_all_types_of_ids())
+        problems.append(self.check_studies_have_all_types_of_ids())
         return problems
 
     @staticmethod
