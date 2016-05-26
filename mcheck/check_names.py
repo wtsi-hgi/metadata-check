@@ -38,5 +38,14 @@ class CHECK_NAMES:
     check_irods_zone_within_acl = "Check valid iRODS zone in ACL"
     check_irods_permission_within_acl = "Check valid permission in ACL"
     check_valid_ids = "Check valid id strings"
+    check_all_irods_ids_found_in_seqscape = "Check all iRODS ids were found in seqscape"
+    check_for_duplicated_ids_within_seqscape = "Check for duplicated ids within seqscape"
+    check_entities_in_seqscape_fetched_by_different_ids = "Check entities fetched by different types of ids from Seqscape"
+    check_samples_belong_to_same_study = "Check the samples belong to the same studies in iRODS and Seqscape"
+    check_that_the_given_study_is_associated_with_the_known_samples = "Check that given the study in iRODS, the samples in iRODS are associated with it"
+    check_studies_in_irods_with_studies_in_seqscape_fetched_by_samples = "Check that the studies in iRODS are the same as the studies fetched from Seqscape when querying by sample"
+    check_samples_in_irods_same_as_samples_fetched_by_study_from_seqscape = "Check that the samples in iRODS are the same as the samples fetched by study from Seqscape"
+    check_for_samples_in_more_studies = "Check if a set of samples is in more studies within Seqscape"
+    check_all_id_types_present = 'Check that all id types are present'
 
 
