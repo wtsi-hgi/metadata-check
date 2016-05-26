@@ -21,6 +21,7 @@ This file has been created on May 26, 2016.
 
 from mcheck.results.checks_results import RESULT, SEVERITY
 from mcheck.results.checks_results import CheckResult
+from collections import defaultdict
 
 class CheckResultsProcessing:
 
@@ -52,3 +53,23 @@ class CheckResultsProcessing:
         :return: filtered list of CheckResults
         """
         return [cr for cr in check_results if cr.executed is True]
+
+    @staticmethod
+    def group_by_severity(check_results):
+        """
+        This method groups the check results by severity, and returns them in a dict,
+        where key=severity, value = list of CheckResults with that severity.
+        :param check_results: list of CheckResults
+        :return: dict with key = severity, value = list of CheckResults
+        """
+        severity_dict = defaultdict(list)
+        for result in check_results:
+            severity_dict[result.severity].append(result)
+        return severity_dict
+
+    @staticmethod
+    def group_by_result(check_results):
+        result_dict = defaultdict(list)
+        for result in check_results:
+            result_dict[result.result].append(result)
+        return result_dict
