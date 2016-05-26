@@ -21,7 +21,8 @@ This file has been created on Feb 26, 2016.
 import unittest
 from sequencescape import connect_to_sequencescape, Sample, Study, Library
 from mcheck.metadata.seqscape_metadata.seqscape_metadata import SeqscapeRawMetadata, SeqscapeEntityQueryAndResults, SeqscapeMetadata
-
+from mcheck.results.checks_results import RESULT
+from mcheck.check_names import CHECK_NAMES
 
 class TestSeqscapeEntitiesFetched(unittest.TestCase):
 
@@ -84,7 +85,7 @@ class TestSeqscapeEntitiesFetched(unittest.TestCase):
         test_obj = SeqscapeEntityQueryAndResults(entities_fetched, query_ids, query_id_type='internal_id', query_entity_type='sample',
                                            fetched_entity_type='sample')
         result = test_obj.check_all_ids_were_found()
-        self.assertEqual(len(result), 1)
+        self.assertEqual(result.result, RESULT.FAILURE)
 
     def test_check_all_ids_were_found_when_not_missing(self):
         entities_fetched = [Sample(name='sam1', internal_id='123', accession_number='ega123'), Sample(name='sam2', internal_id='123', accession_number='ega444')]
@@ -92,7 +93,7 @@ class TestSeqscapeEntitiesFetched(unittest.TestCase):
         test_obj = SeqscapeEntityQueryAndResults(entities_fetched, query_ids, query_id_type='internal_id', query_entity_type='sample',
                                            fetched_entity_type='sample')
         result = test_obj.check_all_ids_were_found()
-        self.assertEqual(len(result), 0)
+        self.assertEqual(result.result, RESULT.SUCCESS)
 
 
     def test_check_no_duplicates_found_when_duplicates(self):
@@ -244,7 +245,7 @@ class TestSeqscapeEntitiesFetched(unittest.TestCase):
         entities_fetched = raw_metadata.get_fetched_entities_by_type('sample')
 
         result = raw_metadata._check_by_comparison_entities_fetched_by_different_id_types(entities_fetched)
-        self.assertEqual(0, len(result))
+        self.assertEqual(result.result, RESULT.SUCCESS)
 
     def test_check_by_comparison_entities_fetched_by_different_id_types_wrong(self):
         raw_metadata = SeqscapeRawMetadata()
@@ -263,7 +264,7 @@ class TestSeqscapeEntitiesFetched(unittest.TestCase):
 
         entities_fetched = raw_metadata.get_fetched_entities_by_type('sample')
         result = raw_metadata._check_by_comparison_entities_fetched_by_different_id_types(entities_fetched)
-        self.assertEqual(1, len(result))
+        self.assertEqual(result.result, RESULT.FAILURE)
 
     def test_check_by_comparison_entities_fetched_by_different_id_types_more_wrong(self):
         raw_metadata = SeqscapeRawMetadata()
@@ -291,7 +292,7 @@ class TestSeqscapeEntitiesFetched(unittest.TestCase):
 
         entities_fetched = raw_metadata.get_fetched_entities_by_type('sample')
         result = raw_metadata._check_by_comparison_entities_fetched_by_different_id_types(entities_fetched)
-        self.assertEqual(2, len(result))
+        self.assertEqual(result.result, RESULT.FAILURE)
 
 
     def test_get_all_fetched_entities(self):
@@ -386,7 +387,7 @@ class TestSamplesAndStudiesFetched(unittest.TestCase):
 
     def test_samples_fetched_by_studies(self):
         result = self.raw_metadata.check_samples_fetched_by_studies()
-        self.assertEqual(len(result), 1)
+        self.assertEqual(result.result, RESULT.FAILURE)
 
 
 class TestCheckEntitiesFetched(unittest.TestCase):
@@ -396,16 +397,24 @@ class TestCheckEntitiesFetched(unittest.TestCase):
         sam1_fetched = SeqscapeEntityQueryAndResults(sam1, query_ids=['1'],
                                                        query_id_type='internal_id', query_entity_type='sample',
                                                        fetched_entity_type='sample')
-        result = SeqscapeRawMetadata._check_entities_fetched([sam1_fetched])
-        self.assertEqual(len(result), 0)
+        check_results = SeqscapeRawMetadata._check_entities_fetched([sam1_fetched])
+        self.assertEqual(len(check_results), 2)
+        for res in check_results:
+            self.assertEqual(res.result, RESULT.SUCCESS)
 
     def test_check_entities_fetched_missing(self):
         sam1 = Sample(name='sam1', accession_number='ega1', internal_id='1')
         sam1_fetched = SeqscapeEntityQueryAndResults(sam1, query_ids=['1', '2'],
                                                        query_id_type='internal_id', query_entity_type='sample',
                                                        fetched_entity_type='sample')
-        result = SeqscapeRawMetadata._check_entities_fetched([sam1_fetched])
-        self.assertEqual(len(result), 1)
+        check_results = SeqscapeRawMetadata._check_entities_fetched([sam1_fetched])
+        self.assertEqual(len(check_results), 2)
+        for res in check_results:
+            if res.check_name == CHECK_NAMES.check_all_irods_ids_found_in_seqscape:
+                self.assertEqual(res.result, RESULT.FAILURE)
+            else:
+                self.assertEqual(res.result, RESULT.SUCCESS)
+
 
     def test_check_entities_fetched_duplication(self):
         sam1 = Sample(name='sam1', accession_number='ega1', internal_id='1')
@@ -413,8 +422,15 @@ class TestCheckEntitiesFetched(unittest.TestCase):
         sam1_fetched = SeqscapeEntityQueryAndResults([sam1, sam2], query_ids=['1'],
                                                        query_id_type='internal_id', query_entity_type='sample',
                                                        fetched_entity_type='sample')
-        result = SeqscapeRawMetadata._check_entities_fetched([sam1_fetched])
-        self.assertEqual(len(result), 1)
+        check_results = SeqscapeRawMetadata._check_entities_fetched([sam1_fetched])
+        self.assertEqual(len(check_results), 2)
+        for res in check_results:
+            if res.check_name == CHECK_NAMES.check_for_duplicated_ids_within_seqscape:
+                self.assertEqual(res.result, RESULT.FAILURE)
+            else:
+                self.assertEqual(res.result, RESULT.SUCCESS)
+
+
 
 
 class TestCheckRawMetadata(unittest.TestCase):
@@ -430,7 +446,10 @@ class TestCheckRawMetadata(unittest.TestCase):
         print("RAW metadata: %s FINISHED" %raw_metadata)
         result = raw_metadata.check_metadata()
         print("Result before exiting with error: %s" % result)
-        self.assertEqual([], result)
+        self.assertEqual(6, len(result))
+        for res in result:
+            if res.executed:
+                self.assertEqual(res.result, RESULT.SUCCESS)
 
     def test_check_raw_metadata_not_ok(self):
         raw_metadata = SeqscapeRawMetadata()
@@ -445,8 +464,7 @@ class TestCheckRawMetadata(unittest.TestCase):
         raw_metadata.add_fetched_entities(sam1_fetched)
         raw_metadata.add_fetched_entities_by_association(std1_fetched)
         result = raw_metadata.check_metadata()
-        print("Result in check_raw_meta before failing test: %s" % result)
-        self.assertEqual(1, len(result))
+        self.assertEqual(6, len(result))
 
 
 class TestSeqscapeMetadata(unittest.TestCase):
@@ -456,28 +474,28 @@ class TestSeqscapeMetadata(unittest.TestCase):
         sam2 = Sample(name='sam2', accession_number='ega2', internal_id='2')
         metadata = SeqscapeMetadata(samples=[sam1, sam2])
         result = metadata.check_samples_have_all_types_of_ids()
-        self.assertEqual(len(result), 0)
+        self.assertEqual(result.result, RESULT.SUCCESS)
 
     def test_check_samples_have_all_types_of_ids_when_mising_acc_nr(self):
         sam1 = Sample(name='sam1', internal_id='1')
         sam2 = Sample(name='sam2', accession_number='ega2', internal_id='2')
         metadata = SeqscapeMetadata(samples=[sam1, sam2])
         result = metadata.check_samples_have_all_types_of_ids()
-        self.assertEqual(len(result), 1)
+        self.assertEqual(result.result, RESULT.FAILURE)
 
     def test_check_samples_have_all_types_of_ids_when_missing_names(self):
         sam1 = Sample(accession_number='ega1', internal_id='1')
         sam2 = Sample(accession_number='ega2', internal_id='2')
         metadata = SeqscapeMetadata(samples=[sam1, sam2])
         result = metadata.check_samples_have_all_types_of_ids()
-        self.assertEqual(len(result), 2)
+        self.assertEqual(result.result, RESULT.FAILURE)
 
     def test_check_samples_have_all_types_of_ids_when_missing_all(self):
         sam1 = Sample()
         sam2 = Sample()
         metadata = SeqscapeMetadata(samples=[sam1, sam2])
         result = metadata.check_samples_have_all_types_of_ids()
-        self.assertEqual(len(result), 2)
+        self.assertEqual(result.result, RESULT.FAILURE)
 
 
     def test_from_raw_metadata(self):
@@ -597,5 +615,5 @@ class TestSeqscapeMetadata(unittest.TestCase):
         sample = Sample(name='sam2', internal_id='2', accession_number='ega2')
         seqsc_metadata = SeqscapeMetadata(samples=[sample], studies=[std])
         result = seqsc_metadata.check_metadata()
-        self.assertEqual(len(result), 0)
+        self.assertEqual(len(result), 2)
 
