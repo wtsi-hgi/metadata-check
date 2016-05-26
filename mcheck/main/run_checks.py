@@ -113,7 +113,8 @@ class MetadataSelfChecks:
         return header_metadata, problems
 
     @staticmethod
-    def check_and_convert_irods_metadata(raw_metadata, reference=None):
+    def check_and_convert_irods_metadata(raw_metadata, reference=None, attribute_counts=None):
+        print("Type of raw metadata: %s" % str(type(raw_metadata)))
         problems = raw_metadata.check_metadata()
         file_metadata = IrodsSeqFileMetadata.from_raw_metadata(raw_metadata)
         problems.extend(file_metadata.check_metadata(reference))
@@ -163,11 +164,17 @@ def main():
         search_criteria = {}
         if args.filter_npg_qc:
             search_criteria['manual_qc'] = args.filter_npg_qc
+        else:
+            print("WARNING! You haven't filtered on manual_qc field. You will get the report from checking all the data, no matter if qc pass of fail.")
         if args.filter_target:
             search_criteria['target'] = args.filter_target
+        else:
+            print("WARNING! You haven't filtered by target field. You will get back the report from checking all the data, no matter if it is the target or not, hence possibly also PhiX")
         if args.file_types:
             for ftype in args.file_types:
                 search_criteria['type'] = ftype
+        else:
+            print("WARNING! You haven't filtered on file type.")
 
         # Parse input parameters and obtain files+metadata:
         if args.study_name:
@@ -258,18 +265,21 @@ def main():
                     severity_dict[iss.severity][fpath].append(iss)
         return severity_dict
 
-
+    if not os.path.exists(args.output_dir):
+        os.makedirs(args.output_dir)
     sorted_by_severity = group_by_severity(issues_to_report)
     for severity, fpaths_issues in sorted_by_severity.items():
         print("SEVERITY: %s" %severity)
         #write_dict_to_file(fpaths_issues, '/lustre/scratch113/teams/hgi/users/ic4/mercury/meta-checks/testing-outputs/greeks.'+severity+'.txt')
         write_dict_to_file(fpaths_issues, os.path.join(args.output_dir, severity+'.txt'))
         for path, issues in fpaths_issues.items():
-            print("For path: %s issues: %s" % (path, issues))
+            print("CheckResults for path: %s:" % path)
+            for issue in issues:
+                print("issue: %s" % (issue))
 
     # OUTPUTTING the data in the requested format:
-    if args.out_file_json:
-        pass
+    # if args.out_file_json:
+    #     pass
 
 
 
