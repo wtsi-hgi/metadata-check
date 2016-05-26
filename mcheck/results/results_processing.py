@@ -42,7 +42,7 @@ class CheckResultsProcessing:
         :param result: string from RESULT class
         :return: filtered list of CheckResults
         """
-        pass
+        return [cr for cr in check_results if cr.result == result]
 
     @staticmethod
     def filter_executed(check_results):
@@ -51,4 +51,4 @@ class CheckResultsProcessing:
         :param check_results: list of CheckResults
         :return: filtered list of CheckResults
         """
-        pass
+        return [cr for cr in check_results if cr.executed is True]
