@@ -63,12 +63,18 @@ class CheckResultsProcessing:
         :return: dict with key = severity, value = list of CheckResults
         """
         severity_dict = defaultdict(list)
+        print("I've received these results : %s" % check_results)
         for result in check_results:
             severity_dict[result.severity].append(result)
         return severity_dict
 
     @staticmethod
     def group_by_result(check_results):
+        """
+        This method is meant to group the result within the CheckResults by whether the test was passed or failed
+        :param check_results: list of CheckResults
+        :return: list of CheckResults
+        """
         result_dict = defaultdict(list)
         for result in check_results:
             result_dict[result.result].append(result)
