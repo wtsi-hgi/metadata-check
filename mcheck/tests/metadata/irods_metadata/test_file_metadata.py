@@ -57,17 +57,19 @@ class TestRawFileMetadataFromBaton(unittest.TestCase):
         self.assertEqual(len(raw_meta.file_replicas), 2)
 
     def test_from_baton_wrapper_acls(self):
-        acl = [baton_models.AccessControl(user_or_group='hgi', level=baton_models.AccessControl.Level.WRITE)]
+        user = "hgi#Sanger1"
+        acl = [baton_models.AccessControl(user, level=baton_models.AccessControl.Level.WRITE)]
         data_obj = baton_models.DataObject(path='/somepath/file.txt', access_controls=acl)
         raw_meta = IrodsRawFileMetadata.from_baton_wrapper(data_obj)
         self.assertEqual(len(raw_meta.acls), 1)
-        self.assertEqual(raw_meta.acls[0].access_group, 'hgi')
+        self.assertEqual(raw_meta.acls[0].access_group, user)
         self.assertEqual(raw_meta.acls[0].permission, IrodsPermission.WRITE)
 
 
 
     def test_from_baton_wrapper_full_obj(self):
-        acl = [baton_models.AccessControl(user_or_group='irina', level=baton_models.AccessControl.Level.OWN)]
+        user = "hgi#Sanger1"
+        acl = [baton_models.AccessControl(user, level=baton_models.AccessControl.Level.OWN)]
         replicas = [
             baton_models.DataObjectReplica(number=1, checksum="123abc", host='hgi-dev', resource_name='irods-s1', up_to_date=True),
             baton_models.DataObjectReplica(number=2, checksum="abc", host='hgi-dev-wow', resource_name='irods-s2', up_to_date=True),]
@@ -79,12 +81,13 @@ class TestRawFileMetadataFromBaton(unittest.TestCase):
         self.assertEqual(len(raw_meta.file_replicas), 2)
         self.assertEqual(len(raw_meta.acls), 1)
         #self.assertEqual(raw_meta.acls[0].zone, 'humgen')
-        self.assertEqual(raw_meta.acls[0].access_group, 'irina')
+        self.assertEqual(raw_meta.acls[0].access_group, user)
 
 
 
     def test_from_baton_wrapper_all_ok(self):
-        acl = [baton_models.AccessControl(user_or_group='irina', level=baton_models.AccessControl.Level.OWN)]
+        user = "hgi#Sanger1"
+        acl = [baton_models.AccessControl(user, level=baton_models.AccessControl.Level.OWN)]
         print("ACL: %s" % acl)
         replicas = [
             baton_models.DataObjectReplica(number=1, checksum="123abc", host='hgi-dev', resource_name='irods-s1', up_to_date=True)]
@@ -95,7 +98,7 @@ class TestRawFileMetadataFromBaton(unittest.TestCase):
         self.assertEqual(len(raw_meta.file_replicas), 1)
         self.assertEqual(len(raw_meta.acls), 1)
         #self.assertEqual(raw_meta.acls[0].zone, 'humgen')
-        self.assertEqual(raw_meta.acls[0].access_group, 'irina')
+        self.assertEqual(raw_meta.acls[0].access_group, user)
 
 
     def test_from_baton_wrapper_missing_bits(self):
