@@ -60,7 +60,7 @@ class iRODSMetadataProvider:
         try:
             connection = connect_to_irods_with_baton(config.BATON_BIN, skip_baton_binaries_validation=True) # type: Connection
             list_of_data_objs_and_metadata = connection.data_object.get_by_metadata(search_crit_list, zone=zone)
-        except IOError as e:
+        except RuntimeError as e:
             if str(e).find('KRB_ERROR_ACQUIRING_CREDS') != -1:
                 raise OSError("ERROR: you need to log into iRODS and aquire the KERBEROS credentials.") from None
             else:
