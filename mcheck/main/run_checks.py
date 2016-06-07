@@ -34,6 +34,7 @@ from mcheck.results.checks_results import CheckResult
 from mcheck.results.constants import SEVERITY
 from mcheck.check_names import CHECK_NAMES
 from mcheck.results.checks_results import RESULT
+from mcheck.results.results_processing import CheckResultsProcessing
 
 def read_file_into_list(fofn_path):
     fofn_fd = open(fofn_path)
@@ -47,7 +48,7 @@ def write_list_to_file(input_list, output_file, header=None):
     if header:
         out_fd.write(header+'\n')
     for entry in input_list:
-        out_fd.write(entry+'\n')
+        out_fd.write(str(entry)+'\n')
     out_fd.write('\n')
     out_fd.close()
 
@@ -265,31 +266,25 @@ def main():
         issues_to_report[fpath].append(h_vs_i_check_result)
 
 
-    # print("Tests results: ")
+    print("Tests results -- type of issues_to_report : %s" % str(issues_to_report.keys()))
     # for fpath in issues_to_report:
     #     print("For path: %s nr of issues: %s" % (fpath, issues_to_report[fpath]))
 
+    # for fpath, issue in issues_to_report.items():
+    #     print("Test: %s " % (issue))
+
     # Reporting the results grouped by severity of issues:
-    def group_by_severity(issues):
-        severity_dict = defaultdict(dict)
-        for fpath, issues in issues_to_report.items():
-            for iss in issues:
-                if not severity_dict[iss.severity].get(fpath):
-                    severity_dict[iss.severity][fpath] = [iss]
-                else:
-                    severity_dict[iss.severity][fpath].append(iss)
-        return severity_dict
+    #def group_by_severity(issues):
 
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
-    sorted_by_severity = group_by_severity(issues_to_report)
-    for severity, fpaths_issues in sorted_by_severity.items():
-        print("SEVERITY: %s" %severity)
-        #write_dict_to_file(fpaths_issues, '/lustre/scratch113/teams/hgi/users/ic4/mercury/meta-checks/testing-outputs/greeks.'+severity+'.txt')
-        write_dict_to_file(fpaths_issues, os.path.join(args.output_dir, severity+'.txt'))
-        for path, issues in fpaths_issues.items():
-            print("CheckResults for path: %s:" % path)
-            for issue in issues:
+    for fpath, file_issues in issues_to_report.items():
+        sorted_by_severity = CheckResultsProcessing.group_by_severity(file_issues)
+        print("SORTED BY SEVERITY:::::::::: %s" % sorted_by_severity)
+        for severity, fpaths_issues in sorted_by_severity.items():
+            print("SEVERITY: %s" % severity)
+            write_list_to_file(fpaths_issues, os.path.join(args.output_dir, severity+'.txt'))
+            for issue in fpaths_issues:
                 print("issue: %s" % (issue))
 
     # OUTPUTTING the data in the requested format:
