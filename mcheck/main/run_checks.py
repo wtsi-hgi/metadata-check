@@ -274,7 +274,7 @@ def fetch_and_preprocess_seqscape_metadata(irods_metadata_by_path_dict, issues_d
     return seqsc_metadata_dict
 
 
-def check_metadata_from_different_sources(irods_metadata_dict, header_metadata_dict, seqsc_metadata_dict, issues_dict):
+def check_metadata_across_different_sources(irods_metadata_dict, header_metadata_dict, seqsc_metadata_dict, issues_dict):
     """
     This function checks the metadata from 3 different sources in terms of samples, libraries and studies.
     As a result it updates the issues_dict by appending the CheckResults obtain after running the latest tests.
@@ -329,9 +329,29 @@ def check_metadata_from_different_sources(irods_metadata_dict, header_metadata_d
         issues_dict[fpath].append(h_vs_i_check_result)
 
 
+def present_output(issues_by_path, output_dir):
+    for fpath, file_issues in issues_by_path.items():
+        sorted_by_exec = CheckResultsProcessing.group_by_executed(file_issues)
+        print("Sorted by exec = True:")
+        for check in  sorted_by_exec[True]:
+            print(check)
+        print("Sorted by exec = False:")
+        for check in sorted_by_exec[False]:
+            print(check)
+        sorted_by_severity = CheckResultsProcessing.group_by_severity(sorted_by_exec[True])
+        print("SORTED BY SEVERITY::::::::::")
+        for severity, fpaths_issues in sorted_by_severity.items():
+            print("SEVERITY: %s" % severity)
+            write_list_to_file(fpaths_issues, os.path.join(output_dir, severity + '.txt'))
+            for issue in fpaths_issues:
+                print("issue: %s" % (issue))
+
+
+
 def main():
     args = arg_parser.parse_args()
     print("ARGS: %s" % args)
+
     issues_dict = defaultdict(list)
     # Getting iRODS metadata for files and checking before bringing it a "normalized" form:
     # TODO: add the option of getting the metadata as a json from the command line...
@@ -339,11 +359,9 @@ def main():
     reference = args.desired_reference if args.desired_reference else None
     if args.metadata_fetching_strategy == 'fetch_by_metadata':
         irods_metadata_dict = fetch_and_preprocess_irods_metadata_by_metadata(issues_dict, args.irods_zone, reference,
-                                                                              args.filter_npg_qc,
-                                                                              args.filter_target, args.filter_types,
-                                                                              args.study_name, args.study_acc_nr,
-                                                                              args.study_internal_id)
-
+                                                                              args.filter_npg_qc, args.filter_target,
+                                                                              args.filter_types, args.study_name,
+                                                                              args.study_acc_nr, args.study_internal_id)
     elif args.metadata_fetching_strategy == 'fetch_by_path':
         irods_metadata_dict = fetch_and_preprocess_irods_metadata_by_path(args.fpaths_irods, issues_dict, reference)
 
@@ -354,73 +372,16 @@ def main():
     seqsc_metadata_dict = fetch_and_preprocess_seqscape_metadata(irods_metadata_dict, issues_dict)
 
     # Running checks to compare metadata obtained from different sources:
-    check_metadata_from_different_sources(irods_metadata_dict, header_metadata_dict, seqsc_metadata_dict, issues_dict)
+    check_metadata_across_different_sources(irods_metadata_dict, header_metadata_dict, seqsc_metadata_dict, issues_dict)
 
-    print("Tests results -- type of issues_to_report : %s" % str(issues_dict.keys()))
-    # for fpath in issues_to_report:
-    #     print("For path: %s nr of issues: %s" % (fpath, issues_to_report[fpath]))
-
-    # for fpath, issue in issues_to_report.items():
-    #     print("Test: %s " % (issue))
-
-    # Reporting the results grouped by severity of issues:
-    #def group_by_severity(issues):
-
+    # Outputting the CheckResults:
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
-    for fpath, file_issues in issues_dict.items():
-        sorted_by_severity = CheckResultsProcessing.group_by_severity(file_issues)
-        print("SORTED BY SEVERITY:::::::::: %s" % sorted_by_severity)
-        for severity, fpaths_issues in sorted_by_severity.items():
-            print("SEVERITY: %s" % severity)
-            write_list_to_file(fpaths_issues, os.path.join(args.output_dir, severity + '.txt'))
-            for issue in fpaths_issues:
-                print("issue: %s" % (issue))
 
-                # OUTPUTTING the data in the requested format:
-                # if args.out_file_json:
-                #     pass
+    present_output(issues_dict, args.output_dir)
 
 
 main()
 
 
-#
 # fpath = '/seq/illumina/library_merge/13841100.CCXX.paired310.4199421624/13841100.CCXX.paired310.4199421624.cram'
-# h_meta = FileMetadataRetrieval.fetch_and_check_header_metadata(fpath)
-# seqsc_meta, errs = FileMetadataRetrieval.fetch_and_check_seqscape_metadata(samples=h_meta.samples, libraries=h_meta.libraries, studies=h_meta.studies )
-# irods_meta = FileMetadataRetrieval.fetch_and_check_irods_metadata_by_path(fpath)
-# print("H METAAAAA: %s\n" % h_meta)
-# print("Seqscape meta: %s\n" % str(seqsc_meta))
-# print("Irods meta: %s\n" % irods_meta)
-#
-#
-# print("\nSamples from H META:     %s" % h_meta.samples)
-# print("\nSamples from IRODS META: %s" % irods_meta.samples)
-# print("\nSamples from SEQSCAPE:   %s" % seqsc_meta.samples)
-#
-# print("\nLibraries from H META:     %s" % h_meta.libraries)
-# print("\nLibraries from IRODS META: %s" % irods_meta.libraries)
-# print("\nLibraries from SEQSCAPE:   %s" % seqsc_meta.libraries)
-
-# print("Metadata comparison head vs irod: %s" % FileMetadataComparison.compare_entities(h_meta.libraries, irods_meta.libraries))
-# print("Metadata comparison irod vs seqs: %s" % FileMetadataComparison.compare_entities(irods_meta.libraries, seqsc_meta.libraries))
-# print("Metadata comparison head vs seqs: %s" % FileMetadataComparison.compare_entities(h_meta.libraries, seqsc_meta.libraries))
-
-
-
-# @classmethod
-# def retrieve_files_metadata_by_metadata(cls, search_criteria_dict, zone=None):
-#     search_crit_list = []
-#     for k, v in search_criteria_dict.items():
-#         search_criterion = SearchCriterion(k, v)
-#         search_crit_list.append(search_criterion)
-#
-#     # Getting metadata from iRODS:
-#     connection = connect_to_irods_with_baton(config.BATON_BIN, skip_baton_binaries_validation=True) # type: Connection
-#     list_of_data_objs_and_metadata = connection.data_object.get_by_metadata(search_crit_list, zone)
-#     raw_meta_objects = [IrodsRawFileMetadata.from_baton_wrapper(data_obj) for data_obj in list_of_data_objs_and_metadata]
-#     return raw_meta_objects
-#
-
-
