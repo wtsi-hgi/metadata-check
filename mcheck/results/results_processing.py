@@ -34,7 +34,7 @@ class CheckResultsProcessing:
         """
         exec_dict = defaultdict(list)
         for result in check_results:
-            exec[result.executed].append(result)
+            exec_dict[result.executed].append(result)
         return exec_dict
 
     @staticmethod
