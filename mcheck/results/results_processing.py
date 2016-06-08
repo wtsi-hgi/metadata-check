@@ -26,33 +26,16 @@ from collections import defaultdict
 class CheckResultsProcessing:
 
     @staticmethod
-    def filter_by_severity(check_results, lowest_severity):
-        """
-        Filters the check results by the severity of the check.
-        It includes all the checks with severity higher than the lowest bound given as parameter.
-        :param check_results: list of CheckResults
-        :return: filtered list of CheckResults
-        """
-        pass
-
-    @staticmethod
-    def filter_by_result(check_results, result=RESULT.FAILURE):
-        """
-        Filters the check results by the result type and return only the check results that match the result parameter.
-        :param check_results: a list of CheckResults
-        :param result: string from RESULT class
-        :return: filtered list of CheckResults
-        """
-        return [cr for cr in check_results if cr.result == result]
-
-    @staticmethod
-    def filter_executed(check_results):
+    def group_by_executed(check_results):
         """
         Filters the check results and return only the checks that could be executed.
         :param check_results: list of CheckResults
         :return: filtered list of CheckResults
         """
-        return [cr for cr in check_results if cr.executed is True]
+        exec_dict = defaultdict(list)
+        for result in check_results:
+            exec[result.executed].append(result)
+        return exec_dict
 
     @staticmethod
     def group_by_severity(check_results):
@@ -63,7 +46,6 @@ class CheckResultsProcessing:
         :return: dict with key = severity, value = list of CheckResults
         """
         severity_dict = defaultdict(list)
-        print("I've received these results : %s" % check_results)
         for result in check_results:
             severity_dict[result.severity].append(result)
         return severity_dict
