@@ -61,14 +61,15 @@ class TestRawFileMetadataFromBaton(unittest.TestCase):
         acl = [baton_models.AccessControl(user, level=baton_models.AccessControl.Level.WRITE)]
         data_obj = baton_models.DataObject(path='/somepath/file.txt', access_controls=acl)
         raw_meta = IrodsRawFileMetadata.from_baton_wrapper(data_obj)
+        print("RAW data: %s" % raw_meta.acls)
         self.assertEqual(len(raw_meta.acls), 1)
-        self.assertEqual(raw_meta.acls[0].access_group, user)
+        self.assertEqual(raw_meta.acls[0].access_group, 'hgi')
         self.assertEqual(raw_meta.acls[0].permission, IrodsPermission.WRITE)
-
+        self.assertEqual(raw_meta.acls[0].zone, 'Sanger1')
 
 
     def test_from_baton_wrapper_full_obj(self):
-        user = "hgi#Sanger1"
+        user = "hgi#humgen"
         acl = [baton_models.AccessControl(user, level=baton_models.AccessControl.Level.OWN)]
         replicas = [
             baton_models.DataObjectReplica(number=1, checksum="123abc", host='hgi-dev', resource_name='irods-s1', up_to_date=True),
@@ -80,15 +81,13 @@ class TestRawFileMetadataFromBaton(unittest.TestCase):
         self.assertEqual(raw_meta.dir_path, '/somepath')
         self.assertEqual(len(raw_meta.file_replicas), 2)
         self.assertEqual(len(raw_meta.acls), 1)
-        #self.assertEqual(raw_meta.acls[0].zone, 'humgen')
-        self.assertEqual(raw_meta.acls[0].access_group, user)
-
+        self.assertEqual(raw_meta.acls[0].zone, 'humgen')
+        self.assertEqual(raw_meta.acls[0].access_group, 'hgi')
 
 
     def test_from_baton_wrapper_all_ok(self):
-        user = "hgi#Sanger1"
+        user = "serapis#humgen"
         acl = [baton_models.AccessControl(user, level=baton_models.AccessControl.Level.OWN)]
-        print("ACL: %s" % acl)
         replicas = [
             baton_models.DataObjectReplica(number=1, checksum="123abc", host='hgi-dev', resource_name='irods-s1', up_to_date=True)]
         data_obj = baton_models.DataObject(path='/somepath/file.txt', access_controls=acl, replicas=replicas)
@@ -97,8 +96,8 @@ class TestRawFileMetadataFromBaton(unittest.TestCase):
         self.assertEqual(raw_meta.dir_path, '/somepath')
         self.assertEqual(len(raw_meta.file_replicas), 1)
         self.assertEqual(len(raw_meta.acls), 1)
-        #self.assertEqual(raw_meta.acls[0].zone, 'humgen')
-        self.assertEqual(raw_meta.acls[0].access_group, user)
+        self.assertEqual(raw_meta.acls[0].zone, 'humgen')
+        self.assertEqual(raw_meta.acls[0].access_group, 'serapis')
 
 
     def test_from_baton_wrapper_missing_bits(self):
