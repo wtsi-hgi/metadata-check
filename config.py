@@ -38,4 +38,4 @@ IRODS_ATTRIBUTE_FREQUENCY_CONFIG_FILE = '/nfs/users/nfs_i/ic4/Projects/metadata-
 BATON_METAQUERY_BIN_PATH =  "/software/gapi/pkg/baton/0.15.0/bin/baton-metaquery"
 BATON_LIST_BIN_PATH =  "/software/gapi/pkg/baton/0.15.0/bin/baton-list"
 
-BATON_BIN = "/software/hgi/pkglocal/baton-0.16.1/bin/"
+BATON_BIN = "/software/hgi/pkglocal/baton-0.16.3/bin"
