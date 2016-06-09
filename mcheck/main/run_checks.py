@@ -76,17 +76,6 @@ def write_dict_to_file(input_dict, output_file):
     out_fd.close()
 
 
-class BulkMetadataRetrieval:
-    @staticmethod
-    def fetch_irods_metadata_by_metadata(search_criteria):
-        """
-        Queries iRODS for all the files that match the search criteria and fetch all the metadata for them.
-        :param search_criteria: a dict with: key = search field name, value = search field value
-        :return:
-        """
-        return iRODSMetadataProvider.retrieve_raw_files_metadata_by_metadata(search_criteria)
-
-
 class FileMetadataRetrieval:
     @staticmethod
     def fetch_seqscape_metadata(samples, libraries, studies):
@@ -125,19 +114,6 @@ class MetadataSelfChecks:
 
 
 class FileMetadataComparison:
-    @staticmethod
-    def are_entities_equal(entity_set1: Dict[str, Set], entity_set2: Dict[str, Set]):
-        """
-        Compares the entities in 2 different dicts that look like: {'accession_number': {'EGAN00001099700'}, 'name': {'SC_SEPI5488478'}, 'internal_id': {'1582333'}}
-        :param entity_set1: dict of key = id_type, value = id_value
-        :param entity_set2: dict of key = id_type, value = id_value
-        :return:
-        """
-        for id_type, values in entity_set1.items():
-            if values and entity_set2.get(id_type):
-                if values != entity_set2.get(id_type):
-                    return False
-        return True
 
     @staticmethod
     def find_differences(metadata1, metadata2, entity_types_list):
@@ -152,55 +128,71 @@ class FileMetadataComparison:
             return differences
 
 
+    @staticmethod
+    def check_metadata_across_different_sources(irods_metadata_dict, header_metadata_dict, seqsc_metadata_dict, issues_dict):
+        """
+        This function checks the metadata from 3 different sources in terms of samples, libraries and studies.
+        As a result it updates the issues_dict by appending the CheckResults obtain after running the latest tests.
+        :param irods_metadata_dict:
+        :param header_metadata_dict:
+        :param seqsc_metadata_dict:
+        :param issues_dict:
+        :return:
+        """
+        for fpath, irods_metadata in irods_metadata_dict.items():
+            header_metadata = header_metadata_dict[fpath]
+            seqscape_metadata = seqsc_metadata_dict[fpath]
+            seqscape_diff_header = FileMetadataComparison.find_differences(seqscape_metadata, header_metadata,
+                                                                           ['samples', 'libraries', 'studies'])
+            header_diff_seqscape = FileMetadataComparison.find_differences(header_metadata, seqscape_metadata,
+                                                                           ['samples', 'libraries', 'studies'])
+
+            irods_diff_header = FileMetadataComparison.find_differences(irods_metadata, header_metadata,
+                                                                        ['samples', 'libraries', 'studies'])
+            header_diff_irods = FileMetadataComparison.find_differences(header_metadata, irods_metadata,
+                                                                        ['samples', 'libraries', 'studies'])
+
+            print("Irods metadata: %s" % irods_metadata)
+            print("Seqscape metadata: %s" % seqscape_metadata)
+            print("Header metadata: %s" % header_metadata)
+            ss_vs_h_check_result = CheckResult(check_name=CHECK_NAMES.check_seqscape_ids_compared_to_header_ids)
+            if seqscape_diff_header:
+                error_msg = "Differences: %s" % seqscape_diff_header
+                ss_vs_h_check_result.error_message = error_msg
+                ss_vs_h_check_result.result = RESULT.FAILURE
+            issues_dict[fpath].append(ss_vs_h_check_result)
+
+            h_vs_ss_check_result = CheckResult(check_name=CHECK_NAMES.check_header_ids_compared_to_seqscape_ids)
+            if header_diff_seqscape:
+                error_msg = "Differences: %s" % header_diff_seqscape
+                h_vs_ss_check_result.result = RESULT.FAILURE
+                h_vs_ss_check_result.error_message = error_msg
+            issues_dict[fpath].append(h_vs_ss_check_result)
+
+            i_vs_h_check_result = CheckResult(check_name=CHECK_NAMES.check_irods_ids_compared_to_header_ids)
+            if irods_diff_header:
+                error_msg = "Differences: %s" % irods_diff_header
+                i_vs_h_check_result.error_message = error_msg
+                i_vs_h_check_result.result = RESULT.FAILURE
+            issues_dict[fpath].append(i_vs_h_check_result)
+
+            h_vs_i_check_result = CheckResult(check_name=CHECK_NAMES.check_header_ids_compared_to_irods_ids)
+            if header_diff_irods:
+                error_msg = "Differences between what is in the header and not in iRODS: %s" % header_diff_irods
+                h_vs_i_check_result.error_message = error_msg
+                h_vs_i_check_result.result = RESULT.FAILURE
+            issues_dict[fpath].append(h_vs_i_check_result)
+
+
+
+
 # def query_for_metadata(filters, study_metadata):
-def fetch_all_matching_metadata(irods_zone, filter_by_npg_qc=None, filter_by_target=None, filter_by_file_types=None,
-                                match_study_name=None, match_study_acc_nr=None, match_study_id=None):
-    search_criteria = {}
-    if filter_by_npg_qc:
-        search_criteria['manual_qc'] = filter_by_npg_qc
-    else:
-        print(
-            "WARNING! You haven't filtered on manual_qc field. You will get the report from checking all the data, no matter if qc pass of fail.")
-    if filter_by_target:
-        search_criteria['target'] = filter_by_target
-    else:
-        print(
-            "WARNING! You haven't filtered by target field. You will get back the report from checking all the data, no matter if it is the target or not, hence possibly also PhiX")
-    if filter_by_file_types:
-        for ftype in filter_by_file_types:
-            search_criteria['type'] = ftype
-    else:
-        print("WARNING! You haven't filtered on file type.")
+# def fetch_all_matching_metadata(irods_zone, filter_by_npg_qc=None, filter_by_target=None, filter_by_file_types=None,
+#                                 match_study_name=None, match_study_acc_nr=None, match_study_id=None):
+#     search_criteria = convert_args_to_serach_criteria(irods_zone, filter_by_npg_qc=None, filter_by_target=None, filter_by_file_types=None,
+#                                 match_study_name=None, match_study_acc_nr, match_study_id)
 
-    # Parse input parameters and obtain files+metadata:
-    if match_study_name:
-        search_criteria['study'] = match_study_name
-    elif match_study_acc_nr:
-        search_criteria['study_accession_number'] = match_study_acc_nr
-    elif match_study_id:
-        search_criteria['study_internal_id'] = match_study_id
-
-    try:
-        all_files_metadata_objs_list = iRODSMetadataProvider.retrieve_raw_files_metadata_by_metadata(search_criteria,
-                                                                                                     irods_zone)
-        return all_files_metadata_objs_list
-    except Exception as e:
-        print(e)
-        sys.exit(1)
-
-
-def run_metacheck_by_metadata():
-    pass
-
-
-def run_metachecks_by_path():
-    pass
-
-
-def fetch_and_preprocess_irods_metadata_by_metadata(issues_dict, irods_zone, reference=None, filter_by_npg_qc=None,
-                                                    filter_by_target=None,
-                                                    filter_by_file_types=None, match_study_name=None,
-                                                    match_study_acc_nr=None, match_study_id=None):
+def fetch_and_preprocess_irods_metadata_by_metadata(search_criteria, irods_zone, issues_dict, reference):
     """
     This function takes some filtering/matching criteria for selecting data from iRODS based on metadata.
     The client also passes an issues_dict to this function as parameter, which the current function just needs to
@@ -217,17 +209,19 @@ def fetch_and_preprocess_irods_metadata_by_metadata(issues_dict, irods_zone, ref
     :return:
     """
     irods_metadata_by_path = {}
-    all_files_metadata_objs_list = fetch_all_matching_metadata(irods_zone, filter_by_npg_qc,
-                                                               filter_by_target, filter_by_file_types,
-                                                               match_study_name, match_study_acc_nr,
-                                                               match_study_id)
-
-    for raw_metadata in all_files_metadata_objs_list:
-        fpath = os.path.join(raw_metadata.dir_path, raw_metadata.fname)
-        file_metadata, problems = MetadataSelfChecks.check_and_convert_irods_metadata(raw_metadata, reference)
-        irods_metadata_by_path[fpath] = file_metadata
-        issues_dict[fpath].extend(problems)
-    return irods_metadata_by_path
+    try:
+        all_files_metadata_objs_list = iRODSMetadataProvider.retrieve_raw_files_metadata_by_metadata(search_criteria,
+                                                                                                     irods_zone)
+    except Exception as e:
+        print(e)
+        sys.exit(1)
+    else:
+        for raw_metadata in all_files_metadata_objs_list:
+            fpath = os.path.join(raw_metadata.dir_path, raw_metadata.fname)
+            file_metadata, problems = MetadataSelfChecks.check_and_convert_irods_metadata(raw_metadata, reference)
+            irods_metadata_by_path[fpath] = file_metadata
+            issues_dict[fpath].extend(problems)
+        return irods_metadata_by_path
 
 
 def fetch_and_preprocess_irods_metadata_by_path(irods_fpaths, issues_dict, reference):
@@ -274,59 +268,6 @@ def fetch_and_preprocess_seqscape_metadata(irods_metadata_by_path_dict, issues_d
     return seqsc_metadata_dict
 
 
-def check_metadata_across_different_sources(irods_metadata_dict, header_metadata_dict, seqsc_metadata_dict, issues_dict):
-    """
-    This function checks the metadata from 3 different sources in terms of samples, libraries and studies.
-    As a result it updates the issues_dict by appending the CheckResults obtain after running the latest tests.
-    :param irods_metadata_dict:
-    :param header_metadata_dict:
-    :param seqsc_metadata_dict:
-    :param issues_dict:
-    :return:
-    """
-    for fpath, irods_metadata in irods_metadata_dict.items():
-        header_metadata = header_metadata_dict[fpath]
-        seqscape_metadata = seqsc_metadata_dict[fpath]
-        seqscape_diff_header = FileMetadataComparison.find_differences(seqscape_metadata, header_metadata,
-                                                                       ['samples', 'libraries', 'studies'])
-        header_diff_seqscape = FileMetadataComparison.find_differences(header_metadata, seqscape_metadata,
-                                                                       ['samples', 'libraries', 'studies'])
-
-        irods_diff_header = FileMetadataComparison.find_differences(irods_metadata, header_metadata,
-                                                                    ['samples', 'libraries', 'studies'])
-        header_diff_irods = FileMetadataComparison.find_differences(header_metadata, irods_metadata,
-                                                                    ['samples', 'libraries', 'studies'])
-
-        print("Irods metadata: %s" % irods_metadata)
-        print("Seqscape metadata: %s" % seqscape_metadata)
-        print("Header metadata: %s" % header_metadata)
-        ss_vs_h_check_result = CheckResult(check_name=CHECK_NAMES.check_seqscape_ids_compared_to_header_ids)
-        if seqscape_diff_header:
-            error_msg = "Differences: %s" % seqscape_diff_header
-            ss_vs_h_check_result.error_message = error_msg
-            ss_vs_h_check_result.result = RESULT.FAILURE
-        issues_dict[fpath].append(ss_vs_h_check_result)
-
-        h_vs_ss_check_result = CheckResult(check_name=CHECK_NAMES.check_header_ids_compared_to_seqscape_ids)
-        if header_diff_seqscape:
-            error_msg = "Differences: %s" % header_diff_seqscape
-            h_vs_ss_check_result.result = RESULT.FAILURE
-            h_vs_ss_check_result.error_message = error_msg
-        issues_dict[fpath].append(h_vs_ss_check_result)
-
-        i_vs_h_check_result = CheckResult(check_name=CHECK_NAMES.check_irods_ids_compared_to_header_ids)
-        if irods_diff_header:
-            error_msg = "Differences: %s" % irods_diff_header
-            i_vs_h_check_result.error_message = error_msg
-            i_vs_h_check_result.result = RESULT.FAILURE
-        issues_dict[fpath].append(i_vs_h_check_result)
-
-        h_vs_i_check_result = CheckResult(check_name=CHECK_NAMES.check_header_ids_compared_to_irods_ids)
-        if header_diff_irods:
-            error_msg = "Differences between what is in the header and not in iRODS: %s" % header_diff_irods
-            h_vs_i_check_result.error_message = error_msg
-            h_vs_i_check_result.result = RESULT.FAILURE
-        issues_dict[fpath].append(h_vs_i_check_result)
 
 
 def present_output(issues_by_path, output_dir):
@@ -346,6 +287,36 @@ def present_output(issues_by_path, output_dir):
             for issue in fpaths_issues:
                 print("issue: %s" % (issue))
 
+def convert_args_to_serach_criteria(irods_zone, filter_by_npg_qc=None, filter_by_target=None, filter_by_file_types=None,
+                                match_study_name=None, match_study_acc_nr=None, match_study_id=None):
+    search_criteria = {}
+    if filter_by_npg_qc:
+        search_criteria['manual_qc'] = filter_by_npg_qc
+    else:
+        print(
+            "WARNING! You haven't filtered on manual_qc field. You will get the report from checking all the data, "
+            "no matter if qc pass of fail.")
+    if filter_by_target:
+        search_criteria['target'] = filter_by_target
+    else:
+        print(
+            "WARNING! You haven't filtered by target field. You will get back the report from checking all the data, "
+            "no matter if it is the target or not, hence possibly also PhiX")
+    if filter_by_file_types:
+        for ftype in filter_by_file_types:
+            search_criteria['type'] = ftype
+    else:
+        print("WARNING! You haven't filtered on file type.")
+
+    # Parse input parameters and obtain files+metadata:
+    if match_study_name:
+        search_criteria['study'] = match_study_name
+    elif match_study_acc_nr:
+        search_criteria['study_accession_number'] = match_study_acc_nr
+    elif match_study_id:
+        search_criteria['study_internal_id'] = match_study_id
+    return search_criteria
+
 
 
 def main():
@@ -358,10 +329,12 @@ def main():
     #irods_metadata_dict = {}    # key = filepath, value = metadata (avus + checksum and others)
     reference = args.desired_reference if args.desired_reference else None
     if args.metadata_fetching_strategy == 'fetch_by_metadata':
-        irods_metadata_dict = fetch_and_preprocess_irods_metadata_by_metadata(issues_dict, args.irods_zone, reference,
+        search_criteria = convert_args_to_serach_criteria(issues_dict, args.irods_zone, reference,
                                                                               args.filter_npg_qc, args.filter_target,
                                                                               args.filter_types, args.study_name,
                                                                               args.study_acc_nr, args.study_internal_id)
+
+        irods_metadata_dict = fetch_and_preprocess_irods_metadata_by_metadata(search_criteria, args.irods_zone, issues_dict, reference=reference)
     elif args.metadata_fetching_strategy == 'fetch_by_path':
         irods_metadata_dict = fetch_and_preprocess_irods_metadata_by_path(args.fpaths_irods, issues_dict, reference)
 
@@ -372,7 +345,7 @@ def main():
     seqsc_metadata_dict = fetch_and_preprocess_seqscape_metadata(irods_metadata_dict, issues_dict)
 
     # Running checks to compare metadata obtained from different sources:
-    check_metadata_across_different_sources(irods_metadata_dict, header_metadata_dict, seqsc_metadata_dict, issues_dict)
+    FileMetadataComparison.check_metadata_across_different_sources(irods_metadata_dict, header_metadata_dict, seqsc_metadata_dict, issues_dict)
 
     # Outputting the CheckResults:
     if not os.path.exists(args.output_dir):
