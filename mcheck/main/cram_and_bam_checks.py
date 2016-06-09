@@ -24,7 +24,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 #from main import arg_parser
 #from meta_check.main import arg_parser
 
-from mcheck.main import arg_parser, error_types, metadata_utils
+from mcheck.main import arg_parser, error_types
 
 #from main import irods_seq_data_tests as seq_tests
 #from main.. import config
@@ -365,7 +365,7 @@ def main():
             if args.test_md5 or args.all_tests:
                 test_name = 'check_md5_in_irods_meta_vs_ichcksum'
                 try:
-                    i_meta.check_checksum_calculated_vs_metadata()
+                    i_meta.validate_checksums()
                 except error_types.WrongChecksumError as e:
                     problems.append(e)
                     tests_results.append(TestResult(test_name=test_name, result='FAIL', reason=str(e)))

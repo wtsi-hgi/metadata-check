@@ -21,7 +21,6 @@ This file has been created on Jun 09, 2015.
 
 from collections import defaultdict
 
-from . import metadata_utils
 from mcheck.com import wrappers
 from mcheck.main import error_types
 
