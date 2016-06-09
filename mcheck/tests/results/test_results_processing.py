@@ -64,6 +64,19 @@ class CheckResultsProcessingGroupedBySeverityTest(unittest.TestCase):
 
 
 
+class CheckResultsProcessingGroupByResultTest(unittest.TestCase):
+
+    def test_group_by_result(self):
+        check_res1 = CheckResult(check_name='Some check1', executed=False, result=RESULT.SUCCESS, severity=SEVERITY.WARNING)
+        check_res2 = CheckResult(check_name='Some check1', executed=True, result=RESULT.FAILURE, severity=SEVERITY.IMPORTANT)
+        check_results = [check_res1, check_res2]
+        res = CheckResultsProcessing.group_by_result(check_results)
+        expected = {RESULT.SUCCESS : [check_res1], RESULT.FAILURE: [check_res2]}
+        self.assertDictEqual(res, expected)
+
+
+
+
 
 
 
