@@ -28,10 +28,7 @@ from mcheck.results.results_processing import CheckResultsProcessing
 from mcheck.checks.mchecks_by_comparison import FileMetadataComparison
 
 
-
-
-
-def present_output(issues_by_path, output_dir):
+def process_output(issues_by_path, output_dir):
     for fpath, file_issues in issues_by_path.items():
         sorted_by_exec = CheckResultsProcessing.group_by_executed(file_issues)
         print("Sorted by exec = True:")
@@ -112,7 +109,7 @@ def main():
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
 
-    present_output(issues_dict, args.output_dir)
+    process_output(issues_dict, args.output_dir)
 
 
 main()
