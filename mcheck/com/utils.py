@@ -55,47 +55,46 @@ from mcheck.com import wrappers
 #    return simplejson.loads(data)
 
 
-# ######################### UNICODE processing ####################################
-#
-# def __ucode2str__(ucode):
-#     if type(ucode) == str:
-#         return unicodedata.normalize('NFKD', ucode).encode('ascii','ignore')
-#     return ucode
-#
-# def __ucode2str_list__(ucode_list):
-#     str_list = []
-#     for elem in ucode_list:
-#         elem = unicode2string(elem)
-#         str_list.append(elem)
-#     return str_list
-#
-#
-# def __ucode2str_dict__(ucode_dict):
-#     ''' This function takes a dict of unicode characters
-#         and returns a dict of strings.
-#     '''
-#     str_dict = dict()
-#     for key, val in list(ucode_dict.items()):
-#         key = unicode2string(key)
-#         val = unicode2string(val)
-#         str_dict[key] = val
-#     return str_dict
-#
-# def unicode2string(ucode):
-#     ''' This function converts a unicode type into string.
-#         The input type can be a dict, list, or unicode characters.
-#     '''
-#     if type(ucode) == dict:
-#         return __ucode2str_dict__(ucode)
-#     elif type(ucode) == list:
-#         return __ucode2str_list__(ucode)
-#     elif type(ucode) == str:
-#         return __ucode2str__(ucode)
-#     return ucode
-
-
-
 ############## FILE NAME/PATH/EXTENSION PROCESSING ###########
+
+def read_file_into_list(fofn_path):
+    fofn_fd = open(fofn_path)
+    files_list = [f.strip() for f in fofn_fd]
+    fofn_fd.close()
+    return files_list
+
+
+def write_list_to_file(input_list, output_file, header=None):
+    out_fd = open(output_file, 'a')
+    if header:
+        out_fd.write(header + '\n')
+    for entry in input_list:
+        out_fd.write(str(entry) + '\n')
+    out_fd.write('\n')
+    out_fd.close()
+
+
+def write_tuples_to_file(tuples, output_file, header_tuple=None):
+    out_fd = open(output_file, 'a')
+    for elem in header_tuple:
+        out_fd.write(str(elem) + "\t")
+    out_fd.write("\n")
+    for tup in tuples:
+        for elem in tup:
+            out_fd.write(str(elem) + "\t")
+        out_fd.write("\n")
+    out_fd.close()
+
+
+def write_dict_to_file(input_dict, output_file):
+    out_fd = open(output_file, 'a')
+    for k, v in input_dict.items():
+        out_fd.write(str(k))
+        out_fd.write("\n")
+        out_fd.write(str(v))
+        out_fd.write("\n")
+    out_fd.close()
+
 
 def extract_fname_and_ext(fpath):
     ''' This function splits the filename in its last extension
