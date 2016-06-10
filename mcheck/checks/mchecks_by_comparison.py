@@ -21,50 +21,60 @@ This file has been created on Jun 10, 2016.
 
 from mcheck.results.checks_results import CheckResult, RESULT
 from mcheck.check_names import CHECK_NAMES
+from collections import  defaultdict
 
 
 class FileMetadataComparison:
 
     @staticmethod
-    def find_differences(metadata1, metadata2, entity_types_list):
+    def _find_differences(metadata1, metadata2, entity_types_list):
+        """
+        This method finds the differences between metadata1 and metadata2, given a list of entities of interest.
+        Basically does metadata1 - metadata2 (finds all the entities that are present within metadata1, but not within metadata2).
+        :param metadata1:
+        :param metadata2:
+        :param entity_types_list:
+        :return:
+        """
+        differences = {}
         for entity_type in entity_types_list:
             metadata_entities1 = getattr(metadata1, entity_type)  # header
             metadata_entities2 = getattr(metadata2, entity_type)  # seqsc
-            differences = {}
+            ent_type_diffs = {}
             for id_type, values in metadata_entities1.items():
                 if values and metadata_entities2.get(id_type):
                     if values != metadata_entities2.get(id_type):
-                        differences[id_type] = set(values).difference(set(metadata_entities2.get(id_type)))
-            return differences
+                        ent_type_diffs[id_type] = set(values).difference(set(metadata_entities2.get(id_type)))
+            if ent_type_diffs:
+                differences[entity_type] = ent_type_diffs
+        return differences
 
 
     @staticmethod
     def check_metadata_across_different_sources(irods_metadata_dict, header_metadata_dict, seqsc_metadata_dict, issues_dict):
         """
         This function checks the metadata from 3 different sources in terms of samples, libraries and studies.
+        At the moment the checks across these sources consist of comparing: libraries, studies and samples
         As a result it updates the issues_dict by appending the CheckResults obtain after running the latest tests.
-        :param irods_metadata_dict:
-        :param header_metadata_dict:
-        :param seqsc_metadata_dict:
-        :param issues_dict:
+        :param irods_metadata_dict: key: fpath, value: irods_metadata for that file
+        :param header_metadata_dict: key: fpath, value: header_metadata for that file
+        :param seqsc_metadata_dict: key: fpath, value: seqscape_metadata for that file
+        :param issues_dict: key: fpath, value: list of CheckResults
         :return:
         """
         for fpath, irods_metadata in irods_metadata_dict.items():
             header_metadata = header_metadata_dict[fpath]
             seqscape_metadata = seqsc_metadata_dict[fpath]
-            seqscape_diff_header = FileMetadataComparison.find_differences(seqscape_metadata, header_metadata,
+            seqscape_diff_header = FileMetadataComparison._find_differences(seqscape_metadata, header_metadata,
                                                                            ['samples', 'libraries', 'studies'])
-            header_diff_seqscape = FileMetadataComparison.find_differences(header_metadata, seqscape_metadata,
+            header_diff_seqscape = FileMetadataComparison._find_differences(header_metadata, seqscape_metadata,
                                                                            ['samples', 'libraries', 'studies'])
 
-            irods_diff_header = FileMetadataComparison.find_differences(irods_metadata, header_metadata,
+            irods_diff_header = FileMetadataComparison._find_differences(irods_metadata, header_metadata,
                                                                         ['samples', 'libraries', 'studies'])
-            header_diff_irods = FileMetadataComparison.find_differences(header_metadata, irods_metadata,
+            header_diff_irods = FileMetadataComparison._find_differences(header_metadata, irods_metadata,
                                                                         ['samples', 'libraries', 'studies'])
 
-            print("Irods metadata: %s" % irods_metadata)
-            print("Seqscape metadata: %s" % seqscape_metadata)
-            print("Header metadata: %s" % header_metadata)
             ss_vs_h_check_result = CheckResult(check_name=CHECK_NAMES.check_seqscape_ids_compared_to_header_ids)
             if seqscape_diff_header:
                 error_msg = "Differences: %s" % seqscape_diff_header
