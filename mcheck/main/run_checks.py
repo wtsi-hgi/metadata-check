@@ -26,6 +26,7 @@ from mcheck.com import utils
 from mcheck.main import arg_parser
 from mcheck.results.results_processing import CheckResultsProcessing
 from mcheck.checks.mchecks_by_comparison import FileMetadataComparison
+from mcheck.checks.mchecks_by_type import MetadataSelfChecks
 
 
 def process_output(issues_by_path, output_dir):
@@ -77,33 +78,82 @@ def convert_args_to_serach_criteria(filter_by_npg_qc=None, filter_by_target=None
     return search_criteria
 
 
+def check_metadata(metadata_fetching_strategy, reference=None, filter_npg_qc=None, filter_target=None, filter_types=None,
+                   study_name=None, study_acc_nr=None, study_internal_id=None, irods_fpaths=None, irods_zone=None):
+    issues_dict = defaultdict(list)
+    # Getting iRODS metadata for files and checking before bringing it a "normalized" form:
+    # TODO: add the option of getting the metadata as a json from the command line...
+    if metadata_fetching_strategy == 'fetch_by_metadata':
+        search_criteria = convert_args_to_serach_criteria(filter_npg_qc, filter_target,
+                                                          filter_types, study_name,
+                                                          study_acc_nr, study_internal_id)
+
+        irods_metadata_dict = MetadataSelfChecks.fetch_and_preprocess_irods_metadata_by_metadata(search_criteria, irods_zone, issues_dict, reference)
+    elif metadata_fetching_strategy == 'fetch_by_path':
+        irods_metadata_dict = MetadataSelfChecks.fetch_and_preprocess_irods_metadata_by_path(irods_fpaths, issues_dict, reference)
+
+    # Getting HEADER metadata:
+    header_metadata_dict = MetadataSelfChecks.fetch_and_preprocess_header_metadata(irods_metadata_dict.keys(), issues_dict)
+
+    # Getting Seqscape metadata:
+    seqsc_metadata_dict = MetadataSelfChecks.fetch_and_preprocess_seqscape_metadata(irods_metadata_dict, issues_dict)
+
+    # Running checks to compare metadata obtained from different sources:
+    FileMetadataComparison.check_metadata_across_different_sources(irods_metadata_dict, header_metadata_dict, seqsc_metadata_dict, issues_dict)
+
+    return issues_dict
 
 def main():
     args = arg_parser.parse_args()
     print("ARGS: %s" % args)
+    try:
+        filter_npg_qc = args.filter_npg_qc
+    except AttributeError:
+        filter_npg_qc = None
 
-    issues_dict = defaultdict(list)
-    # Getting iRODS metadata for files and checking before bringing it a "normalized" form:
-    # TODO: add the option of getting the metadata as a json from the command line...
-    #irods_metadata_dict = {}    # key = filepath, value = metadata (avus + checksum and others)
-    reference = args.desired_reference if args.desired_reference else None
-    if args.metadata_fetching_strategy == 'fetch_by_metadata':
-        search_criteria = convert_args_to_serach_criteria(args.filter_npg_qc, args.filter_target,
-                                                          args.filter_types, args.study_name,
-                                                          args.study_acc_nr, args.study_internal_id)
+    try:
+        filter_target = args.filter_target
+    except AttributeError:
+        filter_target = None
 
-        irods_metadata_dict = FileMetadataComparison.fetch_and_preprocess_irods_metadata_by_metadata(search_criteria, args.irods_zone, issues_dict, reference=reference)
-    elif args.metadata_fetching_strategy == 'fetch_by_path':
-        irods_metadata_dict = FileMetadataComparison.fetch_and_preprocess_irods_metadata_by_path(args.fpaths_irods, issues_dict, reference)
+    try:
+        filter_types = args.filter_types
+    except AttributeError:
+        filter_types = None
 
-    # Getting HEADER metadata:
-    header_metadata_dict = FileMetadataComparison.fetch_and_preprocess_header_metadata(irods_metadata_dict.keys(), issues_dict)
+    try:
+        study_name = args.study_name
+    except AttributeError:
+        study_name = None
 
-    # Getting Seqscape metadata:
-    seqsc_metadata_dict = FileMetadataComparison.fetch_and_preprocess_seqscape_metadata(irods_metadata_dict, issues_dict)
+    try:
+        study_acc_nr = args.study_acc_nr
+    except AttributeError:
+        study_acc_nr = None
 
-    # Running checks to compare metadata obtained from different sources:
-    FileMetadataComparison.check_metadata_across_different_sources(irods_metadata_dict, header_metadata_dict, seqsc_metadata_dict, issues_dict)
+    try:
+        study_internal_id = args.study_internal_id
+    except AttributeError:
+        study_internal_id = None
+
+    try:
+        fpaths_irods = args.fpaths_irods
+    except AttributeError:
+        fpaths_irods = None
+
+    try:
+        irods_zone = args.irods_zone
+    except AttributeError:
+        irods_zone = None
+
+    try:
+        reference = args.desired_reference
+    except AttributeError:
+        reference = None
+
+    issues_dict = check_metadata(args.metadata_fetching_strategy, reference, filter_npg_qc,
+                                 filter_target, filter_types, study_name, study_acc_nr,
+                                 study_internal_id, fpaths_irods, irods_zone)
 
     # Outputting the CheckResults:
     if not os.path.exists(args.output_dir):
