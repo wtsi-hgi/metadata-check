@@ -520,26 +520,26 @@ class TestSeqscapeMetadata(unittest.TestCase):
         sam1 = Sample(name='sam1', accession_number='ega1', internal_id='1')
         sam2 = Sample(name='sam2', accession_number='ega2', internal_id='2')
         entities = [sam1, sam2]
-        names = SeqscapeMetadata._extract_list_of_ids_from_entities(entities, 'name')
+        names = SeqscapeMetadata._extract_list_of_ids_from_entities_grouped_by_id_type(entities, 'name')
         self.assertSetEqual(set(names), set(['sam1', 'sam2']))
 
-        internal_ids = SeqscapeMetadata._extract_list_of_ids_from_entities(entities, 'internal_id')
+        internal_ids = SeqscapeMetadata._extract_list_of_ids_from_entities_grouped_by_id_type(entities, 'internal_id')
         self.assertSetEqual(set(internal_ids), set(['1', '2']))
 
-        acc_nrs = SeqscapeMetadata._extract_list_of_ids_from_entities(entities, 'accession_number')
+        acc_nrs = SeqscapeMetadata._extract_list_of_ids_from_entities_grouped_by_id_type(entities, 'accession_number')
         self.assertSetEqual(set(acc_nrs), set(['ega1', 'ega2']))
 
     def test_extract_list_of_ids_from_entities_ok(self):
         sam1 = Sample(name='sam1', accession_number='ega1', internal_id='1')
         sam2 = Sample(accession_number='ega2', internal_id='2')
         entities = [sam1, sam2]
-        names = SeqscapeMetadata._extract_list_of_ids_from_entities(entities, 'name')
+        names = SeqscapeMetadata._extract_list_of_ids_from_entities_grouped_by_id_type(entities, 'name')
         self.assertSetEqual(set(names), set(['sam1']))
 
-        internal_ids = SeqscapeMetadata._extract_list_of_ids_from_entities(entities, 'internal_id')
+        internal_ids = SeqscapeMetadata._extract_list_of_ids_from_entities_grouped_by_id_type(entities, 'internal_id')
         self.assertSetEqual(set(internal_ids), set(['1', '2']))
 
-        acc_nrs = SeqscapeMetadata._extract_list_of_ids_from_entities(entities, 'accession_number')
+        acc_nrs = SeqscapeMetadata._extract_list_of_ids_from_entities_grouped_by_id_type(entities, 'accession_number')
         self.assertSetEqual(set(acc_nrs), set(['ega1', 'ega2']))
 
 
