@@ -20,177 +20,15 @@ This file has been created on May 05, 2016.
 """
 
 import os
-import sys
 from collections import defaultdict
-from typing import Dict, Set
 
+from mcheck.com import utils
 from mcheck.main import arg_parser
-from mcheck.metadata.irods_metadata.irods_meta_provider import iRODSMetadataProvider
-from mcheck.metadata.seqscape_metadata.seqscape_meta_provider import SeqscapeRawMetadataProvider
-from mcheck.metadata.file_header_metadata.header_meta_provider import SAMFileHeaderMetadataProvider
-from mcheck.metadata.seqscape_metadata.seqscape_metadata import SeqscapeMetadata
-from mcheck.metadata.irods_metadata.file_metadata import IrodsSeqFileMetadata
 from mcheck.results.results_processing import CheckResultsProcessing
-from mcheck.metadata.checks_by_comparison.checks import FileMetadataComparison
-
-
-def read_file_into_list(fofn_path):
-    fofn_fd = open(fofn_path)
-    files_list = [f.strip() for f in fofn_fd]
-    fofn_fd.close()
-    return files_list
-
-
-def write_list_to_file(input_list, output_file, header=None):
-    out_fd = open(output_file, 'a')
-    if header:
-        out_fd.write(header + '\n')
-    for entry in input_list:
-        out_fd.write(str(entry) + '\n')
-    out_fd.write('\n')
-    out_fd.close()
-
-
-def write_tuples_to_file(tuples, output_file, header_tuple=None):
-    out_fd = open(output_file, 'a')
-    for elem in header_tuple:
-        out_fd.write(str(elem) + "\t")
-    out_fd.write("\n")
-    for tup in tuples:
-        for elem in tup:
-            out_fd.write(str(elem) + "\t")
-        out_fd.write("\n")
-    out_fd.close()
-
-
-def write_dict_to_file(input_dict, output_file):
-    out_fd = open(output_file, 'a')
-    for k, v in input_dict.items():
-        out_fd.write(str(k))
-        out_fd.write("\n")
-        out_fd.write(str(v))
-        out_fd.write("\n")
-    out_fd.close()
-
-
-class FileMetadataRetrieval:
-    @staticmethod
-    def fetch_seqscape_metadata(samples, libraries, studies):
-        return SeqscapeRawMetadataProvider.fetch_raw_metadata(samples, libraries, studies)
-
-    @staticmethod
-    def fetch_header_metadata(fpath):
-        return SAMFileHeaderMetadataProvider.fetch_metadata(fpath, irods=True)
-
-    @staticmethod
-    def fetch_irods_metadata_by_path(fpath):
-        return iRODSMetadataProvider.fetch_raw_file_metadata_by_path(fpath)
-
-
-class MetadataSelfChecks:
-    @staticmethod
-    def check_and_convert_seqscape_metadata(raw_metadata):
-        problems = raw_metadata.check_metadata()
-        seqsc_metadata = SeqscapeMetadata.from_raw_metadata(raw_metadata)
-        problems.extend(seqsc_metadata.check_metadata())
-        return seqsc_metadata, problems
-
-    @staticmethod
-    def check_and_convert_header_metadata(header_metadata):
-        problems = header_metadata.check_metadata()
-        header_metadata.fix_metadata()
-        return header_metadata, problems
-
-    @staticmethod
-    def check_and_convert_irods_metadata(raw_metadata, reference=None, attribute_counts=None):
-        print("Type of raw metadata: %s" % str(type(raw_metadata)))
-        problems = raw_metadata.check_metadata()
-        file_metadata = IrodsSeqFileMetadata.from_raw_metadata(raw_metadata)
-        problems.extend(file_metadata.check_metadata(reference))
-        return file_metadata, problems
+from mcheck.checks.mchecks_by_comparison import FileMetadataComparison
 
 
 
-# def query_for_metadata(filters, study_metadata):
-# def fetch_all_matching_metadata(irods_zone, filter_by_npg_qc=None, filter_by_target=None, filter_by_file_types=None,
-#                                 match_study_name=None, match_study_acc_nr=None, match_study_id=None):
-#     search_criteria = convert_args_to_serach_criteria(irods_zone, filter_by_npg_qc=None, filter_by_target=None, filter_by_file_types=None,
-#                                 match_study_name=None, match_study_acc_nr, match_study_id)
-
-def fetch_and_preprocess_irods_metadata_by_metadata(search_criteria, irods_zone, issues_dict, reference):
-    """
-    This function takes some filtering/matching criteria for selecting data from iRODS based on metadata.
-    The client also passes an issues_dict to this function as parameter, which the current function just needs to
-    update with the issues found on the files found in iRODS to match the criteria.
-    :param issues_dict: an existing dictionary of issues, to which this function needs to add the issues found
-    :param irods_zone: the irods zone where to search for the data matching the criteria given
-    :param reference:
-    :param filter_by_npg_qc:
-    :param filter_by_target:
-    :param filter_by_file_types:
-    :param match_study_name:
-    :param match_study_acc_nr:
-    :param match_study_id:
-    :return:
-    """
-    irods_metadata_by_path = {}
-    try:
-        all_files_metadata_objs_list = iRODSMetadataProvider.retrieve_raw_files_metadata_by_metadata(search_criteria,
-                                                                                                     irods_zone)
-    except Exception as e:
-        print(e)
-        sys.exit(1)
-    else:
-        for raw_metadata in all_files_metadata_objs_list:
-            fpath = os.path.join(raw_metadata.dir_path, raw_metadata.fname)
-            file_metadata, problems = MetadataSelfChecks.check_and_convert_irods_metadata(raw_metadata, reference)
-            irods_metadata_by_path[fpath] = file_metadata
-            issues_dict[fpath].extend(problems)
-        return irods_metadata_by_path
-
-
-def fetch_and_preprocess_irods_metadata_by_path(irods_fpaths, issues_dict, reference):
-    """
-    This function fetches the irods metadata by file path and preprocesses it.
-    It also adds the issues found to the issues_dict given as parameter.
-    :param irods_fpaths:
-    :param issues_dict:
-    :param reference:
-    :return:
-    """
-    irods_metadata_dict = defaultdict(list)
-    for fpath in irods_fpaths:
-        try:
-            raw_metadata = iRODSMetadataProvider.fetch_raw_file_metadata_by_path(fpath)
-        except Exception as e:
-            print(e)
-            sys.exit(1)
-        else:
-            file_metadata, problems = MetadataSelfChecks.check_and_convert_irods_metadata(raw_metadata, reference)
-            irods_metadata_dict[fpath] = file_metadata
-            issues_dict[fpath].extend(problems)
-            return irods_metadata_dict
-
-
-def fetch_and_preprocess_header_metadata(irods_fpaths, issues_dict):
-    header_metadata_dict = {}
-    for fpath in irods_fpaths:
-        header_metadata = SAMFileHeaderMetadataProvider.fetch_metadata(fpath, irods=True)
-        processed_header_metadata, problems = MetadataSelfChecks.check_and_convert_header_metadata(header_metadata)
-        header_metadata_dict[fpath] = processed_header_metadata
-        issues_dict[fpath].extend(problems)
-    return header_metadata_dict
-
-
-def fetch_and_preprocess_seqscape_metadata(irods_metadata_by_path_dict, issues_dict):
-    seqsc_metadata_dict = {}
-    for fpath, irods_metadata in irods_metadata_by_path_dict.items():
-        raw_metadata = SeqscapeRawMetadataProvider.fetch_raw_metadata(irods_metadata.samples, irods_metadata.libraries,
-                                                                      irods_metadata.studies)
-        seqsc_metadata, problems = MetadataSelfChecks.check_and_convert_seqscape_metadata(raw_metadata)
-        seqsc_metadata_dict[fpath] = seqsc_metadata
-        issues_dict[fpath].extend(problems)
-    return seqsc_metadata_dict
 
 
 def present_output(issues_by_path, output_dir):
@@ -206,7 +44,7 @@ def present_output(issues_by_path, output_dir):
         print("SORTED BY SEVERITY::::::::::")
         for severity, fpaths_issues in sorted_by_severity.items():
             print("SEVERITY: %s" % severity)
-            write_list_to_file(fpaths_issues, os.path.join(output_dir, severity + '.txt'))
+            utils.write_list_to_file(fpaths_issues, os.path.join(output_dir, severity + '.txt'))
             for issue in fpaths_issues:
                 print("issue: %s" % (issue))
 
@@ -257,15 +95,15 @@ def main():
                                                           args.filter_types, args.study_name,
                                                           args.study_acc_nr, args.study_internal_id)
 
-        irods_metadata_dict = fetch_and_preprocess_irods_metadata_by_metadata(search_criteria, args.irods_zone, issues_dict, reference=reference)
+        irods_metadata_dict = FileMetadataComparison.fetch_and_preprocess_irods_metadata_by_metadata(search_criteria, args.irods_zone, issues_dict, reference=reference)
     elif args.metadata_fetching_strategy == 'fetch_by_path':
-        irods_metadata_dict = fetch_and_preprocess_irods_metadata_by_path(args.fpaths_irods, issues_dict, reference)
+        irods_metadata_dict = FileMetadataComparison.fetch_and_preprocess_irods_metadata_by_path(args.fpaths_irods, issues_dict, reference)
 
     # Getting HEADER metadata:
-    header_metadata_dict = fetch_and_preprocess_header_metadata(irods_metadata_dict.keys(), issues_dict)
+    header_metadata_dict = FileMetadataComparison.fetch_and_preprocess_header_metadata(irods_metadata_dict.keys(), issues_dict)
 
     # Getting Seqscape metadata:
-    seqsc_metadata_dict = fetch_and_preprocess_seqscape_metadata(irods_metadata_dict, issues_dict)
+    seqsc_metadata_dict = FileMetadataComparison.fetch_and_preprocess_seqscape_metadata(irods_metadata_dict, issues_dict)
 
     # Running checks to compare metadata obtained from different sources:
     FileMetadataComparison.check_metadata_across_different_sources(irods_metadata_dict, header_metadata_dict, seqsc_metadata_dict, issues_dict)
