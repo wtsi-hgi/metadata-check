@@ -20,6 +20,7 @@ This file has been created on Jun 23, 2015.
 """
 
 import re
+import os
 from collections import defaultdict, Iterable
 from typing import List, Dict, Union, Set
 
@@ -229,7 +230,7 @@ class IrodsRawFileMetadata:
 
 
 class IrodsSeqFileMetadata(object):
-    def __init__(self, fpath: str=None, fname:str=None, samples=None, libraries=None, studies=None,
+    def __init__(self, fpath: str, fname:str=None, samples=None, libraries=None, studies=None,
                  checksum_in_meta:str=None, checksum_at_upload:str=None, references:List[str]=None,
                  run_ids:List[str]=None, lane_ids:List[str]=None, npg_qc:str=None, target:str=None):
         self.fname = fname
@@ -253,7 +254,8 @@ class IrodsSeqFileMetadata(object):
         :param raw_metadata:
         :return:
         """
-        irods_metadata = IrodsSeqFileMetadata()
+        fpath = os.path.join(raw_metadata.dir_path, raw_metadata.fname)
+        irods_metadata = IrodsSeqFileMetadata(fpath)
         irods_metadata.fname = raw_metadata.fname
         irods_metadata.dir_path = raw_metadata.dir_path
         irods_metadata.checksum_at_upload = {replica.checksum for replica in raw_metadata.file_replicas}
