@@ -39,8 +39,8 @@ class MetadataSelfChecks:
         update with the issues found on the files found in iRODS to match the criteria.
         :param issues_dict: an existing dictionary of issues, to which this function needs to add the issues found
         :param irods_zone: the irods zone where to search for the data matching the criteria given
-        :param search_criteria:
-        :return:
+        :param search_criteria: a dict formed of key= attr name, val = attr value. The operator is by default =.
+        :return: a dict of key: fpath, value: the iRODS metadata for that path
         """
         irods_metadata_by_path = {}
         try:
