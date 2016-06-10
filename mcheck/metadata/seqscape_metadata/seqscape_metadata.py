@@ -21,7 +21,7 @@ This file has been created on Nov 09, 2015.
 
 from collections import defaultdict
 import collections
-from typing import List
+from typing import List, Dict, Union
 
 from sequencescape import NamedModel, Sample, Study, Library
 from mcheck.results.checks_results import CheckResult
@@ -343,19 +343,45 @@ class SeqscapeMetadata:
         # self.studies_by_sample = studies_by_sample
 
     @classmethod
-    def _extract_list_of_ids_from_entities(cls, entities: List, id_type):
-        return [getattr(ent, id_type) for ent in entities if
-                hasattr(ent, id_type) and getattr(ent, id_type) is not None]
+    def _extract_list_of_ids_from_entities_grouped_by_id_type(cls, entities: Union[Dict, List], id_type):
+        """
+        This method returns the set of name attributes of the entities given as parameter. If the entities param is a dict
+        then the method will just return the value corresponding to the id_type key, presuming that the dict looks like:
+        {'name': ['s1', ..], 'accession_number': [], 'internal_id':[] }. If the entities param is a list of Entity objects
+        (Sample, Study, etc) then this method returns the set of names taken from each object.
+        :param entities:
+        :param id_type:
+        :return:
+        """
+        if not entities:
+            return {}
+        if type(entities) is dict:
+            return entities.get(id_type)
+        else:
+            return {getattr(ent, id_type) for ent in entities if
+                    hasattr(ent, id_type) and getattr(ent, id_type) is not None}
+
+        # print("In _Extract, entities: %s" % entities)
+        # for ent in entities:
+        #
+        #     id_val = getattr(ent, id_type) if hasattr(ent, id_type) else None
+        #     print("ID type: %s and ID value %s" % (id_type, id_val))
 
     @classmethod
     def _group_entity_ids_by_id_type(cls, entities):
-        names = cls._extract_list_of_ids_from_entities(entities, 'name')
-        accession_nrs = cls._extract_list_of_ids_from_entities(entities, 'accession_number')
-        internal_ids = cls._extract_list_of_ids_from_entities(entities, 'internal_id')
-        return {'name': {str(name) for name in names},
-                'accession_number': {str(acc_nr) for acc_nr in accession_nrs},
-                'internal_id': {str(id) for id in internal_ids}
+        print("Entities from _group_entity_ids: %s" % entities)
+        names = cls._extract_list_of_ids_from_entities_grouped_by_id_type(entities, 'name')
+        accession_nrs = cls._extract_list_of_ids_from_entities_grouped_by_id_type(entities, 'accession_number')
+        internal_ids = cls._extract_list_of_ids_from_entities_grouped_by_id_type(entities, 'internal_id')
+        print("Names: %s" % names)
+        return {'name': names,
+                'accession_number': accession_nrs,
+                'internal_id': internal_ids
         }
+        # return {'name': {str(name) for name in names if names},
+        #         'accession_number': {str(acc_nr) for acc_nr in accession_nrs if accession_nrs},
+        #         'internal_id': {str(id) for id in internal_ids if internal_ids}
+        # }
 
     @property
     def samples(self):
