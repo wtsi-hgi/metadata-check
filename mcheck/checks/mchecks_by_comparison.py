@@ -26,29 +26,9 @@ from collections import  defaultdict
 
 class FileMetadataComparison:
 
-    @staticmethod
-    def _find_differences(metadata1, metadata2, entity_types_list):
-        """
-        This method finds the differences between metadata1 and metadata2, given a list of entities of interest.
-        Basically does metadata1 - metadata2 (finds all the entities that are present within metadata1, but not within metadata2).
-        :param metadata1:
-        :param metadata2:
-        :param entity_types_list:
-        :return:
-        """
-        differences = {}
-        for entity_type in entity_types_list:
-            metadata_entities1 = getattr(metadata1, entity_type)  # header
-            metadata_entities2 = getattr(metadata2, entity_type)  # seqsc
-            ent_type_diffs = {}
-            for id_type, values in metadata_entities1.items():
-                if values and metadata_entities2.get(id_type):
-                    if values != metadata_entities2.get(id_type):
-                        ent_type_diffs[id_type] = set(values).difference(set(metadata_entities2.get(id_type)))
-            if ent_type_diffs:
-                differences[entity_type] = ent_type_diffs
-        return differences
 
+    # @staticmethod
+    # def _comparison_checks_for_2_sources(metadata1, metadata2):
 
     @staticmethod
     def check_metadata_across_different_sources(irods_metadata_dict, header_metadata_dict, seqsc_metadata_dict, issues_dict):
@@ -65,43 +45,86 @@ class FileMetadataComparison:
         for fpath, irods_metadata in irods_metadata_dict.items():
             header_metadata = header_metadata_dict[fpath]
             seqscape_metadata = seqsc_metadata_dict[fpath]
-            seqscape_diff_header = FileMetadataComparison._find_differences(seqscape_metadata, header_metadata,
-                                                                           ['samples', 'libraries', 'studies'])
-            header_diff_seqscape = FileMetadataComparison._find_differences(header_metadata, seqscape_metadata,
-                                                                           ['samples', 'libraries', 'studies'])
 
-            irods_diff_header = FileMetadataComparison._find_differences(irods_metadata, header_metadata,
-                                                                        ['samples', 'libraries', 'studies'])
-            header_diff_irods = FileMetadataComparison._find_differences(header_metadata, irods_metadata,
-                                                                        ['samples', 'libraries', 'studies'])
+            seqscape_diff_header = seqscape_metadata.differences(header_metadata)
+            header_diff_seqscape = header_metadata.differences(seqscape_metadata)
 
-            ss_vs_h_check_result = CheckResult(check_name=CHECK_NAMES.check_seqscape_ids_compared_to_header_ids)
-            if seqscape_diff_header:
-                error_msg = "Differences: %s" % seqscape_diff_header
-                ss_vs_h_check_result.error_message = error_msg
-                ss_vs_h_check_result.result = RESULT.FAILURE
-            issues_dict[fpath].append(ss_vs_h_check_result)
+            irods_diff_header = irods_metadata.differences(header_metadata)
+            header_diff_irods = header_metadata.differences(irods_metadata)
+            # seqscape_diff_header = FileMetadataComparison._find_differences(seqscape_metadata, header_metadata,
+            #                                                                ['samples', 'libraries', 'studies'])
+            # header_diff_seqscape = FileMetadataComparison._find_differences(header_metadata, seqscape_metadata,
+            #                                                                ['samples', 'libraries', 'studies'])
+            #
+            # irods_diff_header = FileMetadataComparison._find_differences(irods_metadata, header_metadata,
+            #                                                             ['samples', 'libraries', 'studies'])
+            # header_diff_irods = FileMetadataComparison._find_differences(header_metadata, irods_metadata,
+            #                                                             ['samples', 'libraries', 'studies'])
 
-            h_vs_ss_check_result = CheckResult(check_name=CHECK_NAMES.check_header_ids_compared_to_seqscape_ids)
-            if header_diff_seqscape:
-                error_msg = "Differences: %s" % header_diff_seqscape
-                h_vs_ss_check_result.result = RESULT.FAILURE
-                h_vs_ss_check_result.error_message = error_msg
-            issues_dict[fpath].append(h_vs_ss_check_result)
+            impossible_to_exe = False
+            if not seqscape_metadata and not header_metadata:
+                error_msg = "No seqscape metadata and no header_metadata"
+                impossible_to_exe = True
+            elif not seqscape_metadata:
+                impossible_to_exe = True
+                error_msg = "No seqscape metadata"
+            elif not header_metadata:
+                impossible_to_exe = True
+                error_msg = "No header metadata"
 
-            i_vs_h_check_result = CheckResult(check_name=CHECK_NAMES.check_irods_ids_compared_to_header_ids)
-            if irods_diff_header:
-                error_msg = "Differences: %s" % irods_diff_header
-                i_vs_h_check_result.error_message = error_msg
-                i_vs_h_check_result.result = RESULT.FAILURE
-            issues_dict[fpath].append(i_vs_h_check_result)
+            if impossible_to_exe:
+                ss_vs_h_check_result = CheckResult(check_name=CHECK_NAMES.check_seqscape_ids_compared_to_header_ids, executed=False, error_message=error_msg)
+                h_vs_ss_check_result = CheckResult(check_name=CHECK_NAMES.check_header_ids_compared_to_seqscape_ids, executed=False, error_message=error_msg)
+                issues_dict[fpath].append(ss_vs_h_check_result)
+                issues_dict[fpath].append(h_vs_ss_check_result)
+            else:
+                ss_vs_h_check_result = CheckResult(check_name=CHECK_NAMES.check_seqscape_ids_compared_to_header_ids)
+                if seqscape_diff_header:
+                    error_msg = "Differences: %s" % seqscape_diff_header
+                    ss_vs_h_check_result.error_message = error_msg
+                    ss_vs_h_check_result.result = RESULT.FAILURE
+                issues_dict[fpath].append(ss_vs_h_check_result)
 
-            h_vs_i_check_result = CheckResult(check_name=CHECK_NAMES.check_header_ids_compared_to_irods_ids)
-            if header_diff_irods:
-                error_msg = "Differences between what is in the header and not in iRODS: %s" % header_diff_irods
-                h_vs_i_check_result.error_message = error_msg
-                h_vs_i_check_result.result = RESULT.FAILURE
-            issues_dict[fpath].append(h_vs_i_check_result)
+                h_vs_ss_check_result = CheckResult(check_name=CHECK_NAMES.check_header_ids_compared_to_seqscape_ids)
+                if header_metadata and seqscape_metadata:
+                    if header_diff_seqscape:
+                        error_msg = "Differences: %s" % header_diff_seqscape
+                        h_vs_ss_check_result.result = RESULT.FAILURE
+                        h_vs_ss_check_result.error_message = error_msg
+                issues_dict[fpath].append(h_vs_ss_check_result)
+
+
+            impossible_to_exe = False
+            error_msg = ""
+            if not irods_metadata and not header_metadata:
+                error_msg = "No header_metadata and no irods_metadata"
+                impossible_to_exe = True
+            elif not irods_metadata:
+                error_msg = "No irods_metadata"
+                impossible_to_exe = True
+            elif not header_metadata:
+                error_msg = "No header metadata"
+                impossible_to_exe = True
+
+            if impossible_to_exe:
+                i_vs_h_check_result = CheckResult(check_name=CHECK_NAMES.check_irods_ids_compared_to_header_ids, executed=False, error_message=error_msg)
+                h_vs_i_check_result = CheckResult(check_name=CHECK_NAMES.check_header_ids_compared_to_irods_ids, executed=False, error_message=error_msg)
+                issues_dict[fpath].append(i_vs_h_check_result)
+                issues_dict[fpath].append(h_vs_i_check_result)
+            else:
+                i_vs_h_check_result = CheckResult(check_name=CHECK_NAMES.check_irods_ids_compared_to_header_ids)
+                if irods_diff_header:
+                    error_msg = "Differences: %s" % irods_diff_header
+                    i_vs_h_check_result.error_message = error_msg
+                    i_vs_h_check_result.result = RESULT.FAILURE
+                issues_dict[fpath].append(i_vs_h_check_result)
+
+                h_vs_i_check_result = CheckResult(check_name=CHECK_NAMES.check_header_ids_compared_to_irods_ids)
+                if header_diff_irods:
+                    error_msg = "Differences between what is in the header and not in iRODS: %s" % header_diff_irods
+                    h_vs_i_check_result.error_message = error_msg
+                    h_vs_i_check_result.result = RESULT.FAILURE
+                issues_dict[fpath].append(h_vs_i_check_result)
 
 
 
