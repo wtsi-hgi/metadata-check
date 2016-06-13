@@ -47,45 +47,45 @@ def process_output(issues_by_path, output_dir):
                 print("issue: %s" % (issue))
 
 
-def convert_args_to_serach_criteria(filter_by_npg_qc=None, filter_by_target=None, filter_by_file_types=None,
+def convert_args_to_search_criteria(filter_by_npg_qc=None, filter_by_target=None, filter_by_file_types=None,
                                 match_study_name=None, match_study_acc_nr=None, match_study_id=None):
-    search_criteria = {}
+    search_criteria = []
     if filter_by_npg_qc:
-        search_criteria['manual_qc'] = filter_by_npg_qc
+        search_criteria.append(('manual_qc',filter_by_npg_qc))
     else:
         print(
             "WARNING! You haven't filtered on manual_qc field. You will get the report from checking all the data, "
             "no matter if qc pass of fail.")
     if filter_by_target:
-        search_criteria['target'] = filter_by_target
+        search_criteria.append(('target', filter_by_target))
     else:
         print(
             "WARNING! You haven't filtered by target field. You will get back the report from checking all the data, "
             "no matter if it is the target or not, hence possibly also PhiX")
     if filter_by_file_types:
         for ftype in filter_by_file_types:
-            search_criteria['type'] = ftype
+            search_criteria.append(('type', ftype))
     else:
         print("WARNING! You haven't filtered on file type.")
 
     # Parse input parameters and obtain files+metadata:
     if match_study_name:
-        search_criteria['study'] = match_study_name
+        search_criteria(('study', match_study_name))
     elif match_study_acc_nr:
-        search_criteria['study_accession_number'] = match_study_acc_nr
+        search_criteria.append(('study_accession_number', match_study_acc_nr))
     elif match_study_id:
-        search_criteria['study_internal_id'] = match_study_id
+        search_criteria.append(('study_internal_id', match_study_id))
     return search_criteria
 
 
-def check_metadata(metadata_fetching_strategy, reference=None, filter_npg_qc=None, filter_target=None, filter_types=None,
+def check_metadata(metadata_fetching_strategy, reference=None, filter_npg_qc=None, filter_target=None, file_types=None,
                    study_name=None, study_acc_nr=None, study_internal_id=None, irods_fpaths=None, irods_zone=None):
     issues_dict = defaultdict(list)
     # Getting iRODS metadata for files and checking before bringing it a "normalized" form:
     # TODO: add the option of getting the metadata as a json from the command line...
     if metadata_fetching_strategy == 'fetch_by_metadata':
-        search_criteria = convert_args_to_serach_criteria(filter_npg_qc, filter_target,
-                                                          filter_types, study_name,
+        search_criteria = convert_args_to_search_criteria(filter_npg_qc, filter_target,
+                                                          file_types, study_name,
                                                           study_acc_nr, study_internal_id)
 
         irods_metadata_dict = MetadataSelfChecks.fetch_and_preprocess_irods_metadata_by_metadata(search_criteria, irods_zone, issues_dict, reference)
@@ -117,9 +117,9 @@ def main():
         filter_target = None
 
     try:
-        filter_types = args.filter_types
+        file_types = args.file_types
     except AttributeError:
-        filter_types = None
+        file_types = None
 
     try:
         study_name = args.study_name
@@ -152,7 +152,7 @@ def main():
         reference = None
 
     issues_dict = check_metadata(args.metadata_fetching_strategy, reference, filter_npg_qc,
-                                 filter_target, filter_types, study_name, study_acc_nr,
+                                 filter_target, file_types, study_name, study_acc_nr,
                                  study_internal_id, fpaths_irods, irods_zone)
 
     # Outputting the CheckResults:
@@ -162,7 +162,8 @@ def main():
     process_output(issues_dict, args.output_dir)
 
 
-main()
+if __name__ == '__main__':
+    main()
 
 
 # fpath = '/seq/illumina/library_merge/13841100.CCXX.paired310.4199421624/13841100.CCXX.paired310.4199421624.cram'
