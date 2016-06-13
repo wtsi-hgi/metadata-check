@@ -24,7 +24,7 @@ from mcheck.metadata.irods_metadata.file_metadata import IrodsRawFileMetadata
 import config
 from baton.api import connect_to_irods_with_baton
 from baton.models import SearchCriterion
-
+from typing import List, Tuple
 
 
 
@@ -47,15 +47,15 @@ class iRODSMetadataProvider:
 
 
     @classmethod
-    def retrieve_raw_files_metadata_by_metadata(cls, search_criteria_dict, zone=None):
+    def retrieve_raw_files_metadata_by_metadata(cls, search_criteria_list: List[Tuple], zone=None):
         search_crit_list = []
-        for k, v in search_criteria_dict.items():
+        for k, v in search_criteria_list:
             search_criterion = SearchCriterion(k, v)
             search_crit_list.append(search_criterion)
 
         # Getting metadata from iRODS:
         try:
-            connection = connect_to_irods_with_baton(config.BATON_BIN)#, skip_baton_binaries_validation=True) # type: Connection
+            connection = connect_to_irods_with_baton(config.BATON_BIN)  # skip_baton_binaries_validation=True) # type: Connection
             list_of_data_objs_and_metadata = connection.data_object.get_by_metadata(search_crit_list, zone=zone)
         except RuntimeError as e:
             if str(e).find('KRB_ERROR_ACQUIRING_CREDS') != -1:
