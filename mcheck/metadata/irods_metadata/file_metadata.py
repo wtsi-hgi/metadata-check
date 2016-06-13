@@ -27,6 +27,7 @@ from typing import List, Dict, Union, Set
 from mcheck.com.operators import Operators
 from mcheck.main import error_types
 from mcheck.com import wrappers
+from mcheck.metadata.common.comparable_metadata import ComparableMetadata
 from mcheck.metadata.common.identifiers import EntityIdentifier
 from mcheck.metadata.common.attribute_count import AttributeCount
 from mcheck.metadata.irods_metadata import constants as irods_consts, avu
@@ -207,16 +208,10 @@ class IrodsRawFileMetadata:
             return check_results
 
 
-
     def check_metadata(self, avu_counts=None):
         check_results = []
-        #check_results.extend(self.validate_fields())
         check_results.extend(self.ACLsChecks.check(self.acls))
         check_results.extend(self.ReplicasChecks.check(self.file_replicas))
-        # check_results.extend(self.check_read_permission_exists_for_ss_group())
-        # check_results.append(self.check_non_public_acls())
-        # check_results.extend(self.check_more_than_one_replicas())
-        # check_results.append(self.check_all_replicas_have_same_checksum())
         if avu_counts:
             check_results.append(self.check_attribute_count(avu_counts))
         return check_results
@@ -229,7 +224,7 @@ class IrodsRawFileMetadata:
         return self.__str__()
 
 
-class IrodsSeqFileMetadata(object):
+class IrodsSeqFileMetadata(ComparableMetadata):
     def __init__(self, fpath: str, fname:str=None, samples=None, libraries=None, studies=None,
                  checksum_in_meta:str=None, checksum_at_upload:str=None, references:List[str]=None,
                  run_ids:List[str]=None, lane_ids:List[str]=None, npg_qc:str=None, target:str=None):

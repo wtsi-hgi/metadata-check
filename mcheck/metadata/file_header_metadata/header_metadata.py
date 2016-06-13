@@ -22,11 +22,13 @@ This file has been created on Jun 30, 2015.
 #from . import error_types
 import typing
 from mcheck.check_names import CHECK_NAMES
+from mcheck.metadata.common.comparable_metadata import ComparableMetadata
 from mcheck.results.checks_results import RESULT
 
 from mcheck.results.checks_results import CheckResult
 
-class SAMFileHeaderMetadata(object):
+
+class SAMFileHeaderMetadata(ComparableMetadata):
     INVALID_IDS = ['N/A', 'undefined', 'unspecified', -1, '', None]
 
     def __init__(self, fpath, fname, samples={}, libraries={}, studies={}, reference=None, platforms=None):

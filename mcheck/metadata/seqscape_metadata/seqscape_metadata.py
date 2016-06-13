@@ -27,6 +27,7 @@ from sequencescape import NamedModel, Sample, Study, Library
 from mcheck.results.checks_results import CheckResult
 from mcheck.results.constants import SEVERITY, RESULT
 from mcheck.check_names import CHECK_NAMES
+from mcheck.metadata.common.comparable_metadata import ComparableMetadata
 
 
 class SeqscapeEntityQueryAndResults:
@@ -319,7 +320,7 @@ class SeqscapeRawMetadata(object):
             frozenset(self._entities_dict_by_type))  # + hash(frozenset(self.libraries)) + hash(frozenset(self.studies))
 
 
-class SeqscapeMetadata:
+class SeqscapeMetadata(ComparableMetadata):
     """
     This class holds the metadata that has been tested for sanity and is meant to be used
     for comparison with other metadata (fetched from different sources).
@@ -369,11 +370,9 @@ class SeqscapeMetadata:
 
     @classmethod
     def _group_entity_ids_by_id_type(cls, entities):
-        print("Entities from _group_entity_ids: %s" % entities)
         names = cls._extract_list_of_ids_from_entities_grouped_by_id_type(entities, 'name')
         accession_nrs = cls._extract_list_of_ids_from_entities_grouped_by_id_type(entities, 'accession_number')
         internal_ids = cls._extract_list_of_ids_from_entities_grouped_by_id_type(entities, 'internal_id')
-        print("Names: %s" % names)
         return {'name': names,
                 'accession_number': accession_nrs,
                 'internal_id': internal_ids
