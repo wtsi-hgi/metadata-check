@@ -57,13 +57,13 @@ class IrodsFileReplica:
 
     def validate_fields(self):
         check_results = []
-        checksum_check_result = CheckResult(check_name=CHECK_NAMES.valid_replica_checksum_check,
+        checksum_check_result = CheckResult(check_name=CHECK_NAMES.check_replica_checksum,
                                             severity=SEVERITY.IMPORTANT)
         if not self._is_checksum_valid(self.checksum):
             checksum_check_result.result = RESULT.FAILURE
             checksum_check_result.error_message = "The checksum looks invalid: " + str(self.checksum)
 
-        valid_replicas_check_result = CheckResult(check_name=CHECK_NAMES.valid_replica_number_check,
+        valid_replicas_check_result = CheckResult(check_name=CHECK_NAMES.check_replica_number,
                                                   severity=SEVERITY.WARNING)
         if not self._is_replica_nr_valid(self.replica_nr):
             valid_replicas_check_result.result = RESULT.FAILURE

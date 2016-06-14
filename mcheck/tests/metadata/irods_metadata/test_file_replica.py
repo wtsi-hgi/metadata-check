@@ -77,9 +77,9 @@ class TestIrodsFileReplica(unittest.TestCase):
         actual_result = replica.validate_fields()
         self.assertEqual(len(actual_result), 2)
         for result in actual_result:
-            if result.check_name == CHECK_NAMES.valid_replica_checksum_check:
+            if result.check_name == CHECK_NAMES.check_replica_checksum:
                 self.assertEqual(result.result, RESULT.SUCCESS)
-            if result.check_name == CHECK_NAMES.valid_replica_number_check:
+            if result.check_name == CHECK_NAMES.check_replica_number:
                 self.assertEqual(result.result, RESULT.SUCCESS)
 
     def test_validate_fields_when_replica_nr_wrong(self):
@@ -87,9 +87,9 @@ class TestIrodsFileReplica(unittest.TestCase):
         actual_result = replica.validate_fields()
         self.assertEqual(2, len(actual_result))
         for result in actual_result:
-            if result.check_name == CHECK_NAMES.valid_replica_checksum_check:
+            if result.check_name == CHECK_NAMES.check_replica_checksum:
                 self.assertEqual(result.result, RESULT.SUCCESS)
-            if result.check_name == CHECK_NAMES.valid_replica_number_check:
+            if result.check_name == CHECK_NAMES.check_replica_number:
                 self.assertEqual(result.result, RESULT.FAILURE)
 
 

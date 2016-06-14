@@ -95,7 +95,7 @@ class IrodsRawFileMetadata:
             raise ValueError("Operator not defined: %s. It needs to be one of: <>=" % str(operator))
 
     def check_attribute_count(self, avu_counts: List[AttributeCount]) -> List[CheckResult]:
-        check_result = CheckResult(check_name=CHECK_NAMES.attribute_count_check,
+        check_result = CheckResult(check_name=CHECK_NAMES.check_attribute_count,
                                             severity=SEVERITY.IMPORTANT)
         wrong_counts = []
         for avu_count in avu_counts:

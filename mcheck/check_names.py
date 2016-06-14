@@ -21,9 +21,9 @@ This file has been created on May 20, 2016.
 
 
 class CHECK_NAMES:
-    valid_replica_checksum_check = "Check that the replica checksum field is valid"
-    valid_replica_number_check = "Check that the replica number is valid"
-    attribute_count_check = "Check attribute count is as configured"
+    check_replica_checksum = "Check that the replica checksum field is valid"
+    check_replica_number = "Check that the replica number is valid"
+    check_attribute_count = "Check attribute count is as configured"
     check_all_replicas_same_checksum = "Check all replicas have the same checksum"
     check_more_than_one_replica = "Check that file has more than 1 replica"
     check_no_public_acl = "Check that there are no public ACLS"
@@ -52,3 +52,13 @@ class CHECK_NAMES:
     check_irods_ids_compared_to_header_ids = "Compare what is in iRODS and not in the header"
     check_header_ids_compared_to_irods_ids = "Compare what is in the header and not in iRODS"
 
+    @classmethod
+    def get_check_names(cls):
+        checks = dir(CHECK_NAMES)
+        return [getattr(CHECK_NAMES, c) for c in checks if c.startswith('check_')]
+
+    @classmethod
+    def get_only_mandatory_check_names(cls):
+        optional_checks = [cls.check_desired_reference, cls.check_attribute_count, ]
+        checks = dir(CHECK_NAMES)
+        return [getattr(CHECK_NAMES, c) for c in checks if c.startswith('check_') and not c in optional_checks]
