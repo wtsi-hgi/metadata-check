@@ -24,32 +24,62 @@ import unittest
 from mcheck.metadata.file_header_metadata.header_metadata import SAMFileHeaderMetadata
 from mcheck.metadata.irods_metadata.file_metadata import IrodsSeqFileMetadata
 from mcheck.metadata.seqscape_metadata.seqscape_metadata import SeqscapeMetadata
+from mcheck.metadata.common.comparable_metadata import ComparableMetadata
 
 class ComparableMetadataTests(unittest.TestCase):
 
 
-    def test_find_differences_when_there_are_diffs_h_vs_ss1(self):
+    def test_entities_have_values_when_it_has(self):
+        result = ComparableMetadata._entities_have_values({'name': set(['a']), 'accession_number': set(), 'internal_id': set()})
+        self.assertTrue(result)
+
+    def test_entities_have_values_when_it_hasnt(self):
+        result = ComparableMetadata._entities_have_values({'name': set(), 'accession_number': set(), 'internal_id': set()})
+        self.assertFalse(result)
+
+    def test_entities_have_values_when_missing_empty_sets(self):
+        result = ComparableMetadata._entities_have_values({'name': set(['a'])})
+        self.assertTrue(result)
+
+    def test_entities_have_values_when_empty(self):
+        result = ComparableMetadata._entities_have_values({})
+        self.assertFalse(result)
+
+
+    def test_has_metadata_when_not(self):
+        metadata = ComparableMetadata(samples={'name': set()}, libraries={}, studies={})
+        result = metadata.has_metadata()
+        self.assertFalse(result)
+
+    def test_has_metadata_when_has(self):
+        metadata = ComparableMetadata(samples={'name': set(['a'])}, libraries={}, studies={})
+        result = metadata.has_metadata()
+        self.assertTrue(result)
+
+
+
+    def test_difference_when_there_are_diffs_h_vs_ss1(self):
         header_metadata = SAMFileHeaderMetadata('/seq/123.bam', '123/bam', samples={'name': set(['S1'])}, libraries={}, studies={})
         seqscape_metadata = SeqscapeMetadata(samples={'name': set(['S9'])}, libraries={}, studies={})
         result = header_metadata.difference(seqscape_metadata)
         self.assertEqual(result,{'samples': {'name': set(['S1'])}})
 
 
-    def test_find_differences_when_there_are_diffs_h_vs_ss2(self):
+    def test_difference_when_there_are_diffs_h_vs_ss2(self):
         header_metadata = SAMFileHeaderMetadata('/seq/123.bam', '123/bam', samples={'name': set(['S9'])}, libraries={}, studies={})
         seqscape_metadata = SeqscapeMetadata(samples={'name': set(['S1'])}, libraries={}, studies={})
         result = header_metadata.difference(seqscape_metadata)
         self.assertEqual(result,{'samples': {'name': set(['S9'])}})
 
 
-    def test_find_differences_when_there_are_diff_type_ids_h_vs_ss(self):
+    def test_difference_when_there_are_diff_type_ids_h_vs_ss(self):
         header_metadata = SAMFileHeaderMetadata('/seq/123.bam', '123/bam', samples={'name': set(['S1']), 'accession_number': set(['Acc1'])}, libraries={}, studies={})
         seqscape_metadata = SeqscapeMetadata(samples={'name': set(['S1'])}, libraries={}, studies={})
         result = header_metadata.difference(seqscape_metadata)
         self.assertEqual(result, {})
 
 
-    def test_find_differences_when_many_diffs_h_vs_ss(self):
+    def test_difference_when_many_diffs_h_vs_ss(self):
         header_metadata = SAMFileHeaderMetadata('/seq/123.bam', '123/bam',
                                                 samples={'name': set(['S9']), 'accession_number': set(['Acc9'])},
                                                 libraries={'internal_id': set(['123'])}, studies={})
@@ -58,7 +88,7 @@ class ComparableMetadataTests(unittest.TestCase):
         self.assertEqual(result,{'samples': {'name': set(['S9'])}, 'libraries': {'internal_id': set(['123'])}})
 
 
-    def test_find_differences_when_no_diffs_h_vs_ss(self):
+    def test_difference_when_no_diffs_h_vs_ss(self):
         header_metadata = SAMFileHeaderMetadata('/seq/123.bam', '123/bam',
                                                 samples={'name': set(['S9']), 'accession_number': set(['Acc9'])},
                                                 libraries={'internal_id': set(['123'])}, studies={})
@@ -68,7 +98,7 @@ class ComparableMetadataTests(unittest.TestCase):
         self.assertEqual(result,{})
 
 
-    def test_find_differences_when_no_diffs_i_vs_h(self):
+    def test_difference_when_no_diffs_i_vs_h(self):
         irods_metadata = IrodsSeqFileMetadata('/seq/123.bam',
                                               samples={'name': set(['S1']), 'accession_number': set(), 'internal_id': set()},
                                               libraries={}, studies={})
@@ -79,7 +109,7 @@ class ComparableMetadataTests(unittest.TestCase):
         self.assertDictEqual(result, {})
 
 
-    def test_find_differences_when_diff_id_types_i_vs_h(self):
+    def test_difference_when_diff_id_types_i_vs_h(self):
         irods_metadata = IrodsSeqFileMetadata('/seq/123.bam',
                                               samples={'name': set(['S1']), 'accession_number': set(['EGA1']), 'internal_id': set(['1'])},
                                               libraries={'name': set(['123']), 'internal_id': set(['123'])},
@@ -91,7 +121,7 @@ class ComparableMetadataTests(unittest.TestCase):
         self.assertDictEqual(result, {})
 
 
-    def test_find_differences_when_diffs_i_vs_h(self):
+    def test_difference_when_diffs_i_vs_h(self):
         irods_metadata = IrodsSeqFileMetadata('/seq/123.bam',
                                               samples={'name': set(['S1']), 'accession_number': set(['EGA1']), 'internal_id': set(['1'])},
                                               libraries={'name': set(['123']), 'internal_id': set(['123'])},
@@ -102,7 +132,7 @@ class ComparableMetadataTests(unittest.TestCase):
         result = irods_metadata.difference(header_metadata)
         self.assertDictEqual(result, {'samples': {'name': set(['S1'])}})
 
-    def test_find_differences_when_diffs_h_vs_i(self):
+    def test_difference_when_diffs_h_vs_i(self):
         irods_metadata = IrodsSeqFileMetadata('/seq/123.bam',
                                               samples={'name': set(['S1']), 'accession_number': set(['EGA1']), 'internal_id': set(['1'])},
                                               libraries={'name': set(['123']), 'internal_id': set(['123'])},
@@ -114,7 +144,7 @@ class ComparableMetadataTests(unittest.TestCase):
         self.assertDictEqual(result, {'samples': {'name': set(['S100'])}})
 
 
-    def test_find_differences_when_not_the_right_type(self):
+    def test_difference_when_not_the_right_type(self):
         irods_metadata = IrodsSeqFileMetadata('/seq/123.bam',
                                               samples={'name': set(['S1']), 'accession_number': set(), 'internal_id': set()},
                                               libraries={}, studies={})
