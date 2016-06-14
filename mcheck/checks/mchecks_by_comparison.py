@@ -46,7 +46,7 @@ class FileMetadataComparison:
             h_vs_ss_check_result = CheckResult(check_name=CHECK_NAMES.check_header_ids_compared_to_seqscape_ids, error_message=[])
             i_vs_h_check_result = CheckResult(check_name=CHECK_NAMES.check_irods_ids_compared_to_header_ids, error_message=[])
             h_vs_i_check_result = CheckResult(check_name=CHECK_NAMES.check_header_ids_compared_to_irods_ids, error_message=[])
-            if not header_metadata:
+            if not header_metadata.has_metadata():
                 error_msg = "No header metadata"
                 ss_vs_h_check_result.executed = False
                 h_vs_ss_check_result.executed = False
@@ -58,7 +58,7 @@ class FileMetadataComparison:
                 i_vs_h_check_result.error_message.append(error_msg)
                 h_vs_i_check_result.error_message.append(error_msg)
             else:
-                if not seqscape_metadata:
+                if not seqscape_metadata.has_metadata():
                     error_msg = "No seqscape metadata"
                     ss_vs_h_check_result.executed = False
                     h_vs_ss_check_result.executed = False
@@ -76,7 +76,7 @@ class FileMetadataComparison:
                         h_vs_ss_check_result.result = RESULT.FAILURE
                         h_vs_ss_check_result.error_message = error_msg
 
-                if not irods_metadata:
+                if not irods_metadata.has_metadata():
                     error_msg = "No irods metadata"
                     i_vs_h_check_result.error_message.append(error_msg)
                     h_vs_i_check_result.error_message.append(error_msg)
@@ -93,10 +93,6 @@ class FileMetadataComparison:
                         h_vs_i_check_result.error_message = error_msg
                         h_vs_i_check_result.result = RESULT.FAILURE
 
-            print("Before adding them: %s" % ss_vs_h_check_result)
-            print("Before adding them: %s" % h_vs_ss_check_result)
-            print("Before adding them: %s" % i_vs_h_check_result)
-            print("Before adding them: %s" % h_vs_i_check_result)
             issues_dict[fpath].append(ss_vs_h_check_result)
             issues_dict[fpath].append(h_vs_ss_check_result)
             issues_dict[fpath].append(i_vs_h_check_result)
