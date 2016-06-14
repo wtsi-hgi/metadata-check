@@ -19,21 +19,24 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 This file has been created on Jun 13, 2016.
 """
 
-class ComparableMetadata:
 
+class ComparableMetadata:
     def __init__(self, samples, libraries, studies):
         self.samples = samples
         self.studies = studies
         self.libraries = libraries
 
-    def _entities_have_values(self, entities):
+    @staticmethod
+    def _entities_have_values(entities):
         for id_type, values in entities.items():
             if values:
                 return True
         return False
 
     def has_metadata(self):
-        if self._entities_have_values(self.samples) or self._entities_have_values(self.studies) or self._entities_have_values(self.libraries):
+        if ComparableMetadata._entities_have_values(self.samples) or \
+            ComparableMetadata._entities_have_values(self.studies) or \
+            ComparableMetadata._entities_have_values(self.libraries):
             return True
         return False
 
