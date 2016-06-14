@@ -46,11 +46,11 @@ class FileMetadataComparison:
             header_metadata = header_metadata_dict[fpath]
             seqscape_metadata = seqsc_metadata_dict[fpath]
 
-            seqscape_diff_header = seqscape_metadata.differences(header_metadata)
-            header_diff_seqscape = header_metadata.differences(seqscape_metadata)
+            seqscape_diff_header = seqscape_metadata.difference(header_metadata)
+            header_diff_seqscape = header_metadata.difference(seqscape_metadata)
 
-            irods_diff_header = irods_metadata.differences(header_metadata)
-            header_diff_irods = header_metadata.differences(irods_metadata)
+            irods_diff_header = irods_metadata.difference(header_metadata)
+            header_diff_irods = header_metadata.difference(irods_metadata)
             # seqscape_diff_header = FileMetadataComparison._find_differences(seqscape_metadata, header_metadata,
             #                                                                ['samples', 'libraries', 'studies'])
             # header_diff_seqscape = FileMetadataComparison._find_differences(header_metadata, seqscape_metadata,
