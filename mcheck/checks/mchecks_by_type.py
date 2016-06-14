@@ -105,7 +105,9 @@ class MetadataSelfChecks:
             raw_metadata = SeqscapeRawMetadataProvider.fetch_raw_metadata(irods_metadata.samples, irods_metadata.libraries,
                                                                           irods_metadata.studies)
             check_results = raw_metadata.check_metadata()
+            issues_dict[fpath].extend(check_results)
             seqsc_metadata = SeqscapeMetadata.from_raw_metadata(raw_metadata)
+            check_results = seqsc_metadata.check_metadata()
             issues_dict[fpath].extend(check_results)
             seqsc_metadata_dict[fpath] = seqsc_metadata
         return seqsc_metadata_dict
