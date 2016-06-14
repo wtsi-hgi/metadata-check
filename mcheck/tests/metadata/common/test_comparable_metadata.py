@@ -21,7 +21,6 @@ This file has been created on Jun 14, 2016.
 
 import unittest
 
-from mcheck.metadata.common.comparable_metadata import ComparableMetadata
 from mcheck.metadata.file_header_metadata.header_metadata import SAMFileHeaderMetadata
 from mcheck.metadata.irods_metadata.file_metadata import IrodsSeqFileMetadata
 from mcheck.metadata.seqscape_metadata.seqscape_metadata import SeqscapeMetadata
