@@ -27,20 +27,21 @@ from mcheck.metadata.seqscape_metadata.seqscape_metadata import SeqscapeMetadata
 from mcheck.checks.mchecks_by_comparison import FileMetadataComparison
 from mcheck.results.checks_results import RESULT
 
+
 class FileMetadataComparisonTest(unittest.TestCase):
-
-
     def test_mdata_from_diff_srcs_when_ok(self):
         irods_metadata = IrodsSeqFileMetadata('/seq/123.bam',
-                                              samples={'name': set(['S1']), 'accession_number': set(), 'internal_id': set()},
+                                              samples={'name': set(['S1']), 'accession_number': set(),
+                                                       'internal_id': set()},
                                               libraries={}, studies={})
-        header_metadata = SAMFileHeaderMetadata('/seq/123.bam', '123/bam', samples={'name': set(['S1'])}, libraries={}, studies={})
+        header_metadata = SAMFileHeaderMetadata('/seq/123.bam', '123/bam', samples={'name': set(['S1'])}, libraries={},
+                                                studies={})
         seqscape_metadata = SeqscapeMetadata(samples={'name': set(['S1'])}, libraries={}, studies={})
         issues_dict = defaultdict(list)
         FileMetadataComparison.check_metadata_across_different_sources({'/seq/213.bam': irods_metadata},
-                                                                        {'/seq/213.bam': header_metadata},
-                                                                        {'/seq/213.bam': seqscape_metadata},
-                                                                        issues_dict)
+                                                                       {'/seq/213.bam': header_metadata},
+                                                                       {'/seq/213.bam': seqscape_metadata},
+                                                                       issues_dict)
         check_results = issues_dict['/seq/213.bam']
         self.assertEqual(4, len(check_results))
 
@@ -50,15 +51,17 @@ class FileMetadataComparisonTest(unittest.TestCase):
 
     def test_mdata_from_diff_srcs_when_different_id_types(self):
         irods_metadata = IrodsSeqFileMetadata('/seq/123.bam',
-                                              samples={'name': set(['S1']), 'accession_number': set(['EGA1']), 'internal_id': set()},
+                                              samples={'name': set(['S1']), 'accession_number': set(['EGA1']),
+                                                       'internal_id': set()},
                                               libraries={}, studies={})
-        header_metadata = SAMFileHeaderMetadata('/seq/123.bam', '123/bam', samples={'name': set(['S1'])}, libraries={}, studies={})
+        header_metadata = SAMFileHeaderMetadata('/seq/123.bam', '123/bam', samples={'name': set(['S1'])}, libraries={},
+                                                studies={})
         seqscape_metadata = SeqscapeMetadata(samples={'name': set(['S1'])}, libraries={}, studies={})
         issues_dict = defaultdict(list)
         FileMetadataComparison.check_metadata_across_different_sources({'/seq/213.bam': irods_metadata},
-                                                                        {'/seq/213.bam': header_metadata},
-                                                                        {'/seq/213.bam': seqscape_metadata},
-                                                                        issues_dict)
+                                                                       {'/seq/213.bam': header_metadata},
+                                                                       {'/seq/213.bam': seqscape_metadata},
+                                                                       issues_dict)
         check_results = issues_dict['/seq/213.bam']
         self.assertEqual(4, len(check_results))
 
@@ -68,15 +71,17 @@ class FileMetadataComparisonTest(unittest.TestCase):
 
     def test_mdata_from_diff_srcs_when_diff_header(self):
         irods_metadata = IrodsSeqFileMetadata('/seq/123.bam',
-                                              samples={'name': set(['S1']), 'accession_number': set(), 'internal_id': set()},
+                                              samples={'name': set(['S1']), 'accession_number': set(),
+                                                       'internal_id': set()},
                                               libraries={}, studies={})
-        header_metadata = SAMFileHeaderMetadata('/seq/123.bam', '123/bam', samples={'name': set(['S99999'])}, libraries={}, studies={})
+        header_metadata = SAMFileHeaderMetadata('/seq/123.bam', '123/bam', samples={'name': set(['S99999'])},
+                                                libraries={}, studies={})
         seqscape_metadata = SeqscapeMetadata(samples={'name': set(['S1'])}, libraries=set(), studies=set())
         issues_dict = defaultdict(list)
         FileMetadataComparison.check_metadata_across_different_sources({'/seq/213.bam': irods_metadata},
-                                                                        {'/seq/213.bam': header_metadata},
-                                                                        {'/seq/213.bam': seqscape_metadata},
-                                                                        issues_dict)
+                                                                       {'/seq/213.bam': header_metadata},
+                                                                       {'/seq/213.bam': seqscape_metadata},
+                                                                       issues_dict)
         check_results = issues_dict['/seq/213.bam']
         self.assertEqual(4, len(check_results))
 
