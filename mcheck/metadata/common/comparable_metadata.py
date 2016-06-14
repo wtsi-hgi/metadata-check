@@ -26,14 +26,12 @@ class ComparableMetadata:
         self.studies = studies
         self.libraries = libraries
 
-    def differences(self, other):
+    def difference(self, other):
         """
         This method finds the differences between metadata1 and metadata2, given a list of entities of interest.
-        Basically does metadata1 - metadata2 (finds all the entities that are present within metadata1, but not within metadata2).
-        :param metadata1:
-        :param metadata2:
-        :param entity_types_list:
-        :return:
+        Basically does metadata1 - metadata2 (finds all the entities that are present within metadata1, and not within metadata2).
+        :param other: ComparableMetadata
+        :return: a dict of differences per type of entity.
         """
         if not isinstance(other, ComparableMetadata):
             raise TypeError("Can't compare with a non-ComparableMetadata type")
@@ -42,10 +40,11 @@ class ComparableMetadata:
             metadata_entities1 = getattr(self, entity_type)  # header
             metadata_entities2 = getattr(other, entity_type)  # seqsc
             ent_type_diffs = {}
-            for id_type, values in metadata_entities1.items():
-                if values and metadata_entities2.get(id_type):
-                    if values != metadata_entities2.get(id_type):
-                        ent_type_diffs[id_type] = set(values).difference(set(metadata_entities2.get(id_type)))
+            for id_type, values1 in metadata_entities1.items():
+                if values1 and metadata_entities2.get(id_type):
+                    value2 = metadata_entities2.get(id_type)
+                    if values1 != value2:
+                        ent_type_diffs[id_type] = set(values1).difference(set(value2))
             if ent_type_diffs:
                 differences[entity_type] = ent_type_diffs
         return differences
