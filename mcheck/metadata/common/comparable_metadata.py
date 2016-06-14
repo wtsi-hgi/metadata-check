@@ -26,6 +26,17 @@ class ComparableMetadata:
         self.studies = studies
         self.libraries = libraries
 
+    def _entities_have_values(self, entities):
+        for id_type, values in entities.items():
+            if values:
+                return True
+        return False
+
+    def has_metadata(self):
+        if self._entities_have_values(self.samples) or self._entities_have_values(self.studies) or self._entities_have_values(self.libraries):
+            return True
+        return False
+
     def difference(self, other):
         """
         This method finds the differences between metadata1 and metadata2, given a list of entities of interest.
@@ -49,5 +60,3 @@ class ComparableMetadata:
                 differences[entity_type] = ent_type_diffs
         return differences
 
-    # @staticmethod
-    # def _find_differences(metadata1, metadata2, entity_types_list):
