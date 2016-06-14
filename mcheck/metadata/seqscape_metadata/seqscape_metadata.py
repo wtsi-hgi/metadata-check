@@ -470,10 +470,8 @@ class SeqscapeMetadata(ComparableMetadata):
         return self._check_entities_have_all_types_of_ids(self._studies, ['name', 'accession_number', 'internal_id'], 'study')
 
     def check_metadata(self):
-        problems = []
-        problems.append(self.check_samples_have_all_types_of_ids())
-        problems.append(self.check_studies_have_all_types_of_ids())
-        return problems
+        return [self.check_samples_have_all_types_of_ids(),
+                self.check_studies_have_all_types_of_ids()]
 
     @staticmethod
     def from_raw_metadata(raw_metadata: SeqscapeRawMetadata):
