@@ -1,6 +1,5 @@
-git+https://github.com/wtsi-hgi/sequencescape-python-client.git@94bf380ec93e1adc4241fdf176bebf14548f39ad#egg=sequencescape
+git+https://github.com/wtsi-hgi/python-sequencescape-db.git@94bf380ec93e1adc4241fdf176bebf14548f39ad#egg=sequencescape
+git+https://github.com/wtsi-hgi/python-baton-wrapper.git@a97af16b1435c8693c48aa6dfcc889e6c916f933#egg=baton
 hgicommon==1.1.0
-baton==1.0.0
-hgijson==1.3.0
 PyHamcrest==1.8.5
 pbr==1.8.1
