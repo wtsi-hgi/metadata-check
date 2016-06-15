@@ -23,7 +23,7 @@ import unittest
 from mcheck.main import run_checks
 from mcheck.check_names import CHECK_NAMES
 
-@unittest.skip
+
 class MetadataFetchedByPathTest(unittest.TestCase):
     def test_metadata_for_library_file(self):
         """
@@ -36,7 +36,7 @@ class MetadataFetchedByPathTest(unittest.TestCase):
             check_names = [c.check_name for c in check_results]
             self.assertSetEqual(set(check_names), set(CHECK_NAMES.get_only_mandatory_check_names()))
             for check_res in check_results:
-                if check_res.name in [
+                if check_res.check_name in [
                     CHECK_NAMES.check_seqscape_ids_compared_to_header_ids,
                     CHECK_NAMES.check_header_ids_compared_to_seqscape_ids,
                     CHECK_NAMES.check_irods_ids_compared_to_header_ids,
