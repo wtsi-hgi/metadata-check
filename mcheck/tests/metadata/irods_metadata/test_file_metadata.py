@@ -293,7 +293,7 @@ class TestIrodsRawFileMetadata(unittest.TestCase):
         result = raw_metadata.ACLsChecks.check_read_permission_exists_for_ss_group(raw_metadata.acls)
         self.assertEqual(len(result), 2)
         for check_res in result:
-            if check_res.check_name == CHECK_NAMES.check_there_is_ss_irods_group:
+            if check_res.check_name in [CHECK_NAMES.check_ss_irods_group_read_permission, CHECK_NAMES.check_there_is_ss_irods_group]:
                 self.assertEqual(check_res.result, RESULT.FAILURE)
             else:
                 self.assertEqual(check_res.result, RESULT.SUCCESS)
@@ -518,9 +518,6 @@ class TestIrodsSeqFileMetadata(unittest.TestCase):
         self.assertEqual(seq_metadata.samples, expected)
         self.assertEqual(seq_metadata.libraries, expected)
         self.assertEqual(seq_metadata.checksum_in_meta, set())
-        #check_results = seq_metadata.check_metadata()
-        #print("Check res: %s" % check_results)
-        #self.assertEqual(len(check_results), 1)
         #TODO: test further the fields of seq_metadata
 
     def test_check_more_than_one_replicas_when_ok(self):
