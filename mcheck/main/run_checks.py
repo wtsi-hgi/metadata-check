@@ -73,7 +73,7 @@ def convert_args_to_search_criteria(filter_by_npg_qc=None, filter_by_target=None
 
     # Parse input parameters and obtain files+metadata:
     if match_study_name:
-        search_criteria(('study', match_study_name))
+        search_criteria.append(('study', match_study_name))
     elif match_study_acc_nr:
         search_criteria.append(('study_accession_number', match_study_acc_nr))
     elif match_study_id:
