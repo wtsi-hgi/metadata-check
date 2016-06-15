@@ -243,7 +243,7 @@ class SeqscapeRawMetadata(object):
 
         sample_set_ids = [(sample.name, sample.accession_number) for sample in self.get_entities_by_type('sample')]
         if not studies_set.issubset(studies_by_samples_set):
-            error_msg = "For the %s given seqscape samples, the studies in iRODS: %s and the studies in Seqscape don't agree: %s" % (str(len(sample_set_ids)), studies_set_names, studies_by_samples_set_names)
+            error_msg = "For the %s given seqscape samples, the studies in iRODS: %s and the studies in Seqscape DISAGREE: %s" % (str(len(sample_set_ids)), studies_set_names, studies_by_samples_set_names)
             same_study_for_samples_check.result = RESULT.FAILURE
             same_study_for_samples_check.error_message=error_msg
         else:
