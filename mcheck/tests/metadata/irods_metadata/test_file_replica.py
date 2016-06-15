@@ -64,11 +64,15 @@ class TestIrodsFileReplica(unittest.TestCase):
         self.assertTrue(IrodsFileReplica._is_checksum_valid(checksum))
 
     def test_is_checksum_valid_3(self):
-        checksum = None
+        checksum = 1
         self.assertRaises(TypeError, IrodsFileReplica._is_checksum_valid, checksum)
 
     def test_is_checksum_valid_4(self):
         checksum = '12.24'
+        self.assertFalse(IrodsFileReplica._is_checksum_valid(checksum))
+
+    def test_is_checksum_valid_5(self):
+        checksum = None
         self.assertFalse(IrodsFileReplica._is_checksum_valid(checksum))
 
 
