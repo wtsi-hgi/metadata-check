@@ -62,7 +62,7 @@ class IrodsFileReplica:
         checksum_check_result = CheckResult(check_name=CHECK_NAMES.check_replica_checksum,
                                             severity=SEVERITY.IMPORTANT)
         try:
-            is_valid_checksum =  self._is_checksum_valid(self.checksum)
+            is_valid_checksum = self._is_checksum_valid(self.checksum)
             if not is_valid_checksum:
                 checksum_check_result.result = RESULT.FAILURE
                 checksum_check_result.error_message = "The checksum looks invalid: " + str(self.checksum)

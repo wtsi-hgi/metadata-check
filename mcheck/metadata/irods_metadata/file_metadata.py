@@ -122,7 +122,8 @@ class IrodsRawFileMetadata:
         def check_all_replicas_have_same_checksum(cls, replicas) -> List[CheckResult]:
             result = CheckResult(check_name=CHECK_NAMES.check_all_replicas_same_checksum, severity=SEVERITY.IMPORTANT)
             if not replicas:
-                result.result = RESULT.FAILURE
+                result.executed = False
+                result.error_message = ["No replicas to compare with."]
                 return [result]
             first_replica = replicas[0]
             error_message = ''
@@ -138,6 +139,7 @@ class IrodsRawFileMetadata:
         def check_more_than_one_replicas(cls, replicas) -> List[CheckResult]:
             check_result = CheckResult(check_name=CHECK_NAMES.check_more_than_one_replica, severity=SEVERITY.WARNING)
             if len(replicas) <= 1:
+                check_result.executed = True
                 check_result.result = RESULT.FAILURE
                 check_result.error_message="File has " + str(len(replicas)) + " replicas"
             return check_result
@@ -373,8 +375,18 @@ class IrodsSeqFileMetadata(ComparableMetadata):
 
 
     def checksum_comparison_check(self):
-        check_result = CheckResult(check_name=CHECK_NAMES.check_by_comparison_checksum_in_meta_with_checksum_at_upload)
-        if self.checksum_in_meta != self.checksum_at_upload:
+        check_result = CheckResult(check_name=CHECK_NAMES.check_by_comparison_checksum_in_meta_with_checksum_at_upload,
+                                   error_message=[])
+        impossible_to_exec = False
+        if not self.checksum_at_upload:
+            check_result.executed = False
+            check_result.error_message.append("Missing ichecksum result.")
+            impossible_to_exec = True
+        if not self.checksum_in_meta:
+            check_result.executed = False
+            check_result.error_message.append("Missing checksum from metadata")
+            impossible_to_exec = True
+        if not impossible_to_exec and self.checksum_in_meta != self.checksum_at_upload:
             check_result.result = RESULT.FAILURE
             check_result.error_message = "The checksum in metadata = %s different than checksum at upload = %s" % \
                                          (self.checksum_at_upload, self.checksum_in_meta)
