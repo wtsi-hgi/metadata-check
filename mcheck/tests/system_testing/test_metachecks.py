@@ -99,13 +99,18 @@ class MetadataFetchedByPathTest(unittest.TestCase):
                 if check_res.check_name == CHECK_NAMES.check_desired_reference:
                     self.assertEqual(check_res.result, RESULT.FAILURE)
 
-    def test_metadata_when_metadata_ok_with_wrong_reference2(self):
+    def test_metadata_when_metadata_ok_with_wrong_reference_and_one_replica(self):
         irods_fpath = "/humgen/projects/serapis_staging/test-metacheck/test_metadata_missing_md5.out"
         result = run_checks.check_metadata(metadata_fetching_strategy='fetch_by_path', irods_fpaths=[irods_fpath], reference='grch38')
         for fpath, check_results in result.items():
             for check_res in check_results:
                 if check_res.check_name == CHECK_NAMES.check_desired_reference:
                     self.assertEqual(check_res.executed, False)
+                elif check_res.check_name in [CHECK_NAMES.check_more_than_one_replica,
+                                              CHECK_NAMES.check_ss_irods_group_read_permission,
+                                              CHECK_NAMES.check_there_is_ss_irods_group,
+                                              ]:
+                    self.assertEqual(check_res.result, RESULT.FAILURE)
 
 
 
