@@ -20,6 +20,7 @@ This file has been created on May 05, 2016.
 """
 
 import os
+import sys
 from collections import defaultdict
 
 from mcheck.com import utils
@@ -27,7 +28,7 @@ from mcheck.main import arg_parser
 from mcheck.results.results_processing import CheckResultsProcessing
 from mcheck.checks.mchecks_by_comparison import FileMetadataComparison
 from mcheck.checks.mchecks_by_type import MetadataSelfChecks
-
+from mcheck.results.checks_results import RESULT
 
 def process_output(issues_by_path, output_dir):
     for fpath, file_issues in issues_by_path.items():
@@ -160,6 +161,13 @@ def main():
         os.makedirs(args.output_dir)
 
     process_output(issues_dict, args.output_dir)
+    
+    for fpath, check_res in issues_dict.items():
+        for result in check_res:
+            if result.result == RESULT.FAILURE:
+                sys.exit(1)
+
+
 
 
 if __name__ == '__main__':
