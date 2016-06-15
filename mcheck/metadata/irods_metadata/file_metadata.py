@@ -195,6 +195,7 @@ class IrodsRawFileMetadata:
                     break
             if not found_ss_gr_acl:
                 check_result_ss_group_present.result = RESULT.FAILURE
+                check_result_read_permission.result = RESULT.FAILURE
             return [check_result_ss_group_present, check_result_read_permission]
 
         @classmethod
