@@ -23,7 +23,7 @@ import unittest
 from mcheck.main import run_checks
 from mcheck.check_names import CHECK_NAMES
 
-
+@unittest.skip
 class MetadataFetchedByPathTest(unittest.TestCase):
     def test_metadata_for_library_file(self):
         """
