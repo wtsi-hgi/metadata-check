@@ -51,6 +51,8 @@ class IrodsFileReplica:
 
     @staticmethod
     def _is_checksum_valid(checksum):
+        if not checksum:
+            return False
         if not type(checksum) is str:
             raise TypeError("WRONG TYPE: the checksum must be a string, and is: " + str(type(checksum)))
         return utils.is_hexadecimal_string(checksum)
@@ -59,7 +61,12 @@ class IrodsFileReplica:
         check_results = []
         checksum_check_result = CheckResult(check_name=CHECK_NAMES.check_replica_checksum,
                                             severity=SEVERITY.IMPORTANT)
-        if not self._is_checksum_valid(self.checksum):
+        try:
+            is_valid_checksum =  self._is_checksum_valid(self.checksum)
+            if not is_valid_checksum:
+                checksum_check_result.result = RESULT.FAILURE
+                checksum_check_result.error_message = "The checksum looks invalid: " + str(self.checksum)
+        except TypeError as e:
             checksum_check_result.result = RESULT.FAILURE
             checksum_check_result.error_message = "The checksum looks invalid: " + str(self.checksum)
 
