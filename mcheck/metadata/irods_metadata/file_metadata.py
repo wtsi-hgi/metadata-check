@@ -421,7 +421,7 @@ class IrodsSeqFileMetadata(ComparableMetadata):
             check_result.error_message.append("Missing desired reference parameter")
         if not check_result.error_message:
             for ref in self.get_references():
-                if ref.find(desired_ref_name) == -1:
+                if ref.lower().find(desired_ref_name.lower()) == -1:
                     check_result.result = RESULT.FAILURE
                     check_result.error_message = "The desired reference is: %s is different thant the metadata reference: %s" % (desired_ref_name, ref)
         return check_result
