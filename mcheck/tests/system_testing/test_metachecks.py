@@ -113,6 +113,50 @@ class MetadataFetchedByPathTest(unittest.TestCase):
                     self.assertEqual(check_res.result, RESULT.FAILURE)
 
 
+    def test_metadata_when_study_and_samples_dont_match(self):
+        irods_fpath = "/humgen/projects/serapis_staging/test-metacheck/test_samples_given_wrong_study.cram"
+        result = run_checks.check_metadata(metadata_fetching_strategy='fetch_by_path', irods_fpaths=[irods_fpath], reference='grch38')
+        for fpath, check_results in result.items():
+            for check_res in check_results:
+                if check_res.check_name in [
+                    CHECK_NAMES.check_studies_in_irods_with_studies_in_seqscape_fetched_by_samples,
+                    CHECK_NAMES.check_for_samples_in_more_studies,
+                    CHECK_NAMES.check_samples_in_irods_same_as_samples_fetched_by_study_from_seqscape,
+                    CHECK_NAMES.check_there_is_ss_irods_group,
+                    CHECK_NAMES.check_ss_irods_group_read_permission
+                    ]:
+                    self.assertEqual(check_res.result, RESULT.FAILURE)
+                else:
+                    self.assertDictEqual(check_res.result, RESULT.SUCCESS)
+
+
+    def test_metadata_when_header_doesnt_match_irods(self):
+        irods_fpath = "/humgen/projects/serapis_staging/test-metacheck/test_wrong_header.cram"
+        result = run_checks.check_metadata(metadata_fetching_strategy='fetch_by_path', irods_fpaths=[irods_fpath], reference='grch38')
+        for fpath, check_results in result.items():
+            for check_res in check_results:
+                if check_res.check_name in [
+                    CHECK_NAMES.check_there_is_ss_irods_group,
+                    CHECK_NAMES.check_ss_irods_group_read_permission,
+                    CHECK_NAMES.check_irods_ids_compared_to_header_ids,
+                    CHECK_NAMES.check_header_ids_compared_to_irods_ids,
+                    CHECK_NAMES.check_header_ids_compared_to_seqscape_ids,
+                    CHECK_NAMES.check_seqscape_ids_compared_to_header_ids,
+                    CHECK_NAMES.check_for_samples_in_more_studies
+                    ]:
+                    self.assertEqual(check_res.result, RESULT.FAILURE)
+                else:
+                    self.assertDictEqual(check_res.result, RESULT.SUCCESS)
+
+
+    def test_when_md5_is_wrong(self):
+        pass
+
+    def test_when_more_than_1_md5s(self):
+        pass
+
+
+
 
         # def check_metadata(metadata_fetching_strategy, reference=None, filter_npg_qc=None, filter_target=None, file_types=None,
         # study_name=None, study_acc_nr=None, study_internal_id=None, irods_fpaths=None, irods_zone=None):
