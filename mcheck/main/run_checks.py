@@ -32,6 +32,7 @@ from mcheck.results.checks_results import RESULT
 
 def process_output(issues_by_path, output_dir):
     for fpath, file_issues in issues_by_path.items():
+        print("FPATH: %s" % fpath)
         sorted_by_exec = CheckResultsProcessing.group_by_executed(file_issues)
         print("Sorted by exec = True:")
         for check in  sorted_by_exec[True]:
@@ -45,7 +46,13 @@ def process_output(issues_by_path, output_dir):
             print("SEVERITY: %s" % severity)
             utils.write_list_to_file(fpaths_issues, os.path.join(output_dir, severity + '.txt'))
             for issue in fpaths_issues:
-                print("issue: %s" % (issue))
+                if issue.result == RESULT.FAILURE:
+                    print("issue: %s" % (issue))
+
+        print("FAILED-------------")
+        sorted_by_result = CheckResultsProcessing.group_by_result(file_issues)
+        for issue in sorted_by_result[RESULT.FAILURE]:
+            print(issue)
 
 
 def convert_args_to_search_criteria(filter_by_npg_qc=None, filter_by_target=None, filter_by_file_types=None,
