@@ -389,7 +389,7 @@ class IrodsSeqFileMetadata(ComparableMetadata):
         if not impossible_to_exec and self.checksum_in_meta != self.checksum_at_upload:
             check_result.result = RESULT.FAILURE
             check_result.error_message = "The checksum in metadata = %s different than checksum at upload = %s" % \
-                                         (self.checksum_at_upload, self.checksum_in_meta)
+                                         (self.checksum_in_meta, self.checksum_at_upload)
         return check_result
 
 
