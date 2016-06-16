@@ -338,7 +338,6 @@ class IrodsSeqFileMetadata(ComparableMetadata):
     def check_npg_qc_field(self):
         check_npg_qc = CheckResult(check_name=CHECK_NAMES.check_npg_qc_field)
         npg_qc = self.get_npg_qc()
-        print("NPG QC -- why is True not npg_qc? %s" % npg_qc)
         if self.get_npg_qc() is None:
             check_npg_qc.result = RESULT.FAILURE
             check_npg_qc.error_message = "Missing npg_qc field"
