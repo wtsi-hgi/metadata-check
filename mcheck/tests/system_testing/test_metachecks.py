@@ -148,7 +148,6 @@ class MetadataFetchedByPathTest(unittest.TestCase):
                 else:
                     self.assertEqual(check_res.result, RESULT.SUCCESS)
 
-
     def test_when_md5_is_wrong(self):
         irods_fpath = "/humgen/projects/serapis_staging/test-metacheck/test_wrong_md5.out"
         result = run_checks.check_metadata(metadata_fetching_strategy='fetch_by_path', irods_fpaths=[irods_fpath], reference='grch38')
@@ -158,7 +157,7 @@ class MetadataFetchedByPathTest(unittest.TestCase):
                     CHECK_NAMES.check_there_is_ss_irods_group,
                     CHECK_NAMES.check_ss_irods_group_read_permission,
                     CHECK_NAMES.check_for_samples_in_more_studies,
-                    CHECK_NAMES.check_replica_checksum,
+                    CHECK_NAMES.check_replica_checksum_valid,
                     CHECK_NAMES.check_more_than_one_replica,
                     CHECK_NAMES.check_by_comparison_checksum_in_meta_with_checksum_at_upload
                     ]:
@@ -166,7 +165,19 @@ class MetadataFetchedByPathTest(unittest.TestCase):
                 else:
                     self.assertEqual(check_res.result, RESULT.SUCCESS)
 
-
     def test_when_more_than_1_md5s(self):
-        pass
+        irods_fpath = "/humgen/projects/serapis_staging/test-metacheck/test_more_than_one_md5s.out"
+        result = run_checks.check_metadata(metadata_fetching_strategy='fetch_by_path', irods_fpaths=[irods_fpath], reference='grch38')
+        for fpath, check_results in result.items():
+            for check_res in check_results:
+                if check_res.check_name in [
+                    CHECK_NAMES.check_there_is_ss_irods_group,
+                    CHECK_NAMES.check_ss_irods_group_read_permission,
+                    CHECK_NAMES.check_for_samples_in_more_studies,
+                    CHECK_NAMES.check_more_than_one_replica,
+                    CHECK_NAMES.check_by_comparison_checksum_in_meta_with_checksum_at_upload
+                    ]:
+                    self.assertEqual(check_res.result, RESULT.FAILURE)
+                else:
+                    self.assertEqual(check_res.result, RESULT.SUCCESS)
 
