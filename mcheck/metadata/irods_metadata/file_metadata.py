@@ -331,21 +331,23 @@ class IrodsSeqFileMetadata(ComparableMetadata):
 
     def check_npg_qc_field(self):
         check_npg_qc = CheckResult(check_name=CHECK_NAMES.check_npg_qc_field)
-        if not self.get_npg_qc():
+        npg_qc = self.get_npg_qc()
+        print("NPG QC -- why is True not npg_qc? %s" % npg_qc)
+        if self.get_npg_qc() is None:
             check_npg_qc.result = RESULT.FAILURE
             check_npg_qc.error_message = "Missing npg_qc field"
-        if not self._is_npg_qc_valid(self.get_npg_qc()):
-            check_npg_qc.error_message="This npg_qc field looks invalid: " + str(self.get_npg_qc())
+        elif not self._is_npg_qc_valid(self.get_npg_qc()):
+            check_npg_qc.error_message = "This npg_qc field looks invalid: " + str(self.get_npg_qc())
             check_npg_qc.result = RESULT.FAILURE
         return check_npg_qc
 
     def check_target_field(self):
         check_target_field = CheckResult(check_name=CHECK_NAMES.check_target_field)
-        if not self.get_target():
+        if self.get_target() is None:
             check_target_field.result = RESULT.FAILURE
             check_target_field.error_message = "Missing target field"
-        if not self._is_target_valid(self.get_target()):
-            check_target_field.error_message="The target field looks invalid: " + str(self.get_target())
+        elif not self._is_target_valid(self.get_target()):
+            check_target_field.error_message = "The target field looks invalid: " + str(self.get_target())
             check_target_field.result = RESULT.FAILURE
         return check_target_field
 
@@ -353,7 +355,6 @@ class IrodsSeqFileMetadata(ComparableMetadata):
         check_result = CheckResult(check_name=CHECK_NAMES.check_checksum_in_metadata_present, severity=SEVERITY.WARNING)
         if self.checksum_in_meta:
             check_result.result = RESULT.SUCCESS
-
         else:
             check_result.result = RESULT.FAILURE
             check_result.error_message = "Missing checksum from metadata"
