@@ -21,9 +21,11 @@ This file has been created on May 05, 2016.
 
 import os
 from collections import defaultdict
+from sys import stdin
 
 from mcheck.com import utils
 from mcheck.main import arg_parser
+from mcheck.main.input_parser import parse_data_objects
 from mcheck.results.results_processing import CheckResultsProcessing
 from mcheck.checks.mchecks_by_comparison import FileMetadataComparison
 from mcheck.checks.mchecks_by_type import MetadataSelfChecks
@@ -82,7 +84,6 @@ def check_metadata(metadata_fetching_strategy, reference=None, filter_npg_qc=Non
                    study_name=None, study_acc_nr=None, study_internal_id=None, irods_fpaths=None, irods_zone=None):
     issues_dict = defaultdict(list)
     # Getting iRODS metadata for files and checking before bringing it a "normalized" form:
-    # TODO: add the option of getting the metadata as a json from the command line...
     if metadata_fetching_strategy == 'fetch_by_metadata':
         search_criteria = convert_args_to_search_criteria(filter_npg_qc, filter_target,
                                                           file_types, study_name,
@@ -91,6 +92,11 @@ def check_metadata(metadata_fetching_strategy, reference=None, filter_npg_qc=Non
         irods_metadata_dict = MetadataSelfChecks.fetch_and_preprocess_irods_metadata_by_metadata(search_criteria, irods_zone, issues_dict, reference)
     elif metadata_fetching_strategy == 'fetch_by_path':
         irods_metadata_dict = MetadataSelfChecks.fetch_and_preprocess_irods_metadata_by_path(irods_fpaths, issues_dict, reference)
+
+    # TODO: add the option of getting the metadata as a json from the command line...
+    if ("some_setting_indicates_read_from_stdin" or "read_from_stdin_is_standard") and False:
+        input_data_objects = stdin.read()
+        irods_seq_file_metadata_collection = parse_data_objects(input_data_objects)
 
     # Getting HEADER metadata:
     header_metadata_dict = MetadataSelfChecks.fetch_and_preprocess_header_metadata(irods_metadata_dict.keys(), issues_dict)
