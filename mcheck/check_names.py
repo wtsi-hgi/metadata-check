@@ -21,7 +21,7 @@ This file has been created on May 20, 2016.
 
 
 class CHECK_NAMES:
-    check_replica_checksum = "Check that the replica checksum field is valid"
+    check_replica_checksum_valid = "Check that the replica checksum field is valid"
     check_replica_number = "Check that the replica number is valid"
     check_attribute_count = "Check attribute count is as configured"
     check_all_replicas_same_checksum = "Check all replicas have the same checksum"

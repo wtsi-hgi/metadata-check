@@ -59,7 +59,7 @@ class IrodsFileReplica:
 
     def validate_fields(self):
         check_results = []
-        checksum_check_result = CheckResult(check_name=CHECK_NAMES.check_replica_checksum,
+        checksum_check_result = CheckResult(check_name=CHECK_NAMES.check_replica_checksum_valid,
                                             severity=SEVERITY.IMPORTANT)
         try:
             is_valid_checksum = self._is_checksum_valid(self.checksum)
