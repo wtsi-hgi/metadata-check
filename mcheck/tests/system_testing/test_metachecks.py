@@ -127,7 +127,7 @@ class MetadataFetchedByPathTest(unittest.TestCase):
                     ]:
                     self.assertEqual(check_res.result, RESULT.FAILURE)
                 else:
-                    self.assertDictEqual(check_res.result, RESULT.SUCCESS)
+                    self.assertEqual(check_res.result, RESULT.SUCCESS)
 
 
     def test_metadata_when_header_doesnt_match_irods(self):
@@ -146,39 +146,27 @@ class MetadataFetchedByPathTest(unittest.TestCase):
                     ]:
                     self.assertEqual(check_res.result, RESULT.FAILURE)
                 else:
-                    self.assertDictEqual(check_res.result, RESULT.SUCCESS)
+                    self.assertEqual(check_res.result, RESULT.SUCCESS)
 
 
     def test_when_md5_is_wrong(self):
-        pass
+        irods_fpath = "/humgen/projects/serapis_staging/test-metacheck/test_wrong_md5.out"
+        result = run_checks.check_metadata(metadata_fetching_strategy='fetch_by_path', irods_fpaths=[irods_fpath], reference='grch38')
+        for fpath, check_results in result.items():
+            for check_res in check_results:
+                if check_res.check_name in [
+                    CHECK_NAMES.check_there_is_ss_irods_group,
+                    CHECK_NAMES.check_ss_irods_group_read_permission,
+                    CHECK_NAMES.check_for_samples_in_more_studies,
+                    CHECK_NAMES.check_replica_checksum,
+                    CHECK_NAMES.check_more_than_one_replica,
+                    CHECK_NAMES.check_by_comparison_checksum_in_meta_with_checksum_at_upload
+                    ]:
+                    self.assertEqual(check_res.result, RESULT.FAILURE)
+                else:
+                    self.assertEqual(check_res.result, RESULT.SUCCESS)
+
 
     def test_when_more_than_1_md5s(self):
         pass
 
-
-
-
-        # def check_metadata(metadata_fetching_strategy, reference=None, filter_npg_qc=None, filter_target=None, file_types=None,
-        # study_name=None, study_acc_nr=None, study_internal_id=None, irods_fpaths=None, irods_zone=None):
-        #     issues_dict = defaultdict(list)
-        #     # Getting iRODS metadata for files and checking before bringing it a "normalized" form:
-        #     # TODO: add the option of getting the metadata as a json from the command line...
-        #     if metadata_fetching_strategy == 'fetch_by_metadata':
-        #         search_criteria = convert_args_to_search_criteria(filter_npg_qc, filter_target,
-        #                                                           file_types, study_name,
-        #                                                           study_acc_nr, study_internal_id)
-        #
-        #         irods_metadata_dict = MetadataSelfChecks.fetch_and_preprocess_irods_metadata_by_metadata(search_criteria, irods_zone, issues_dict, reference)
-        #     elif metadata_fetching_strategy == 'fetch_by_path':
-        #         irods_metadata_dict = MetadataSelfChecks.fetch_and_preprocess_irods_metadata_by_path(irods_fpaths, issues_dict, reference)
-        #
-        #     # Getting HEADER metadata:
-        #     header_metadata_dict = MetadataSelfChecks.fetch_and_preprocess_header_metadata(irods_metadata_dict.keys(), issues_dict)
-        #
-        #     # Getting Seqscape metadata:
-        #     seqsc_metadata_dict = MetadataSelfChecks.fetch_and_preprocess_seqscape_metadata(irods_metadata_dict, issues_dict)
-        #
-        #     # Running checks to compare metadata obtained from different sources:
-        #     FileMetadataComparison.check_metadata_across_different_sources(irods_metadata_dict, header_metadata_dict, seqsc_metadata_dict, issues_dict)
-        #
-        #     return issues_dict
