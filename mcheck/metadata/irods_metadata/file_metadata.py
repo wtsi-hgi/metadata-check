@@ -39,7 +39,7 @@ from mcheck.metadata.irods_metadata.file_replica import IrodsFileReplica
 from mcheck.check_names import CHECK_NAMES
 
 
-class IrodsRawFileMetadata:
+class IrodsRawFileMetadata(ComparableMetadata):
     def __init__(self, fname: str, dir_path: str, file_replicas: List[IrodsFileReplica]=None,
                  acls: List[IrodsACL]=None):
         self.fname = fname
@@ -47,6 +47,7 @@ class IrodsRawFileMetadata:
         self.file_replicas = file_replicas
         self.acls = acls
         self._attributes = defaultdict(set)
+
 
     @staticmethod
     def from_baton_wrapper(data_object):
@@ -236,7 +237,8 @@ class IrodsRawFileMetadata:
 class IrodsSeqFileMetadata(ComparableMetadata):
     def __init__(self, fpath: str, fname:str=None, samples=None, libraries=None, studies=None,
                  checksum_in_meta:str=None, checksum_at_upload:str=None, references:List[str]=None,
-                 run_ids:List[str]=None, lane_ids:List[str]=None, npg_qc:str=None, target:str=None):
+                 run_ids:List[str]=None, lane_ids:List[str]=None, npg_qc:str=None, target:str=None, file_replicas=None,
+                 acls=None):
         self.fname = fname
         self.fpath = fpath
         self.samples = samples
@@ -249,6 +251,7 @@ class IrodsSeqFileMetadata(ComparableMetadata):
         self.lane_ids = lane_ids if lane_ids else []
         self._npg_qc_values = [npg_qc]
         self._target_values = [target]
+
 
     @classmethod
     def from_raw_metadata(cls, raw_metadata: IrodsRawFileMetadata):
