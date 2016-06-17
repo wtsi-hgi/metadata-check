@@ -90,8 +90,8 @@ def parse_args():
                                              '(by default if no param given - include in the report)',
     )
 
-    subparsers = parser.add_subparsers(title='Fetch metadata in batch or per file',
-                                       description='One subcommand required: fetch_by_path | fetch_by_metadata',
+    subparsers = parser.add_subparsers(title='Strategies for fetching iRODS metadata: in batch, per file or given by the user as input',
+                                       description='One subcommand required: fetch_by_path | fetch_by_metadata | given_by_user',
                                        help='Sub-commands',
                                        dest='metadata_fetching_strategy'
     )
