@@ -56,9 +56,10 @@ class ComparableMetadata:
             ent_type_diffs = {}
             for id_type, values1 in metadata_entities1.items():
                 if values1 and metadata_entities2.get(id_type):
-                    value2 = metadata_entities2.get(id_type)
-                    if values1 != value2:
-                        ent_type_diffs[id_type] = set(values1).difference(set(value2))
+                    values1 = [str(v) for v in values1]
+                    values2 = [str(v) for v in metadata_entities2.get(id_type)]
+                    if values1 != values2:
+                        ent_type_diffs[id_type] = set(values1).difference(set(values2))
             if ent_type_diffs:
                 differences[entity_type] = ent_type_diffs
         return differences

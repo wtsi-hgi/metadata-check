@@ -21,7 +21,7 @@ This file has been created on May 20, 2016.
 
 
 class CHECK_NAMES:
-    check_replica_checksum = "Check that the replica checksum field is valid"
+    check_replica_checksum_valid = "Check that the replica checksum field is valid"
     check_replica_number = "Check that the replica number is valid"
     check_attribute_count = "Check attribute count is as configured"
     check_all_replicas_same_checksum = "Check all replicas have the same checksum"
@@ -41,8 +41,6 @@ class CHECK_NAMES:
     check_all_irods_ids_found_in_seqscape = "Check all iRODS ids were found in seqscape"
     check_for_duplicated_ids_within_seqscape = "Check for duplicated ids within seqscape"
     check_entities_in_seqscape_fetched_by_different_ids = "Check entities fetched by different types of ids from Seqscape"
-    check_samples_belong_to_same_study = "Check the samples belong to the same studies in iRODS and Seqscape"
-    check_that_the_given_study_is_associated_with_the_known_samples = "Check that given the study in iRODS, the samples in iRODS are associated with it"
     check_studies_in_irods_with_studies_in_seqscape_fetched_by_samples = "Check that the studies in iRODS are the same as the studies fetched from Seqscape when querying by sample"
     check_samples_in_irods_same_as_samples_fetched_by_study_from_seqscape = "Check that the samples in iRODS are the same as the samples fetched by study from Seqscape"
     check_for_samples_in_more_studies = "Check if a set of samples is in more studies within Seqscape"
@@ -59,6 +57,6 @@ class CHECK_NAMES:
 
     @classmethod
     def get_only_mandatory_check_names(cls):
-        optional_checks = [cls.check_desired_reference, cls.check_attribute_count, ]
+        optional_checks = ['check_desired_reference', 'check_attribute_count' ]
         checks = dir(CHECK_NAMES)
         return [getattr(CHECK_NAMES, c) for c in checks if c.startswith('check_') and not c in optional_checks]

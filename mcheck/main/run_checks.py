@@ -20,6 +20,7 @@ This file has been created on May 05, 2016.
 """
 
 import os
+import sys
 from collections import defaultdict
 from sys import stdin
 
@@ -29,10 +30,11 @@ from mcheck.main.input_parser import parse_data_objects
 from mcheck.results.results_processing import CheckResultsProcessing
 from mcheck.checks.mchecks_by_comparison import FileMetadataComparison
 from mcheck.checks.mchecks_by_type import MetadataSelfChecks
-
+from mcheck.results.checks_results import RESULT
 
 def process_output(issues_by_path, output_dir):
     for fpath, file_issues in issues_by_path.items():
+        print("FPATH: %s" % fpath)
         sorted_by_exec = CheckResultsProcessing.group_by_executed(file_issues)
         print("Sorted by exec = True:")
         for check in  sorted_by_exec[True]:
@@ -46,7 +48,13 @@ def process_output(issues_by_path, output_dir):
             print("SEVERITY: %s" % severity)
             utils.write_list_to_file(fpaths_issues, os.path.join(output_dir, severity + '.txt'))
             for issue in fpaths_issues:
-                print("issue: %s" % (issue))
+                if issue.result == RESULT.FAILURE:
+                    print("issue: %s" % (issue))
+
+        print("FAILED-------------")
+        sorted_by_result = CheckResultsProcessing.group_by_result(file_issues)
+        for issue in sorted_by_result[RESULT.FAILURE]:
+            print(issue)
 
 
 def convert_args_to_search_criteria(filter_by_npg_qc=None, filter_by_target=None, filter_by_file_types=None,
@@ -72,7 +80,7 @@ def convert_args_to_search_criteria(filter_by_npg_qc=None, filter_by_target=None
 
     # Parse input parameters and obtain files+metadata:
     if match_study_name:
-        search_criteria(('study', match_study_name))
+        search_criteria.append(('study', match_study_name))
     elif match_study_acc_nr:
         search_criteria.append(('study_accession_number', match_study_acc_nr))
     elif match_study_id:
@@ -166,6 +174,13 @@ def main():
         os.makedirs(args.output_dir)
 
     process_output(issues_dict, args.output_dir)
+
+    for fpath, check_res in issues_dict.items():
+        for result in check_res:
+            if result.result == RESULT.FAILURE:
+                sys.exit(1)
+
+
 
 
 if __name__ == '__main__':

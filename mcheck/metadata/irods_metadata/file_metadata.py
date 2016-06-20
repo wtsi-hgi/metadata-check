@@ -128,7 +128,8 @@ class IrodsRawFileMetadata:
         def check_all_replicas_have_same_checksum(cls, replicas) -> List[CheckResult]:
             result = CheckResult(check_name=CHECK_NAMES.check_all_replicas_same_checksum, severity=SEVERITY.IMPORTANT)
             if not replicas:
-                result.result = RESULT.FAILURE
+                result.executed = False
+                result.error_message = ["No replicas to compare with."]
                 return [result]
             first_replica = replicas[0]
             error_message = ''
@@ -144,6 +145,7 @@ class IrodsRawFileMetadata:
         def check_more_than_one_replicas(cls, replicas) -> List[CheckResult]:
             check_result = CheckResult(check_name=CHECK_NAMES.check_more_than_one_replica, severity=SEVERITY.WARNING)
             if len(replicas) <= 1:
+                check_result.executed = True
                 check_result.result = RESULT.FAILURE
                 check_result.error_message="File has " + str(len(replicas)) + " replicas"
             return check_result
@@ -195,6 +197,7 @@ class IrodsRawFileMetadata:
                     break
             if not found_ss_gr_acl:
                 check_result_ss_group_present.result = RESULT.FAILURE
+                check_result_read_permission.result = RESULT.FAILURE
             return [check_result_ss_group_present, check_result_read_permission]
 
         @classmethod
@@ -334,21 +337,22 @@ class IrodsSeqFileMetadata(ComparableMetadata):
 
     def check_npg_qc_field(self):
         check_npg_qc = CheckResult(check_name=CHECK_NAMES.check_npg_qc_field)
-        if not self.get_npg_qc():
+        npg_qc = self.get_npg_qc()
+        if self.get_npg_qc() is None:
             check_npg_qc.result = RESULT.FAILURE
             check_npg_qc.error_message = "Missing npg_qc field"
-        if not self._is_npg_qc_valid(self.get_npg_qc()):
-            check_npg_qc.error_message="This npg_qc field looks invalid: " + str(self.get_npg_qc())
+        elif not self._is_npg_qc_valid(self.get_npg_qc()):
+            check_npg_qc.error_message = "This npg_qc field looks invalid: " + str(self.get_npg_qc())
             check_npg_qc.result = RESULT.FAILURE
         return check_npg_qc
 
     def check_target_field(self):
         check_target_field = CheckResult(check_name=CHECK_NAMES.check_target_field)
-        if not self.get_target():
+        if self.get_target() is None:
             check_target_field.result = RESULT.FAILURE
             check_target_field.error_message = "Missing target field"
-        if not self._is_target_valid(self.get_target()):
-            check_target_field.error_message="The target field looks invalid: " + str(self.get_target())
+        elif not self._is_target_valid(self.get_target()):
+            check_target_field.error_message = "The target field looks invalid: " + str(self.get_target())
             check_target_field.result = RESULT.FAILURE
         return check_target_field
 
@@ -356,7 +360,6 @@ class IrodsSeqFileMetadata(ComparableMetadata):
         check_result = CheckResult(check_name=CHECK_NAMES.check_checksum_in_metadata_present, severity=SEVERITY.WARNING)
         if self.checksum_in_meta:
             check_result.result = RESULT.SUCCESS
-
         else:
             check_result.result = RESULT.FAILURE
             check_result.error_message = "Missing checksum from metadata"
@@ -378,11 +381,21 @@ class IrodsSeqFileMetadata(ComparableMetadata):
 
 
     def checksum_comparison_check(self):
-        check_result = CheckResult(check_name=CHECK_NAMES.check_by_comparison_checksum_in_meta_with_checksum_at_upload)
-        if self.checksum_in_meta != self.checksum_at_upload:
+        check_result = CheckResult(check_name=CHECK_NAMES.check_by_comparison_checksum_in_meta_with_checksum_at_upload,
+                                   error_message=[])
+        impossible_to_exec = False
+        if not self.checksum_at_upload:
+            check_result.executed = False
+            check_result.error_message.append("Missing ichecksum result.")
+            impossible_to_exec = True
+        if not self.checksum_in_meta:
+            check_result.executed = False
+            check_result.error_message.append("Missing checksum from metadata")
+            impossible_to_exec = True
+        if not impossible_to_exec and self.checksum_in_meta != self.checksum_at_upload:
             check_result.result = RESULT.FAILURE
             check_result.error_message = "The checksum in metadata = %s different than checksum at upload = %s" % \
-                                         (self.checksum_at_upload, self.checksum_in_meta)
+                                         (self.checksum_in_meta, self.checksum_at_upload)
         return check_result
 
 
@@ -420,7 +433,7 @@ class IrodsSeqFileMetadata(ComparableMetadata):
             check_result.error_message.append("Missing desired reference parameter")
         if not check_result.error_message:
             for ref in self.get_references():
-                if ref.find(desired_ref_name) == -1:
+                if ref.lower().find(desired_ref_name.lower()) == -1:
                     check_result.result = RESULT.FAILURE
                     check_result.error_message = "The desired reference is: %s is different thant the metadata reference: %s" % (desired_ref_name, ref)
         return check_result

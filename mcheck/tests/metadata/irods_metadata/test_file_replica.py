@@ -64,11 +64,15 @@ class TestIrodsFileReplica(unittest.TestCase):
         self.assertTrue(IrodsFileReplica._is_checksum_valid(checksum))
 
     def test_is_checksum_valid_3(self):
-        checksum = None
+        checksum = 1
         self.assertRaises(TypeError, IrodsFileReplica._is_checksum_valid, checksum)
 
     def test_is_checksum_valid_4(self):
         checksum = '12.24'
+        self.assertFalse(IrodsFileReplica._is_checksum_valid(checksum))
+
+    def test_is_checksum_valid_5(self):
+        checksum = None
         self.assertFalse(IrodsFileReplica._is_checksum_valid(checksum))
 
 
@@ -77,7 +81,7 @@ class TestIrodsFileReplica(unittest.TestCase):
         actual_result = replica.validate_fields()
         self.assertEqual(len(actual_result), 2)
         for result in actual_result:
-            if result.check_name == CHECK_NAMES.check_replica_checksum:
+            if result.check_name == CHECK_NAMES.check_replica_checksum_valid:
                 self.assertEqual(result.result, RESULT.SUCCESS)
             if result.check_name == CHECK_NAMES.check_replica_number:
                 self.assertEqual(result.result, RESULT.SUCCESS)
@@ -87,7 +91,7 @@ class TestIrodsFileReplica(unittest.TestCase):
         actual_result = replica.validate_fields()
         self.assertEqual(2, len(actual_result))
         for result in actual_result:
-            if result.check_name == CHECK_NAMES.check_replica_checksum:
+            if result.check_name == CHECK_NAMES.check_replica_checksum_valid:
                 self.assertEqual(result.result, RESULT.SUCCESS)
             if result.check_name == CHECK_NAMES.check_replica_number:
                 self.assertEqual(result.result, RESULT.FAILURE)
