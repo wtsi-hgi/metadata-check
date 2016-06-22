@@ -43,8 +43,8 @@ class IrodsRawFileMetadata(ComparableMetadata):
     def __init__(self, fpath: str, file_replicas: List[IrodsFileReplica]=None,
                  acls: List[IrodsACL]=None, avus: Dict[str, Set]=None):
         self.fpath = fpath
-        self.file_replicas = file_replicas
-        self.acls = acls
+        self.file_replicas = file_replicas if file_replicas else []
+        self.acls = acls if acls else []
         self.avus = avus if avus else defaultdict(set)
 
     @classmethod
@@ -159,6 +159,11 @@ class IrodsRawFileMetadata(ComparableMetadata):
             """
             #problems = []
             check_result = CheckResult(check_name=CHECK_NAMES.check_no_public_acl, severity=SEVERITY.WARNING)
+            if not acls:
+                check_result.result = None
+                check_result.executed = False
+                check_result.error_message = "There are no ACLs."
+                return check_result
             for acl in acls:
                 if acl.provides_public_access():
                     check_result.error_message = error_message="The following ACL was found: " + str(acl)
@@ -269,7 +274,7 @@ class IrodsSeqFileMetadata(IrodsRawFileMetadata):
 
     @classmethod
     def from_baton_wrapper(cls, data_object):
-        irods_metadata = cls.from_baton_wrapper(data_object)
+        irods_metadata = super().from_baton_wrapper(data_object)
         irods_metadata.checksum_at_upload = {replica.checksum for replica in irods_metadata.file_replicas}
         cls.set_attributes_from_avus(irods_metadata)
         return irods_metadata
@@ -440,6 +445,7 @@ class IrodsSeqFileMetadata(IrodsRawFileMetadata):
 
     def check_metadata(self, desired_reference: str=None) -> List[CheckResult]:
         check_results = []
+        check_results.extend(super().check_metadata())
         check_results.extend(self.validate_fields())
         if desired_reference:
             check_results.append(self.check_reference(desired_reference))
@@ -447,7 +453,7 @@ class IrodsSeqFileMetadata(IrodsRawFileMetadata):
 
 
     def __str__(self):
-        return "Fpath = " + str(self.fpath) + ", fname = " + str(self.fname) + ", samples = " + str(self.samples) + \
+        return "Fpath = " + str(self.fpath) + ", samples = " + str(self.samples) + \
                ", libraries = " + str(self.libraries) + ", studies = " + str(self.studies) + ", md5 = " + str(self.checksum_in_meta) \
                + ", ichksum_md5 = " + str(self.checksum_at_upload) + ", reference = " + str(self.get_reference_paths())
 
