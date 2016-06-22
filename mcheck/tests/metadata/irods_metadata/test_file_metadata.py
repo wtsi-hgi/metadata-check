@@ -36,17 +36,15 @@ from mcheck.metadata.common.attribute_count import AttributeCount
 
 class TestRawFileMetadataFromBaton(unittest.TestCase):
 
-    def test_from_baton_wrapper_fname_and_path_1(self):
+    def test_from_baton_wrapper_fpath_1(self):
         data_obj = baton_models.DataObject(path='/seq/123/123.bam.bai')
         raw_meta = IrodsRawFileMetadata.from_baton_wrapper(data_obj)
-        self.assertEqual(raw_meta.fname, '123.bam.bai')
-        self.assertEqual(raw_meta.dir_path, '/seq/123')
+        self.assertEqual(raw_meta.fpath, '/seq/123/123.bam.bai')
 
-    def test_from_baton_wrapper_fname_and_path_2(self):
+    def test_from_baton_wrapper_fpath_2(self):
         data_obj = baton_models.DataObject(path='/humgen/projects/helic/123.bam')
         raw_meta = IrodsRawFileMetadata.from_baton_wrapper(data_obj)
-        self.assertEqual(raw_meta.fname, '123.bam')
-        self.assertEqual(raw_meta.dir_path, '/humgen/projects/helic')
+        self.assertEqual(raw_meta.fpath, '/humgen/projects/helic/123.bam')
 
     def test_from_baton_wrapper_file_replicas(self):
         replicas = [
@@ -77,8 +75,7 @@ class TestRawFileMetadataFromBaton(unittest.TestCase):
         metadata = baton_coll.IrodsMetadata({'study': set(['BLUEPRINT'])})
         data_obj = baton_models.DataObject(path='/somepath/file.txt', access_controls=acl, metadata=metadata, replicas=replicas)
         raw_meta = IrodsRawFileMetadata.from_baton_wrapper(data_obj)
-        self.assertEqual(raw_meta.fname, 'file.txt')
-        self.assertEqual(raw_meta.dir_path, '/somepath')
+        self.assertEqual(raw_meta.fpath, '/somepath/file.txt')
         self.assertEqual(len(raw_meta.file_replicas), 2)
         self.assertEqual(len(raw_meta.acls), 1)
         self.assertEqual(raw_meta.acls[0].zone, 'humgen')
@@ -92,8 +89,7 @@ class TestRawFileMetadataFromBaton(unittest.TestCase):
             baton_models.DataObjectReplica(number=1, checksum="123abc", host='hgi-dev', resource_name='irods-s1', up_to_date=True)]
         data_obj = baton_models.DataObject(path='/somepath/file.txt', access_controls=acl, replicas=replicas)
         raw_meta = IrodsRawFileMetadata.from_baton_wrapper(data_obj)
-        self.assertEqual(raw_meta.fname, 'file.txt')
-        self.assertEqual(raw_meta.dir_path, '/somepath')
+        self.assertEqual(raw_meta.fpath, '/somepath/file.txt')
         self.assertEqual(len(raw_meta.file_replicas), 1)
         self.assertEqual(len(raw_meta.acls), 1)
         self.assertEqual(raw_meta.acls[0].zone, 'humgen')
@@ -142,7 +138,7 @@ class TestIrodsRawFileMetadata(unittest.TestCase):
 
 
     def test_set_attributes_from_avus_1(self):
-        raw_meta = IrodsRawFileMetadata(fname='123.bam', dir_path='/seq/123')
+        raw_meta = IrodsRawFileMetadata(fpath='/seq/123/123.bam')
         raw_meta.init_avus_from_avu_tuples([MetaAVU(attribute='sample', value='ABCSample'),
                                            MetaAVU(attribute='library', value='lib')])
         expected_result = {'sample': set(['ABCSample']), 'library': set(['lib'])}
@@ -150,7 +146,7 @@ class TestIrodsRawFileMetadata(unittest.TestCase):
 
 
     def test_get_values_for_attribute_1(self):
-        raw_meta = IrodsRawFileMetadata(fname='123.bam', dir_path='/seq/123')
+        raw_meta = IrodsRawFileMetadata(fpath='/seq/123/123.bam')
         raw_meta.init_avus_from_avu_tuples([MetaAVU(attribute='sample', value='ABCSample'),
                                            MetaAVU(attribute='library', value='lib')])
         expected_result = set(['ABCSample'])
@@ -158,7 +154,7 @@ class TestIrodsRawFileMetadata(unittest.TestCase):
         self.assertSetEqual(actual_result, expected_result)
 
     def test_get_values_for_attribute_2(self):
-        raw_meta = IrodsRawFileMetadata(fname='123.bam', dir_path='/seq/123')
+        raw_meta = IrodsRawFileMetadata(fpath='/seq/123/123.bam')
         raw_meta.init_avus_from_avu_tuples([MetaAVU(attribute='sample', value='ABCSample'),
                                            MetaAVU(attribute='sample', value='123')])
         expected_result = set(['ABCSample', '123'])
@@ -166,7 +162,7 @@ class TestIrodsRawFileMetadata(unittest.TestCase):
         self.assertSetEqual(actual_result, expected_result)
 
     def test_get_values_for_attribute_3(self):
-        raw_meta = IrodsRawFileMetadata(fname='123.bam', dir_path='/seq/123')
+        raw_meta = IrodsRawFileMetadata(fpath='/seq/123/123.bam')
         raw_meta.init_avus_from_avu_tuples([MetaAVU(attribute='sample', value='ABCSample'),
                                            MetaAVU(attribute='library', value='lib')])
         expected_result = set()
@@ -175,14 +171,14 @@ class TestIrodsRawFileMetadata(unittest.TestCase):
 
 
     def test_get_values_count_for_attribute_1(self):
-        raw_meta = IrodsRawFileMetadata(fname='123.bam', dir_path='/seq/123')
+        raw_meta = IrodsRawFileMetadata(fpath='/seq/123/123.bam')
         raw_meta.init_avus_from_avu_tuples([MetaAVU(attribute='sample', value='ABCSample')])
         expected_result = 1
         actual_result = raw_meta.get_values_count_for_attribute('sample')
         self.assertEqual(expected_result, actual_result)
 
     def test_get_values_count_for_attribute_2(self):
-        raw_meta = IrodsRawFileMetadata(fname='123.bam', dir_path='/seq/123')
+        raw_meta = IrodsRawFileMetadata(fpath='/seq/123/123.bam')
         expected_result = 0
         actual_result = raw_meta.get_values_count_for_attribute('sample')
         self.assertEqual(expected_result, actual_result)
@@ -221,14 +217,14 @@ class TestIrodsRawFileMetadata(unittest.TestCase):
         self.assertRaises(ValueError, IrodsRawFileMetadata._is_true_comparison, 1, 3, '#')
 
     def test_check_attribute_count_equal_ok(self):
-        raw_metadata = IrodsRawFileMetadata(fname='myfile', dir_path='/home')
+        raw_metadata = IrodsRawFileMetadata(fpath='/home/myfile')
         raw_metadata.avus = {'sample': set(['1', '2', '3'])}
         result = raw_metadata.check_attribute_count([AttributeCount(attribute='sample', count=3, operator='=')])
         #self.assertEqual(len(result), 1)
         self.assertEqual(result.result, RESULT.SUCCESS)
 
     def test_check_attribute_count_greater_ok(self):
-        raw_metadata = IrodsRawFileMetadata(fname='myfile', dir_path='/home')
+        raw_metadata = IrodsRawFileMetadata(fpath='/home/myfile')
         raw_metadata.avus = {'sample': set(['1', '2', '3'])}
         result = raw_metadata.check_attribute_count([AttributeCount(attribute='sample', count=2, operator='>')])
         #self.assertEqual(len(result), 1)
@@ -236,14 +232,14 @@ class TestIrodsRawFileMetadata(unittest.TestCase):
 
 
     def test_check_attribute_count_less_wrong(self):
-        raw_metadata = IrodsRawFileMetadata(fname='myfile', dir_path='/home')
+        raw_metadata = IrodsRawFileMetadata(fpath='/home/myfile')
         raw_metadata.avus = {'sample': set(['1', '2', '3'])}
         result = raw_metadata.check_attribute_count([AttributeCount(attribute='sample', count=2, operator='<')])
         #self.assertEqual(len(result), 1)
         self.assertEqual(result.result, RESULT.FAILURE)
 
     def test_check_attribute_count_when_not_found(self):
-        raw_metadata = IrodsRawFileMetadata(fname='myfile', dir_path='/home')
+        raw_metadata = IrodsRawFileMetadata(fpath='/home/myfile')
         raw_metadata.avus = {'sample': set(['1', '2', '3'])}
         result = raw_metadata.check_attribute_count([AttributeCount(attribute='study', count=2, operator='>')])
         #self.assertEqual(len(result), 1)
@@ -289,7 +285,7 @@ class TestIrodsRawFileMetadata(unittest.TestCase):
     def test_check_has_read_permission_ss_group_no_ss_grp(self):
         acl1 = IrodsACL(access_group='public#seq', zone='seq', permission='read')
         acl2 = IrodsACL(access_group='npg#seq', zone='seq', permission='own')
-        raw_metadata = IrodsRawFileMetadata(fname='myfile', dir_path='/home', acls=[acl1, acl2])
+        raw_metadata = IrodsRawFileMetadata(fpath='/home/myfile', acls=[acl1, acl2])
         result = raw_metadata.ACLsChecks.check_read_permission_exists_for_ss_group(raw_metadata.acls)
         self.assertEqual(len(result), 2)
         for check_res in result:
@@ -408,14 +404,14 @@ class TestIrodsSeqFileMetadata(unittest.TestCase):
         self.assertFalse(IrodsSeqFileMetadata._is_npg_qc_valid(npq_qc))
 
     def test_checksum_comparison_check_ok(self):
-        irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam', fname='1234_5#6.bam',
+        irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam',
                                               checksum_in_meta='123abc', checksum_at_upload='123abc')
         result = irods_metadata.checksum_comparison_check()
         self.assertEqual(result.result, RESULT.SUCCESS)
 
 
     def test_checksum_comparison_check_when_not_ok(self):
-        irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam', fname='1234_5#6.bam',
+        irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam',
                                               checksum_in_meta='123abc123', checksum_at_upload='123abc')
         result = irods_metadata.checksum_comparison_check()
         self.assertEqual(result.result, RESULT.FAILURE)
@@ -439,7 +435,7 @@ class TestIrodsSeqFileMetadata(unittest.TestCase):
 
 
     def test_validate_fields_1(self):
-        irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam', fname='1234_5#6.bam',
+        irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam',
                                               checksum_in_meta='aaAAA')
         result = irods_metadata.validate_fields()
         self.assertEqual(len(result), 5)
@@ -451,7 +447,7 @@ class TestIrodsSeqFileMetadata(unittest.TestCase):
                 self.assertEqual(check_res.result, RESULT.FAILURE)
 
     def test_validate_fields_2(self):
-        irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam', fname='1234_5#6.bam')
+        irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam')
         result = irods_metadata.validate_fields()
         print("RESUlts: %s" % result)
         self.assertEqual(len(result), 5)
@@ -459,7 +455,7 @@ class TestIrodsSeqFileMetadata(unittest.TestCase):
             self.assertEqual(check_res.result, RESULT.FAILURE)
 
     def test_validate_fields_when_wrong_npg_qc(self):
-        irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam', fname='1234_5#6.bam', npg_qc='aaAAA',
+        irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam', npg_qc='aaAAA',
                                               checksum_at_upload='123abc', checksum_in_meta='123abc')
         result = irods_metadata.validate_fields()
         self.assertEqual(len(result), 5)
@@ -490,20 +486,20 @@ class TestIrodsSeqFileMetadata(unittest.TestCase):
 
 
     def test_check_reference_when_ok(self):
-        irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.cram', fname='1234_5#6.cram',
+        irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.cram',
                                               references=['/lustre/hs37d5.fa'])
         result = irods_metadata.check_reference('hs37d5')
         self.assertEqual(result.result, RESULT.SUCCESS)
 
     def test_check_reference_2(self):
-        irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.cram', fname='1234_5#6.cram',
+        irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.cram',
                                               references=['/lustre/hs37d5.fa'])
         result = irods_metadata.check_reference('')
         self.assertEqual(result.result, None)
         self.assertEqual(result.executed, False)
 
     def test_check_reference_3(self):
-        irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.cram', fname='1234_5#6.cram')
+        irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.cram')
         result = irods_metadata.check_reference('')
         self.assertEqual(result.result, None)
         self.assertEqual(result.executed, False)
@@ -512,7 +508,7 @@ class TestIrodsSeqFileMetadata(unittest.TestCase):
         replicas = [
             baton_models.DataObjectReplica(number=1, checksum="123abc"),
             baton_models.DataObjectReplica(number=2, checksum="abc"),]
-        raw_metadata = IrodsRawFileMetadata(fname='123.bam', dir_path='/seq', file_replicas=replicas)
+        raw_metadata = IrodsRawFileMetadata(fpath='/seq/123.bam', file_replicas=replicas)
         seq_metadata = IrodsSeqFileMetadata.from_raw_metadata(raw_metadata)
         expected = {'name': set(), 'accession_number': set(), 'internal_id': set()}
         self.assertEqual(seq_metadata.samples, expected)
@@ -524,7 +520,7 @@ class TestIrodsSeqFileMetadata(unittest.TestCase):
         replicas = [
             baton_models.DataObjectReplica(number=1, checksum="123abc"),
             baton_models.DataObjectReplica(number=2, checksum="abc")]
-        raw_metadata = IrodsRawFileMetadata(fname='123.cram', dir_path='/seq/123', file_replicas=replicas)
+        raw_metadata = IrodsRawFileMetadata(fpath='/seq/123/123.cram', file_replicas=replicas)
         result = raw_metadata.ReplicasChecks.check_more_than_one_replicas(raw_metadata.file_replicas)
         self.assertEqual(result.result, RESULT.SUCCESS)
         #self.assertEqual(result[0].result, RESULT.SUCCESS)
@@ -532,35 +528,35 @@ class TestIrodsSeqFileMetadata(unittest.TestCase):
     def test_check_more_than_one_replicas_when_1_replica(self):
         replicas = [
             baton_models.DataObjectReplica(number=1, checksum="123abc")]
-        raw_metadata = IrodsRawFileMetadata(fname='123.cram', dir_path='/seq/123', file_replicas=replicas)
+        raw_metadata = IrodsRawFileMetadata(fpath='/seq/123/123.cram', file_replicas=replicas)
         result = raw_metadata.ReplicasChecks.check_more_than_one_replicas(raw_metadata.file_replicas)
         #self.assertEqual(len(result), 1)
         self.assertEqual(result.result, RESULT.FAILURE)
 
     def test_check_more_than_one_replicas_when_no_replica(self):
         replicas = []
-        raw_metadata = IrodsRawFileMetadata(fname='123.cram', dir_path='/seq/123', file_replicas=replicas)
+        raw_metadata = IrodsRawFileMetadata(fpath='/seq/123/123.cram', file_replicas=replicas)
         result = raw_metadata.ReplicasChecks.check_more_than_one_replicas(raw_metadata.file_replicas)
         #self.assertEqual(len(result), 1)
         self.assertEqual(result.result, RESULT.FAILURE)
 
     def test_check_checksum_at_upload_present_when_present(self):
-        irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam', fname='1234_5#6.bam', checksum_at_upload='aaa')
+        irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam', checksum_at_upload='aaa')
         result = irods_metadata.check_checksum_at_upload_present()
         self.assertEqual(result.result, RESULT.SUCCESS)
 
     def test_check_checksum_at_upload_present_when_absent(self):
-        irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam', fname='1234_5#6.bam')
+        irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam')
         result = irods_metadata.check_checksum_at_upload_present()
         self.assertEqual(result.result, RESULT.FAILURE)
 
     def test_check_checksum_in_meta_present(self):
-        irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam', fname='1234_5#6.bam', checksum_in_meta='aaa')
+        irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam', checksum_in_meta='aaa')
         result = irods_metadata.check_checksum_in_meta_present()
         self.assertEqual(result.result, RESULT.SUCCESS)
 
     def test_check_checksum_in_meta_present_when_absent(self):
-        irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam', fname='1234_5#6.bam')
+        irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam')
         result = irods_metadata.check_checksum_in_meta_present()
         self.assertEqual(result.result, RESULT.FAILURE)
 

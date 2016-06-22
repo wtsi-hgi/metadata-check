@@ -40,10 +40,9 @@ from mcheck.check_names import CHECK_NAMES
 
 
 class IrodsRawFileMetadata(ComparableMetadata):
-    def __init__(self, fname: str, dir_path: str, file_replicas: List[IrodsFileReplica]=None,
+    def __init__(self, fpath: str, file_replicas: List[IrodsFileReplica]=None,
                  acls: List[IrodsACL]=None, avus: Dict[str, Set]=None):
-        self.fname = fname
-        self.dir_path = dir_path
+        self.fpath = fpath
         self.file_replicas = file_replicas
         self.acls = acls
         self.avus = avus if avus else defaultdict(set)
@@ -61,7 +60,7 @@ class IrodsRawFileMetadata(ComparableMetadata):
             acls = [IrodsACL.from_baton_wrapper(ac_item) for ac_item in data_object.access_controls if ac_item]
         else:
             acls = []
-        raw_meta = IrodsRawFileMetadata(fname=fname, dir_path=collection, file_replicas=replicas, acls=acls)
+        raw_meta = IrodsRawFileMetadata(fpath=os.path.join(collection, fname), file_replicas=replicas, acls=acls)
         if data_object.metadata:
             raw_meta.avus = dict(data_object.metadata)
         return raw_meta
@@ -225,11 +224,10 @@ class IrodsRawFileMetadata(ComparableMetadata):
 
 
 class IrodsSeqFileMetadata(IrodsRawFileMetadata):
-    def __init__(self, fpath: str, fname:str=None, samples=None, libraries=None, studies=None,
+    def __init__(self, fpath: str, samples=None, libraries=None, studies=None,
                  checksum_in_meta:str=None, checksum_at_upload:str=None, references:List[str]=None,
                  run_ids:List[str]=None, lane_ids:List[str]=None, npg_qc:str=None, target:str=None, file_replicas=None,
                  acls=None):
-        self.fname = fname
         self.fpath = fpath
         self.samples = samples
         self.libraries = libraries
@@ -241,6 +239,8 @@ class IrodsSeqFileMetadata(IrodsRawFileMetadata):
         self.lane_ids = lane_ids if lane_ids else []
         self._npg_qc_values = [npg_qc]
         self._target_values = [target]
+        super().__init__(fpath=fpath, file_replicas=file_replicas, acls=acls)
+
 
 
 
@@ -252,10 +252,10 @@ class IrodsSeqFileMetadata(IrodsRawFileMetadata):
         :param raw_metadata:
         :return:
         """
-        fpath = os.path.join(raw_metadata.dir_path, raw_metadata.fname)
+        fpath = raw_metadata.fpath
         irods_metadata = IrodsSeqFileMetadata(fpath)
-        irods_metadata.fname = raw_metadata.fname
-        irods_metadata.dir_path = raw_metadata.dir_path
+        irods_metadata.fpath = raw_metadata.fpath
+        #irods_metadata.dir_path = raw_metadata.dir_path
         irods_metadata.checksum_at_upload = {replica.checksum for replica in raw_metadata.file_replicas}
 
         # Sample
