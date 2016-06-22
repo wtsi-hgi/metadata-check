@@ -114,12 +114,12 @@ class IrodsRawFileMetadata(ComparableMetadata):
             return check_results
 
         @classmethod
-        def check_all_replicas_have_same_checksum(cls, replicas) -> List[CheckResult]:
+        def check_all_replicas_have_same_checksum(cls, replicas) -> CheckResult:
             result = CheckResult(check_name=CHECK_NAMES.check_all_replicas_same_checksum, severity=SEVERITY.IMPORTANT)
             if not replicas:
                 result.executed = False
                 result.error_message = ["No replicas to compare with."]
-                return [result]
+                return result
             first_replica = replicas[0]
             error_message = ''
             for replica in replicas:
@@ -131,7 +131,7 @@ class IrodsRawFileMetadata(ComparableMetadata):
             return result
 
         @classmethod
-        def check_more_than_one_replicas(cls, replicas) -> List[CheckResult]:
+        def check_more_than_one_replicas(cls, replicas) -> CheckResult:
             check_result = CheckResult(check_name=CHECK_NAMES.check_more_than_one_replica, severity=SEVERITY.WARNING)
             if len(replicas) <= 1:
                 check_result.executed = True
