@@ -13,6 +13,12 @@ IRODS_METADATA_TARGET_PROPERTY = "target"
 IRODS_ORIGINAL_REPLICA_NUMBER = 0
 
 
+def convert_json_to_baton_objs(data_objects_as_json_string: str) -> List[IrodsSeqFileMetadata]:
+    decoded = json.loads(data_objects_as_json_string, cls=DataObjectJSONDecoder)
+    if isinstance(decoded, DataObject):
+        decoded = [decoded]
+    return decoded
+
 def parse_data_objects(data_objects_as_json_string: str) -> List[IrodsSeqFileMetadata]:
     """
     Parses the given data object(s) in the JSON serialised form, defined by baton, into representations that are used
