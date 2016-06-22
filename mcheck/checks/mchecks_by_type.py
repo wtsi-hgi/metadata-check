@@ -51,12 +51,12 @@ class MetadataSelfChecks:
             sys.exit(1)
         else:
             for raw_metadata in all_files_metadata_objs_list:
-                fpath = os.path.join(raw_metadata.dir_path, raw_metadata.fname)
+                #fpath = os.path.join(raw_metadata.dir_path, raw_metadata.fname)
                 check_results = raw_metadata.check_metadata()
                 file_metadata = IrodsSeqFileMetadata.from_raw_metadata(raw_metadata)
                 check_results.extend(file_metadata.check_metadata(reference))
-                irods_metadata_by_path[fpath] = file_metadata
-                issues_dict[fpath].extend(check_results)
+                irods_metadata_by_path[raw_metadata.fpath] = file_metadata
+                issues_dict[raw_metadata.fpath].extend(check_results)
             return irods_metadata_by_path
 
 
