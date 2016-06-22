@@ -41,12 +41,12 @@ from mcheck.check_names import CHECK_NAMES
 
 class IrodsRawFileMetadata(ComparableMetadata):
     def __init__(self, fname: str, dir_path: str, file_replicas: List[IrodsFileReplica]=None,
-                 acls: List[IrodsACL]=None):
+                 acls: List[IrodsACL]=None, avus: Dict[str, Set]=None):
         self.fname = fname
         self.dir_path = dir_path
         self.file_replicas = file_replicas
         self.acls = acls
-        self._attributes = defaultdict(set)
+        self.avus = avus if avus else defaultdict(set)
 
 
     @staticmethod
@@ -63,32 +63,22 @@ class IrodsRawFileMetadata(ComparableMetadata):
             acls = []
         raw_meta = IrodsRawFileMetadata(fname=fname, dir_path=collection, file_replicas=replicas, acls=acls)
         if data_object.metadata:
-            raw_meta.set_attributes_from_dict(dict(data_object.metadata))
+            raw_meta.avus = dict(data_object.metadata)
         return raw_meta
 
 
-    def set_attributes_from_avus(self, avus_list: Set[avu.MetaAVU]) -> None:
-        self._attributes = IrodsRawFileMetadata._group_avus_per_attribute(avus_list)
-
-    def set_attributes_from_dict(self, avus_dict: Dict[str, Set[str]]) -> None:
-        if not type(avus_dict) == dict:
-            raise TypeError("The avus_dict parameter of set_attributes_from_dict must be a dict, and is a {0}".format(
-                str(type(avus_dict))))
-        self._attributes = avus_dict
+    def init_avus_from_avu_tuples(self, avus_list: Set[avu.MetaAVU]) -> None:
+        avus_grouped = defaultdict(set)
+        for avu in avus_list:
+            avus_grouped[avu.attribute].add(avu.value)
+        self.avus = avus_grouped
 
     def get_values_for_attribute(self, attribute: str) -> list:
-        found = self._attributes.get(attribute)
+        found = self.avus.get(attribute)
         return found if found else set()
 
     def get_values_count_for_attribute(self, attribute: str) -> int:
         return len(self.get_values_for_attribute(attribute))
-
-    @staticmethod
-    def _group_avus_per_attribute(avus: List[avu.MetaAVU]) -> Dict[str, Set[str]]:
-        avus_grouped = defaultdict(set)
-        for avu in avus:
-            avus_grouped[avu.attribute].add(avu.value)
-        return avus_grouped
 
     @staticmethod
     def _is_true_comparison(left_operand: int, right_operand: int, operator: str) -> bool:
@@ -228,13 +218,13 @@ class IrodsRawFileMetadata(ComparableMetadata):
 
     def __str__(self):
         return "Location: dir_path = " + str(self.dir_path) + ", fname = " + str(self.fname) + ", AVUS: " + \
-               str(self._attributes) + ", replicas = " + str(self.file_replicas) + ", acls = " + str(self.acls)
+               str(self.avus) + ", replicas = " + str(self.file_replicas) + ", acls = " + str(self.acls)
 
     def __repr__(self):
         return self.__str__()
 
 
-class IrodsSeqFileMetadata(ComparableMetadata):
+class IrodsSeqFileMetadata(IrodsRawFileMetadata):
     def __init__(self, fpath: str, fname:str=None, samples=None, libraries=None, studies=None,
                  checksum_in_meta:str=None, checksum_at_upload:str=None, references:List[str]=None,
                  run_ids:List[str]=None, lane_ids:List[str]=None, npg_qc:str=None, target:str=None, file_replicas=None,
@@ -251,6 +241,7 @@ class IrodsSeqFileMetadata(ComparableMetadata):
         self.lane_ids = lane_ids if lane_ids else []
         self._npg_qc_values = [npg_qc]
         self._target_values = [target]
+
 
 
     @classmethod

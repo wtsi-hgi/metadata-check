@@ -121,37 +121,37 @@ class TestRawFileMetadataFromBaton(unittest.TestCase):
 
 class TestIrodsRawFileMetadata(unittest.TestCase):
 
-    def test_group_avus_per_attribute_1(self):
-        avus_list = [MetaAVU(attribute='sample', value='ABCSample'), MetaAVU(attribute='sample', value='DEFGSample')]
-        expected_result = {'sample': set(['ABCSample', 'DEFGSample'])}
-        actual_result = IrodsRawFileMetadata._group_avus_per_attribute(avus_list)
-        self.assertDictEqual(expected_result, actual_result)
-
-    def test_group_avus_per_attribute_2(self):
-        avus_list = [MetaAVU(attribute='sample', value='ABCSample'), MetaAVU(attribute='library', value='lib')]
-        expected_result = {'sample': set(['ABCSample']), 'library': set(['lib'])}
-        actual_result = IrodsRawFileMetadata._group_avus_per_attribute(avus_list)
-        self.assertDictEqual(expected_result, actual_result)
-
-    def test_group_avus_per_attribute_3(self):
-        avus_list = [MetaAVU(attribute='sample', value='ABCSample'), MetaAVU(attribute='library', value='lib'),
-                     MetaAVU(attribute='sample', value='XYZSample')]
-        expected_result = {'sample': set(['ABCSample', 'XYZSample']), 'library': set(['lib'])}
-        actual_result = IrodsRawFileMetadata._group_avus_per_attribute(avus_list)
-        self.assertDictEqual(expected_result, actual_result)
+    # def test_group_avus_per_attribute_1(self):
+    #     avus_list = [MetaAVU(attribute='sample', value='ABCSample'), MetaAVU(attribute='sample', value='DEFGSample')]
+    #     expected_result = {'sample': set(['ABCSample', 'DEFGSample'])}
+    #     actual_result = IrodsRawFileMetadata._group_avus_per_attribute(avus_list)
+    #     self.assertDictEqual(expected_result, actual_result)
+    #
+    # def test_group_avus_per_attribute_2(self):
+    #     avus_list = [MetaAVU(attribute='sample', value='ABCSample'), MetaAVU(attribute='library', value='lib')]
+    #     expected_result = {'sample': set(['ABCSample']), 'library': set(['lib'])}
+    #     actual_result = IrodsRawFileMetadata._group_avus_per_attribute(avus_list)
+    #     self.assertDictEqual(expected_result, actual_result)
+    #
+    # def test_group_avus_per_attribute_3(self):
+    #     avus_list = [MetaAVU(attribute='sample', value='ABCSample'), MetaAVU(attribute='library', value='lib'),
+    #                  MetaAVU(attribute='sample', value='XYZSample')]
+    #     expected_result = {'sample': set(['ABCSample', 'XYZSample']), 'library': set(['lib'])}
+    #     actual_result = IrodsRawFileMetadata._group_avus_per_attribute(avus_list)
+    #     self.assertDictEqual(expected_result, actual_result)
 
 
     def test_set_attributes_from_avus_1(self):
         raw_meta = IrodsRawFileMetadata(fname='123.bam', dir_path='/seq/123')
-        raw_meta.set_attributes_from_avus([MetaAVU(attribute='sample', value='ABCSample'),
+        raw_meta.init_avus_from_avu_tuples([MetaAVU(attribute='sample', value='ABCSample'),
                                            MetaAVU(attribute='library', value='lib')])
         expected_result = {'sample': set(['ABCSample']), 'library': set(['lib'])}
-        self.assertDictEqual(raw_meta._attributes, expected_result)
+        self.assertDictEqual(raw_meta.avus, expected_result)
 
 
     def test_get_values_for_attribute_1(self):
         raw_meta = IrodsRawFileMetadata(fname='123.bam', dir_path='/seq/123')
-        raw_meta.set_attributes_from_avus([MetaAVU(attribute='sample', value='ABCSample'),
+        raw_meta.init_avus_from_avu_tuples([MetaAVU(attribute='sample', value='ABCSample'),
                                            MetaAVU(attribute='library', value='lib')])
         expected_result = set(['ABCSample'])
         actual_result = raw_meta.get_values_for_attribute('sample')
@@ -159,7 +159,7 @@ class TestIrodsRawFileMetadata(unittest.TestCase):
 
     def test_get_values_for_attribute_2(self):
         raw_meta = IrodsRawFileMetadata(fname='123.bam', dir_path='/seq/123')
-        raw_meta.set_attributes_from_avus([MetaAVU(attribute='sample', value='ABCSample'),
+        raw_meta.init_avus_from_avu_tuples([MetaAVU(attribute='sample', value='ABCSample'),
                                            MetaAVU(attribute='sample', value='123')])
         expected_result = set(['ABCSample', '123'])
         actual_result = raw_meta.get_values_for_attribute('sample')
@@ -167,7 +167,7 @@ class TestIrodsRawFileMetadata(unittest.TestCase):
 
     def test_get_values_for_attribute_3(self):
         raw_meta = IrodsRawFileMetadata(fname='123.bam', dir_path='/seq/123')
-        raw_meta.set_attributes_from_avus([MetaAVU(attribute='sample', value='ABCSample'),
+        raw_meta.init_avus_from_avu_tuples([MetaAVU(attribute='sample', value='ABCSample'),
                                            MetaAVU(attribute='library', value='lib')])
         expected_result = set()
         actual_result = raw_meta.get_values_for_attribute('study')
@@ -176,7 +176,7 @@ class TestIrodsRawFileMetadata(unittest.TestCase):
 
     def test_get_values_count_for_attribute_1(self):
         raw_meta = IrodsRawFileMetadata(fname='123.bam', dir_path='/seq/123')
-        raw_meta.set_attributes_from_avus([MetaAVU(attribute='sample', value='ABCSample')])
+        raw_meta.init_avus_from_avu_tuples([MetaAVU(attribute='sample', value='ABCSample')])
         expected_result = 1
         actual_result = raw_meta.get_values_count_for_attribute('sample')
         self.assertEqual(expected_result, actual_result)
@@ -222,14 +222,14 @@ class TestIrodsRawFileMetadata(unittest.TestCase):
 
     def test_check_attribute_count_equal_ok(self):
         raw_metadata = IrodsRawFileMetadata(fname='myfile', dir_path='/home')
-        raw_metadata.set_attributes_from_dict({'sample': set(['1', '2', '3'])})
+        raw_metadata.avus = {'sample': set(['1', '2', '3'])}
         result = raw_metadata.check_attribute_count([AttributeCount(attribute='sample', count=3, operator='=')])
         #self.assertEqual(len(result), 1)
         self.assertEqual(result.result, RESULT.SUCCESS)
 
     def test_check_attribute_count_greater_ok(self):
         raw_metadata = IrodsRawFileMetadata(fname='myfile', dir_path='/home')
-        raw_metadata.set_attributes_from_dict({'sample': set(['1', '2', '3'])})
+        raw_metadata.avus = {'sample': set(['1', '2', '3'])}
         result = raw_metadata.check_attribute_count([AttributeCount(attribute='sample', count=2, operator='>')])
         #self.assertEqual(len(result), 1)
         self.assertEqual(result.result, RESULT.SUCCESS)
@@ -237,14 +237,14 @@ class TestIrodsRawFileMetadata(unittest.TestCase):
 
     def test_check_attribute_count_less_wrong(self):
         raw_metadata = IrodsRawFileMetadata(fname='myfile', dir_path='/home')
-        raw_metadata.set_attributes_from_dict({'sample': set(['1', '2', '3'])})
+        raw_metadata.avus = {'sample': set(['1', '2', '3'])}
         result = raw_metadata.check_attribute_count([AttributeCount(attribute='sample', count=2, operator='<')])
         #self.assertEqual(len(result), 1)
         self.assertEqual(result.result, RESULT.FAILURE)
 
     def test_check_attribute_count_when_not_found(self):
         raw_metadata = IrodsRawFileMetadata(fname='myfile', dir_path='/home')
-        raw_metadata.set_attributes_from_dict({'sample': set(['1', '2', '3'])})
+        raw_metadata.avus = {'sample': set(['1', '2', '3'])}
         result = raw_metadata.check_attribute_count([AttributeCount(attribute='study', count=2, operator='>')])
         #self.assertEqual(len(result), 1)
         self.assertEqual(result.result, RESULT.FAILURE)
