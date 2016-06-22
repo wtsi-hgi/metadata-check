@@ -47,9 +47,8 @@ class IrodsRawFileMetadata(ComparableMetadata):
         self.acls = acls
         self.avus = avus if avus else defaultdict(set)
 
-
-    @staticmethod
-    def from_baton_wrapper(data_object):
+    @classmethod
+    def from_baton_wrapper(cls, data_object):
         fname = data_object.get_name()
         collection = data_object.get_collection_path()
         if data_object.replicas is not None:
@@ -60,7 +59,7 @@ class IrodsRawFileMetadata(ComparableMetadata):
             acls = [IrodsACL.from_baton_wrapper(ac_item) for ac_item in data_object.access_controls if ac_item]
         else:
             acls = []
-        raw_meta = IrodsRawFileMetadata(fpath=os.path.join(collection, fname), file_replicas=replicas, acls=acls)
+        raw_meta = cls(fpath=os.path.join(collection, fname), file_replicas=replicas, acls=acls)
         if data_object.metadata:
             raw_meta.avus = dict(data_object.metadata)
         return raw_meta
@@ -228,7 +227,6 @@ class IrodsSeqFileMetadata(IrodsRawFileMetadata):
                  checksum_in_meta:str=None, checksum_at_upload:str=None, references:List[str]=None,
                  run_ids:List[str]=None, lane_ids:List[str]=None, npg_qc:str=None, target:str=None, file_replicas=None,
                  acls=None):
-        self.fpath = fpath
         self.samples = samples
         self.libraries = libraries
         self.studies = studies
@@ -241,7 +239,40 @@ class IrodsSeqFileMetadata(IrodsRawFileMetadata):
         self._target_values = [target]
         super().__init__(fpath=fpath, file_replicas=file_replicas, acls=acls)
 
+    @classmethod
+    def set_attributes_from_avus(cls, obj_to_set):
+        # Sample
+        obj_to_set.samples = {'name': obj_to_set.get_values_for_attribute('sample'),
+                                  'accession_number': obj_to_set.get_values_for_attribute(
+                                      'sample_accession_number'),
+                                  'internal_id': obj_to_set.get_values_for_attribute('sample_id')
+        }
 
+        # Library: Hack to correct NPG mistakes (they submit under library names the actual library ids)
+        library_identifiers = obj_to_set.get_values_for_attribute('library')\
+
+        library_identifiers = library_identifiers.union(obj_to_set.get_values_for_attribute('library_id'))
+        obj_to_set.libraries = EntityIdentifier.separate_identifiers_by_type(library_identifiers)
+
+        # Study:
+        obj_to_set.studies = {'name': obj_to_set.get_values_for_attribute('study'),
+                                  'accession_number': obj_to_set.get_values_for_attribute(
+                                      'study_accession_number'),
+                                  'internal_id': obj_to_set.get_values_for_attribute('study_id')
+        }
+
+        obj_to_set.checksum_in_meta = obj_to_set.get_values_for_attribute('md5')
+        obj_to_set._reference_paths = obj_to_set.get_values_for_attribute('reference')
+        obj_to_set._npg_qc_values = obj_to_set.get_values_for_attribute('manual_qc')
+        obj_to_set._target_values = obj_to_set.get_values_for_attribute('target')
+        return obj_to_set
+
+    @classmethod
+    def from_baton_wrapper(cls, data_object):
+        irods_metadata = cls.from_baton_wrapper(data_object)
+        irods_metadata.checksum_at_upload = {replica.checksum for replica in irods_metadata.file_replicas}
+        cls.set_attributes_from_avus(irods_metadata)
+        return irods_metadata
 
 
     @classmethod
@@ -255,33 +286,8 @@ class IrodsSeqFileMetadata(IrodsRawFileMetadata):
         fpath = raw_metadata.fpath
         irods_metadata = IrodsSeqFileMetadata(fpath)
         irods_metadata.fpath = raw_metadata.fpath
-        #irods_metadata.dir_path = raw_metadata.dir_path
         irods_metadata.checksum_at_upload = {replica.checksum for replica in raw_metadata.file_replicas}
-
-        # Sample
-        irods_metadata.samples = {'name': raw_metadata.get_values_for_attribute('sample'),
-                                  'accession_number': raw_metadata.get_values_for_attribute(
-                                      'sample_accession_number'),
-                                  'internal_id': raw_metadata.get_values_for_attribute('sample_id')
-        }
-
-        # Library: Hack to correct NPG mistakes (they submit under library names the actual library ids)
-        library_identifiers = raw_metadata.get_values_for_attribute('library')\
-
-        library_identifiers = library_identifiers.union(raw_metadata.get_values_for_attribute('library_id'))
-        irods_metadata.libraries = EntityIdentifier.separate_identifiers_by_type(library_identifiers)
-
-        # Study:
-        irods_metadata.studies = {'name': raw_metadata.get_values_for_attribute('study'),
-                                  'accession_number': raw_metadata.get_values_for_attribute(
-                                      'study_accession_number'),
-                                  'internal_id': raw_metadata.get_values_for_attribute('study_id')
-        }
-
-        irods_metadata.checksum_in_meta = raw_metadata.get_values_for_attribute('md5')
-        irods_metadata._reference_paths = raw_metadata.get_values_for_attribute('reference')
-        irods_metadata._npg_qc_values = raw_metadata.get_values_for_attribute('manual_qc')
-        irods_metadata._target_values = raw_metadata.get_values_for_attribute('target')
+        cls.set_attributes_from_avus(irods_metadata)
         return irods_metadata
 
 
