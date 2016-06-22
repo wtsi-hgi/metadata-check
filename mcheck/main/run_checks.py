@@ -26,15 +26,20 @@ from sys import stdin
 
 from mcheck.com import utils
 from mcheck.main import arg_parser
-from mcheck.main.input_parser import parse_data_objects
+from mcheck.main.input_parser import convert_json_to_baton_objs #parse_data_objects,
 from mcheck.results.results_processing import CheckResultsProcessing
 from mcheck.checks.mchecks_by_comparison import FileMetadataComparison
 from mcheck.checks.mchecks_by_type import MetadataSelfChecks
 from mcheck.results.checks_results import RESULT
+from mcheck.metadata.irods_metadata.file_metadata import IrodsSeqFileMetadata
 
 def process_output(issues_by_path, output_dir):
     for fpath, file_issues in issues_by_path.items():
-        print("FPATH: %s" % fpath)
+        print("FPATH: %s and type of issues container: %s" % (fpath, str(type(file_issues))))
+        for issue in file_issues:
+            print("Issue: %s" % issue)
+
+
         sorted_by_exec = CheckResultsProcessing.group_by_executed(file_issues)
         print("Sorted by exec = True:")
         for check in  sorted_by_exec[True]:
@@ -46,7 +51,7 @@ def process_output(issues_by_path, output_dir):
         print("SORTED BY SEVERITY::::::::::")
         for severity, fpaths_issues in sorted_by_severity.items():
             print("SEVERITY: %s" % severity)
-            utils.write_list_to_file(fpaths_issues, os.path.join(output_dir, severity + '.txt'))
+            utils.write_list_to_file(fpaths_issues, os.path.join(output_dir, severity + '.txt'), fpath)
             for issue in fpaths_issues:
                 if issue.result == RESULT.FAILURE:
                     print("issue: %s" % (issue))
@@ -100,11 +105,19 @@ def check_metadata(metadata_fetching_strategy, reference=None, filter_npg_qc=Non
         irods_metadata_dict = MetadataSelfChecks.fetch_and_preprocess_irods_metadata_by_metadata(search_criteria, irods_zone, issues_dict, reference)
     elif metadata_fetching_strategy == 'fetch_by_path':
         irods_metadata_dict = MetadataSelfChecks.fetch_and_preprocess_irods_metadata_by_path(irods_fpaths, issues_dict, reference)
+    else:
+        input_data_objects = stdin.read()
+        baton_data_objects_list = convert_json_to_baton_objs(input_data_objects)
+        irods_metadata_dict = {}
+        for data_obj in baton_data_objects_list:
+            #print("Data object type %s and value before passing it to IrodsSeqFile %s" % (str(type(data_obj)), str(data_obj)))
+            meta = IrodsSeqFileMetadata.from_baton_wrapper(data_obj)
+            irods_metadata_dict[meta.fpath] = meta
 
     # TODO: add the option of getting the metadata as a json from the command line...
-    if ("some_setting_indicates_read_from_stdin" or "read_from_stdin_is_standard") and False:
-        input_data_objects = stdin.read()
-        irods_seq_file_metadata_collection = parse_data_objects(input_data_objects)
+    # if ("some_setting_indicates_read_from_stdin" or "read_from_stdin_is_standard") and False:
+    #     input_data_objects = stdin.read()
+    #     irods_seq_file_metadata_collection = parse_data_objects(input_data_objects)
 
     # Getting HEADER metadata:
     header_metadata_dict = MetadataSelfChecks.fetch_and_preprocess_header_metadata(irods_metadata_dict.keys(), issues_dict)

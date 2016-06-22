@@ -22,6 +22,7 @@ This file has been created on Jun 23, 2015.
 import argparse
 # from . import constants
 # import argcomplete
+import sys
 from mcheck.main import constants
 
 
@@ -93,7 +94,10 @@ def parse_args():
     subparsers = parser.add_subparsers(title='Strategies for fetching iRODS metadata: in batch, per file or given by the user as input',
                                        description='One subcommand required: fetch_by_path | fetch_by_metadata | given_by_user',
                                        help='Sub-commands',
-                                       dest='metadata_fetching_strategy'
+                                       #choices=['fetch_by_path', 'fetch_by_metadata', 'given_by_user'],
+                                       dest='metadata_fetching_strategy',
+                                       #default=sys.stdin
+
     )
     subparsers.required = True
 
@@ -103,6 +107,9 @@ def parse_args():
                                   nargs='+',
                                   help='List of file paths in iRODS'
     )
+    parser_give_by_user = subparsers.add_parser('given_by_user', parents=[parent_parser],
+                                                help="The metadata is given as baton output via stdin and should be a list of data objects with metadata.")
+
 
     parser_all_files_metacheck = subparsers.add_parser('fetch_by_metadata', parents=[parent_parser],
                                                        help='Fetch the files matching the meta query')
