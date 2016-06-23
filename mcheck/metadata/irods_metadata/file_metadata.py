@@ -220,7 +220,7 @@ class IrodsRawFileMetadata(ComparableMetadata):
         return check_results
 
     def __str__(self):
-        return "Location: dir_path = " + str(self.dir_path) + ", fname = " + str(self.fname) + ", AVUS: " + \
+        return "Location: fpath = " + str(self.fpath) + ", AVUS: " + \
                str(self.avus) + ", replicas = " + str(self.file_replicas) + ", acls = " + str(self.acls)
 
     def __repr__(self):
