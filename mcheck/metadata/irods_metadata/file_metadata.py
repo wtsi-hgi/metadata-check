@@ -119,6 +119,7 @@ class IrodsRawFileMetadata(ComparableMetadata):
             if not replicas:
                 result.executed = False
                 result.error_message = ["No replicas to compare with."]
+                result.result = None
                 return result
             first_replica = replicas[0]
             error_message = ''
@@ -182,16 +183,21 @@ class IrodsRawFileMetadata(ComparableMetadata):
             check_result_read_permission = CheckResult(check_name=CHECK_NAMES.check_ss_irods_group_read_permission, severity=SEVERITY.WARNING)
             check_result_ss_group_present = CheckResult(check_name=CHECK_NAMES.check_there_is_ss_irods_group, severity=SEVERITY.WARNING)
             found_ss_gr_acl = False
+            print("ACLs -- before looping:::::::::: %s" % acls)
             for acl in acls:
+                print("Checking if ACL provides access for ss grp..............................%s" % acl)
                 if acl.provides_access_for_ss_group():
+                    print("ACLs Provide access for ss group...................................%s" % acl)
                     found_ss_gr_acl = True
                     if not acl.provides_read_permission():
+                        print("Doesn't provide read access: %s" % acl)
                         check_result_read_permission.result = RESULT.FAILURE
                         check_result_read_permission.error_message="ACL found: " + str(acl)
                     break
             if not found_ss_gr_acl:
                 check_result_ss_group_present.result = RESULT.FAILURE
                 check_result_read_permission.result = RESULT.FAILURE
+            print("Read perm on ss -- before returning ----------- %s AND \n %s" % (check_result_read_permission, check_result_ss_group_present))
             return [check_result_ss_group_present, check_result_read_permission]
 
         @classmethod
@@ -391,13 +397,15 @@ class IrodsSeqFileMetadata(IrodsRawFileMetadata):
         impossible_to_exec = False
         if not self.checksum_at_upload:
             check_result.executed = False
+            check_result.result = None
             check_result.error_message.append("Missing ichecksum result.")
             impossible_to_exec = True
         if not self.checksum_in_meta:
             check_result.executed = False
+            check_result.result = None
             check_result.error_message.append("Missing checksum from metadata")
             impossible_to_exec = True
-        if not impossible_to_exec and self.checksum_in_meta != self.checksum_at_upload:
+        if not impossible_to_exec:
             check_result.result = RESULT.FAILURE
             check_result.error_message = "The checksum in metadata = %s different than checksum at upload = %s" % \
                                          (self.checksum_in_meta, self.checksum_at_upload)
@@ -413,9 +421,14 @@ class IrodsSeqFileMetadata(IrodsRawFileMetadata):
         check_results.append(meta_checksum_check)
 
         if upl_checksum_check.result == RESULT.SUCCESS and meta_checksum_check.result == RESULT.SUCCESS:
-            check_results.append(self.checksum_comparison_check())
+            if self.checksum_in_meta != self.checksum_at_upload:
+                comp_check = CheckResult(check_name=CHECK_NAMES.check_by_comparison_checksum_in_meta_with_checksum_at_upload)
+                comp_check.result = RESULT.FAILURE
+                comp_check.error_message = "The checksum in metadata = %s different than checksum at upload = %s" % \
+                                         (self.checksum_in_meta, self.checksum_at_upload)
+                check_results.append(comp_check)
         else:
-            check_results.append(CheckResult(CHECK_NAMES.check_by_comparison_checksum_in_meta_with_checksum_at_upload, executed=False, result=RESULT.FAILURE))
+            check_results.append(CheckResult(CHECK_NAMES.check_by_comparison_checksum_in_meta_with_checksum_at_upload, executed=False, result=None))
 
         check_npg_qc = self.check_npg_qc_field()
         check_results.append(check_npg_qc)

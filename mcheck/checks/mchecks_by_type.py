@@ -50,9 +50,11 @@ class MetadataSelfChecks:
             print(e)
             sys.exit(1)
         else:
+            print("From fetch -- what I fetched: %s" % all_files_metadata_objs_list)
             for raw_metadata in all_files_metadata_objs_list:
                 #fpath = os.path.join(raw_metadata.dir_path, raw_metadata.fname)
-                check_results = raw_metadata.check_metadata()
+                #check_results = raw_metadata.check_metadata()
+                check_results = []
                 file_metadata = IrodsSeqFileMetadata.from_raw_metadata(raw_metadata)
                 check_results.extend(file_metadata.check_metadata(reference))
                 irods_metadata_by_path[raw_metadata.fpath] = file_metadata
@@ -78,7 +80,8 @@ class MetadataSelfChecks:
                 print(e)
                 sys.exit(1)
             else:
-                check_results = raw_metadata.check_metadata()
+                #check_results = raw_metadata.check_metadata()
+                check_results = []
                 file_metadata = IrodsSeqFileMetadata.from_raw_metadata(raw_metadata)
                 check_results.extend(file_metadata.check_metadata(reference))
                 irods_metadata_dict[fpath] = file_metadata
