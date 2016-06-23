@@ -53,6 +53,11 @@ class FileMetadataComparison:
                 i_vs_h_check_result.executed = False
                 h_vs_i_check_result.executed = False
 
+                i_vs_h_check_result.result = None
+                h_vs_i_check_result.result = None
+                h_vs_ss_check_result.result = None
+                ss_vs_h_check_result.result = None
+
                 ss_vs_h_check_result.error_message.append(error_msg)
                 h_vs_ss_check_result.error_message.append(error_msg)
                 i_vs_h_check_result.error_message.append(error_msg)
@@ -62,6 +67,8 @@ class FileMetadataComparison:
                     error_msg = "No seqscape metadata"
                     ss_vs_h_check_result.executed = False
                     h_vs_ss_check_result.executed = False
+                    ss_vs_h_check_result.result = None
+                    h_vs_ss_check_result.result = None
                     ss_vs_h_check_result.error_message.append(error_msg)
                     h_vs_ss_check_result.error_message.append(error_msg)
                 else:
@@ -78,6 +85,10 @@ class FileMetadataComparison:
 
                 if not irods_metadata.has_metadata():
                     error_msg = "No irods metadata"
+                    i_vs_h_check_result.executed = False
+                    h_vs_i_check_result.executed = False
+                    i_vs_h_check_result.result = None
+                    h_vs_i_check_result.result = None
                     i_vs_h_check_result.error_message.append(error_msg)
                     h_vs_i_check_result.error_message.append(error_msg)
                 else:
