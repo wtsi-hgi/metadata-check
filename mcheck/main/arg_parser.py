@@ -136,8 +136,8 @@ def parse_args():
     filter_grp = parser_all_files_metacheck.add_argument_group('FILTERS', 'Which files to include based on metadata filters')
     filter_grp.add_argument('--file_types',
                             choices=['bam', 'cram'],
-                            default=['bam', 'cram'],
-                            nargs='*',
+                            default='cram',
+                            #nargs='*',
                             required=False,
                             dest='file_types',
                             #action='append',

@@ -37,7 +37,7 @@ def process_output(issues_by_path, output_dir):
     for fpath, file_issues in issues_by_path.items():
         print("FPATH: %s and type of issues container: %s" % (fpath, str(type(file_issues))))
         for issue in file_issues:
-            print("Issue: %s" % issue)
+            print("Issue - type: %s and value: %s" % (str(type(issue)), issue))
 
 
         sorted_by_exec = CheckResultsProcessing.group_by_executed(file_issues)
@@ -78,8 +78,8 @@ def convert_args_to_search_criteria(filter_by_npg_qc=None, filter_by_target=None
             "WARNING! You haven't filtered by target field. You will get back the report from checking all the data, "
             "no matter if it is the target or not, hence possibly also PhiX")
     if filter_by_file_types:
-        for ftype in filter_by_file_types:
-            search_criteria.append(('type', ftype))
+        #for ftype in filter_by_file_types:
+        search_criteria.append(('type', filter_by_file_types))
     else:
         print("WARNING! You haven't filtered on file type.")
 
@@ -103,6 +103,7 @@ def check_metadata(metadata_fetching_strategy, reference=None, filter_npg_qc=Non
                                                           study_acc_nr, study_internal_id)
 
         irods_metadata_dict = MetadataSelfChecks.fetch_and_preprocess_irods_metadata_by_metadata(search_criteria, irods_zone, issues_dict, reference)
+        #print("Irods metadata dict: %s" % irods_metadata_dict)
     elif metadata_fetching_strategy == 'fetch_by_path':
         irods_metadata_dict = MetadataSelfChecks.fetch_and_preprocess_irods_metadata_by_path(irods_fpaths, issues_dict, reference)
     else:
@@ -110,7 +111,6 @@ def check_metadata(metadata_fetching_strategy, reference=None, filter_npg_qc=Non
         baton_data_objects_list = convert_json_to_baton_objs(input_data_objects)
         irods_metadata_dict = {}
         for data_obj in baton_data_objects_list:
-            #print("Data object type %s and value before passing it to IrodsSeqFile %s" % (str(type(data_obj)), str(data_obj)))
             meta = IrodsSeqFileMetadata.from_baton_wrapper(data_obj)
             irods_metadata_dict[meta.fpath] = meta
 
