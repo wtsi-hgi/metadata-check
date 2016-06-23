@@ -25,7 +25,7 @@ from mcheck.main import run_checks
 class ArgsConvertTests(unittest.TestCase):
 
     def test_convert_args_to_search_criteria_1(self):
-        result = set(run_checks.convert_args_to_search_criteria(filter_by_npg_qc='1', filter_by_target='1', filter_by_file_types=['cram']))
+        result = set(run_checks.convert_args_to_search_criteria(filter_by_npg_qc='1', filter_by_target='1', filter_by_file_types='cram'))
         expected = set([('manual_qc', '1'), ('target', '1'), ('type', 'cram')])
         self.assertSetEqual(result, expected)
 
@@ -43,6 +43,6 @@ class ArgsConvertTests(unittest.TestCase):
 
 
     def test_convert_args_to_search_criteria_3(self):
-        result = set(run_checks.convert_args_to_search_criteria(filter_by_file_types=['bam', 'cram']))
-        expected = set([('type', 'bam'), ('type', 'cram')])
+        result = set(run_checks.convert_args_to_search_criteria(filter_by_file_types='bam'))
+        expected = set([('type', 'bam')])
         self.assertSetEqual(result, expected)
