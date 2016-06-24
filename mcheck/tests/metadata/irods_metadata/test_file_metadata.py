@@ -403,65 +403,34 @@ class TestIrodsSeqFileMetadata(unittest.TestCase):
         npq_qc = True
         self.assertFalse(IrodsSeqFileMetadata._is_npg_qc_valid(npq_qc))
 
-    def test_checksum_comparison_check_ok(self):
-        irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam',
-                                              checksum_in_meta='123abc', checksum_at_upload='123abc')
-        result = irods_metadata.checksum_comparison_check()
-        self.assertEqual(result.result, RESULT.SUCCESS)
-
-
-    def test_checksum_comparison_check_when_not_ok(self):
-        irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam',
-                                              checksum_in_meta='123abc123', checksum_at_upload='123abc')
-        result = irods_metadata.checksum_comparison_check()
-        self.assertEqual(result.result, RESULT.FAILURE)
-
-    # impossible to run
-    # def test_check_checksum_calculated_vs_metadata_3(self):
-    #     irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam', fname='1234_5#6.bam',
-    #                                           checksum_in_meta='123abc')
-    #     result = irods_metadata.checksum_comparison_check()
-    #     self.assertEqual(len(result), 2)
-    #     self.assertEqual(result[0].result, RESULT.FAILURE)
-
-        #self.assertEqual(result[0].executed, False)
-#
-#     def test_check_checksum_calculated_vs_metadata_4(self):
-#         irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam', fname='1234_5#6.bam',
-#                                               checksum_at_upload='123abc')
-#         result = irods_metadata.validate_checksums()
-#         self.assertEqual(len(result), 2)
-#         #self.assertEqual(result[0].executed, False)
-
 
     def test_validate_fields_1(self):
         irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam',
                                               checksum_in_meta='aaAAA')
         result = irods_metadata.validate_fields()
         self.assertEqual(len(result), 5)
-        print("RESULT: %s" % result)
         for check_res in result:
             if check_res.check_name == CHECK_NAMES.check_checksum_in_metadata_present:
                 self.assertEqual(check_res.result, RESULT.SUCCESS)
-            else:
-                self.assertEqual(check_res.result, RESULT.FAILURE)
+            elif check_res.check_name == CHECK_NAMES.check_by_comparison_checksum_in_meta_with_checksum_at_upload:
+                self.assertEqual(check_res.result, None)
 
     def test_validate_fields_2(self):
         irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam')
         result = irods_metadata.validate_fields()
-        print("RESUlts: %s" % result)
         self.assertEqual(len(result), 5)
         for check_res in result:
-            self.assertEqual(check_res.result, RESULT.FAILURE)
+            if check_res.check_name == CHECK_NAMES.check_by_comparison_checksum_in_meta_with_checksum_at_upload:
+                self.assertEqual(check_res.result, None)
+            else:
+                self.assertEqual(check_res.result, RESULT.FAILURE)
 
     def test_validate_fields_when_wrong_npg_qc(self):
         irods_metadata = IrodsSeqFileMetadata(fpath='/seq/1234/1234_5#6.bam', npg_qc='aaAAA',
                                               checksum_at_upload='123abc', checksum_in_meta='123abc')
         result = irods_metadata.validate_fields()
         self.assertEqual(len(result), 5)
-        print("All check results: %s" % result)
         for check_res in result:
-            print("Check result: %s" % check_res)
             if check_res.check_name in [CHECK_NAMES.check_target_field, CHECK_NAMES.check_npg_qc_field]:
                 self.assertEqual(check_res.result, RESULT.FAILURE)
             else:
