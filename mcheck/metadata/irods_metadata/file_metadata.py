@@ -183,21 +183,16 @@ class IrodsRawFileMetadata(ComparableMetadata):
             check_result_read_permission = CheckResult(check_name=CHECK_NAMES.check_ss_irods_group_read_permission, severity=SEVERITY.WARNING)
             check_result_ss_group_present = CheckResult(check_name=CHECK_NAMES.check_there_is_ss_irods_group, severity=SEVERITY.WARNING)
             found_ss_gr_acl = False
-            print("ACLs -- before looping:::::::::: %s" % acls)
             for acl in acls:
-                print("Checking if ACL provides access for ss grp..............................%s" % acl)
                 if acl.provides_access_for_ss_group():
-                    print("ACLs Provide access for ss group...................................%s" % acl)
                     found_ss_gr_acl = True
                     if not acl.provides_read_permission():
-                        print("Doesn't provide read access: %s" % acl)
                         check_result_read_permission.result = RESULT.FAILURE
                         check_result_read_permission.error_message="ACL found: " + str(acl)
                     break
             if not found_ss_gr_acl:
                 check_result_ss_group_present.result = RESULT.FAILURE
                 check_result_read_permission.result = RESULT.FAILURE
-            print("Read perm on ss -- before returning ----------- %s AND \n %s" % (check_result_read_permission, check_result_ss_group_present))
             return [check_result_ss_group_present, check_result_read_permission]
 
         @classmethod
@@ -282,6 +277,9 @@ class IrodsSeqFileMetadata(IrodsRawFileMetadata):
     def from_baton_wrapper(cls, data_object):
         irods_metadata = super().from_baton_wrapper(data_object)
         irods_metadata.checksum_at_upload = {replica.checksum for replica in irods_metadata.file_replicas}
+        irods_metadata.file_replicas = irods_metadata.file_replicas
+        irods_metadata.acls = [IrodsACL.from_baton_wrapper(ac_item) for ac_item in data_object.access_controls if ac_item]
+        irods_metadata.avus = data_object.metadata
         cls.set_attributes_from_avus(irods_metadata)
         return irods_metadata
 
@@ -294,11 +292,13 @@ class IrodsSeqFileMetadata(IrodsRawFileMetadata):
         :param raw_metadata:
         :return:
         """
-        fpath = raw_metadata.fpath
-        irods_metadata = IrodsSeqFileMetadata(fpath)
-        irods_metadata.fpath = raw_metadata.fpath
+        irods_metadata = IrodsSeqFileMetadata(raw_metadata.fpath)
         irods_metadata.checksum_at_upload = {replica.checksum for replica in raw_metadata.file_replicas}
-        cls.set_attributes_from_avus(irods_metadata)
+        irods_metadata.file_replicas = raw_metadata.file_replicas
+        irods_metadata.acls = raw_metadata.acls
+        irods_metadata.avus = raw_metadata.avus
+        irods_metadata = cls.set_attributes_from_avus(irods_metadata)
+
         return irods_metadata
 
 

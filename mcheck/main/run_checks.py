@@ -103,9 +103,10 @@ def check_metadata(metadata_fetching_strategy, reference=None, filter_npg_qc=Non
                                                           study_acc_nr, study_internal_id)
 
         irods_metadata_dict = MetadataSelfChecks.fetch_and_preprocess_irods_metadata_by_metadata(search_criteria, irods_zone, issues_dict, reference)
-        #print("Irods metadata dict: %s" % irods_metadata_dict)
+
     elif metadata_fetching_strategy == 'fetch_by_path':
         irods_metadata_dict = MetadataSelfChecks.fetch_and_preprocess_irods_metadata_by_path(irods_fpaths, issues_dict, reference)
+        print("Irods metadata dict: %s" % irods_metadata_dict)
     else:
         input_data_objects = stdin.read()
         baton_data_objects_list = convert_json_to_baton_objs(input_data_objects)
