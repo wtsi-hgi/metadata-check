@@ -163,7 +163,10 @@ class MetadataFetchedByPathTest(unittest.TestCase):
                     ]:
                     self.assertEqual(check_res.result, RESULT.FAILURE)
                 else:
-                    self.assertEqual(check_res.result, RESULT.SUCCESS)
+                    if check_res.executed:
+                        self.assertEqual(check_res.result, RESULT.SUCCESS)
+                    else:
+                        self.assertIsNone(check_res.result)
 
     def test_when_more_than_1_md5s(self):
         irods_fpath = "/humgen/projects/serapis_staging/test-metacheck/test_more_than_one_md5s.out"
@@ -179,5 +182,8 @@ class MetadataFetchedByPathTest(unittest.TestCase):
                     ]:
                     self.assertEqual(check_res.result, RESULT.FAILURE)
                 else:
-                    self.assertEqual(check_res.result, RESULT.SUCCESS)
+                    if check_res.executed:
+                        self.assertEqual(check_res.result, RESULT.SUCCESS)
+                    else:
+                        self.assertIsNone(check_res.result)
 
