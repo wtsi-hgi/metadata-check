@@ -27,7 +27,10 @@ This file has been created on Nov 27, 2015.
 # -the actual human readable error message string
 #
 # the collecting part just has to understand how to present all those to the user
+from json import JSONEncoder
+
 from hgijson import MappingJSONEncoderClassBuilder, JsonPropertyMapping, MappingJSONDecoderClassBuilder
+from hgijson.json.interfaces import ParsedJSONDecoder
 from mcheck.results.constants import SEVERITY, RESULT
 
 CHECK_NAME_JSON_PROPERTY = "check_name"
@@ -68,8 +71,8 @@ class CheckResult:
 
 # JSON encoder/decoder for `CheckResult`
 _check_result_json_mappings = [
-    JsonPropertyMapping(CHECK_NAME_JSON_PROPERTY, "check_name"),
-    JsonPropertyMapping(SEVERITY_JSON_PROPERTY, "severity", "host", optional=True),
+    JsonPropertyMapping(CHECK_NAME_JSON_PROPERTY, "check_name", "check_name"),
+    JsonPropertyMapping(SEVERITY_JSON_PROPERTY, "severity", optional=True),
     JsonPropertyMapping(ERROR_MESSAGE_JSON_PROPERTY, "error_message", optional=True),
     JsonPropertyMapping(EXECUTED_JSON_PROPERTY, "executed", optional=True),
     JsonPropertyMapping(RESULT_JSON_PROPERTY, "result", optional=True)
