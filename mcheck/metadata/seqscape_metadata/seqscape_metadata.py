@@ -225,7 +225,7 @@ class SeqscapeRawMetadata(object):
 
     def check_studies_fetched_by_samples(self):
         check_results = []
-        same_study_for_samples_check = CheckResult(check_name=CHECK_NAMES.check_studies_in_irods_with_studies_in_seqscape_fetched_by_samples, severity=SEVERITY.WARNING)
+        same_study_for_samples_check = CheckResult(check_name=CHECK_NAMES.check_studies_in_irods_with_studies_in_seqscape_fetched_by_samples)
         check_for_samples_in_more_studies = CheckResult(check_name=CHECK_NAMES.check_for_samples_in_more_studies, severity=SEVERITY.WARNING)
         if not self.get_entities_by_type('sample'):
             same_study_for_samples_check.executed = False
