@@ -4,8 +4,7 @@ import unittest
 from mcheck.results.checks_results import CheckResultJSONEncoder, CheckResult, RESULT_JSON_PROPERTY, \
     EXECUTED_JSON_PROPERTY, ERROR_MESSAGE_JSON_PROPERTY, SEVERITY_JSON_PROPERTY, CHECK_NAME_JSON_PROPERTY, \
     CheckResultJSONDecoder
-from mcheck.results.constants import RESULT
-from mcheck.results.constants import SEVERITY
+from mcheck.results.constants import RESULT, SEVERITY
 
 _NAME = "my_name"
 _SEVERITY = SEVERITY.IMPORTANT
