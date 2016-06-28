@@ -206,7 +206,7 @@ class MetadataFetchedByMetadataTest(unittest.TestCase):
         # check_metadata(metadata_fetching_strategy, reference=None, filter_npg_qc=None, filter_target=None, file_types=None,
         #       study_name=None, study_acc_nr=None, study_internal_id=None, irods_fpaths=None, irods_zone=None):
 
-
+@unittest.skip
 class ComparisonFetchByMetadataVsStreamTest(unittest.TestCase):
 
     # def setUp(self):

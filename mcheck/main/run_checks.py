@@ -33,7 +33,18 @@ from mcheck.checks.mchecks_by_type import MetadataSelfChecks
 from mcheck.results.checks_results import RESULT
 from mcheck.metadata.irods_metadata.file_metadata import IrodsSeqFileMetadata
 
+
 def process_output(issues_by_path, output_dir):
+    for fpath, issues in issues_by_path.items():
+        sorted_by_executed = CheckResultsProcessing.group_by_executed(issues)
+        sorted_by_result = CheckResultsProcessing.group_by_result(sorted_by_executed[True])
+        sorted_by_severity = CheckResultsProcessing.group_by_severity(sorted_by_result[RESULT.FAILURE])
+        for severity, failure_issues in sorted_by_severity.items():
+            utils.write_list_to_file(failure_issues, os.path.join(output_dir, severity+'.txt'), fpath)
+        utils.write_list_to_file(issues, os.path.join(output_dir, 'all_issues.txt'), fpath)
+
+
+def process_output_and_print(issues_by_path, output_dir):
     for fpath, file_issues in issues_by_path.items():
         print("FPATH: %s and type of issues container: %s" % (fpath, str(type(file_issues))))
         for issue in file_issues:
@@ -41,9 +52,9 @@ def process_output(issues_by_path, output_dir):
 
 
         sorted_by_exec = CheckResultsProcessing.group_by_executed(file_issues)
-        print("Sorted by exec = True:")
-        for check in  sorted_by_exec[True]:
-            print(check)
+        # print("Sorted by exec = True:")
+        # for check in  sorted_by_exec[True]:
+        #     print(check)
         print("Sorted by exec = False:")
         for check in sorted_by_exec[False]:
             print(check)
