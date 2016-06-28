@@ -20,9 +20,8 @@ This file has been created on May 05, 2016.
 """
 
 import os
-import sys
 from collections import defaultdict
-from sys import stdin
+from sys import stdin, exit
 
 from mcheck.com import utils
 from mcheck.main import arg_parser
@@ -203,7 +202,7 @@ def main():
     for fpath, check_res in issues_dict.items():
         for result in check_res:
             if result.result == RESULT.FAILURE:
-                sys.exit(1)
+                exit(1)
 
 
 

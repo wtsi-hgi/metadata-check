@@ -206,12 +206,9 @@ class MetadataFetchedByMetadataTest(unittest.TestCase):
         # check_metadata(metadata_fetching_strategy, reference=None, filter_npg_qc=None, filter_target=None, file_types=None,
         #       study_name=None, study_acc_nr=None, study_internal_id=None, irods_fpaths=None, irods_zone=None):
 
-@unittest.skip
+
 class ComparisonFetchByMetadataVsStreamTest(unittest.TestCase):
 
-    # def setUp(self):
-    #     assert run_checks.input is __builtins__.input
-    
     @unittest.skip
     def test_fetch_study_metadata_vs_stream_study_metadata1(self):
         fpath = "/nfs/users/nfs_i/ic4/Projects/python3/meta-check/aadm.json"
@@ -227,12 +224,10 @@ class ComparisonFetchByMetadataVsStreamTest(unittest.TestCase):
                         self.assertEqual(check_res.result, RESULT.SUCCESS)
 
 
-    @patch.object(run_checks, "stdin")
-    def test_fetch_study_metadata_vs_stream_study_metadata(self, stdin):
+    @patch.object(run_checks.stdin, "read", create=True)
+    def test_fetch_study_metadata_vs_stream_study_metadata(self, stdin_read):
         fpath = "/nfs/users/nfs_i/ic4/Projects/python3/meta-check/aadm.json"
-        stdin.read.return_value = open(fpath).read()
-
-        #with patch.object(run_checks, "stdin.read", create=True, return_value=open(fpath).read):
+        stdin_read.return_value = open(fpath).read()
         result = run_checks.check_metadata(metadata_fetching_strategy='given_by_user')
 
         for fpath, check_results in result.items():
