@@ -206,7 +206,32 @@ class MetadataFetchedByMetadataTest(unittest.TestCase):
         # check_metadata(metadata_fetching_strategy, reference=None, filter_npg_qc=None, filter_target=None, file_types=None,
         #       study_name=None, study_acc_nr=None, study_internal_id=None, irods_fpaths=None, irods_zone=None):
 
+@unittest.skip
+class ComparisonFetchByMetadataVsFetchByPathTest(unittest.TestCase):
 
+    def test_same_check_results_by_path_and_by_metadata(self):
+        fpath = '/humgen/projects/serapis_staging/test-metacheck/test_metadata_comparison.cram'
+        check_results_by_metadata = run_checks.check_metadata(metadata_fetching_strategy='fetch_by_metadata', reference='GRCh38', study_name='GDAP_XTEN', irods_zone='humgen')
+        check_results_by_path = run_checks.check_metadata(metadata_fetching_strategy='fetch_by_path', irods_fpaths=[fpath], reference='GRCh38')
+
+        file_check_results_by_meta = check_results_by_metadata[fpath]
+        file_check_results_by_path = check_results_by_path[fpath]
+
+        def find_check_in_list(check_list, check_searched_name):
+            for check in check_list:
+                if check.check_name == check_searched_name:
+                    return check
+            return None
+
+        for check_result in file_check_results_by_meta:
+            check_by_path = find_check_in_list(file_check_results_by_path, check_result.check_name)
+            self.assertEqual(check_result, check_by_path)
+
+        self.assertEqual(len(file_check_results_by_path), len(file_check_results_by_meta))
+
+
+
+@unittest.skip
 class ComparisonFetchByMetadataVsStreamTest(unittest.TestCase):
 
     @unittest.skip
@@ -224,10 +249,10 @@ class ComparisonFetchByMetadataVsStreamTest(unittest.TestCase):
                         self.assertEqual(check_res.result, RESULT.SUCCESS)
 
 
-    @patch.object(run_checks.stdin, "read", create=True)
-    def test_fetch_study_metadata_vs_stream_study_metadata(self, stdin_read):
+    @patch('mcheck.main.run_checks.stdin.read')
+    def test_fetch_study_metadata_vs_stream_study_metadata(self, stdin):
         fpath = "/nfs/users/nfs_i/ic4/Projects/python3/meta-check/aadm.json"
-        stdin_read.return_value = open(fpath).read()
+        stdin.return_value = open(fpath).read()
         result = run_checks.check_metadata(metadata_fetching_strategy='given_by_user')
 
         for fpath, check_results in result.items():
@@ -236,6 +261,8 @@ class ComparisonFetchByMetadataVsStreamTest(unittest.TestCase):
                     self.assertEqual(check_res.result, RESULT.FAILURE)
                 elif check_res.executed:
                     self.assertEqual(check_res.result, RESULT.SUCCESS)
+
+
 
 # class MyTestCase(unittest.TestCase):
 #
