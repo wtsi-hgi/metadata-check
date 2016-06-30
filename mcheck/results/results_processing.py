@@ -21,7 +21,7 @@ This file has been created on May 26, 2016.
 
 from mcheck.results.checks_results import RESULT, SEVERITY
 from mcheck.results.checks_results import CheckResult
-from collections import defaultdict
+from collections import defaultdict, Counter
 
 class CheckResultsProcessing:
 
@@ -61,3 +61,20 @@ class CheckResultsProcessing:
         for result in check_results:
             result_dict[result.result].append(result)
         return result_dict
+
+    @staticmethod
+    def failed_check_results_stats(checks_by_fpath):
+        results_by_check_type_counter = Counter()
+        for fpath, check_results in checks_by_fpath.items():
+            for check in check_results:
+                if check.result == RESULT.FAILURE:
+                    results_by_check_type_counter[check.check_name] += 1
+        return results_by_check_type_counter
+
+
+
+
+    def not_executed_check_results_stats(self):
+        pass
+
+
