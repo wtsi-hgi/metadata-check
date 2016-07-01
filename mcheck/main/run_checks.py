@@ -178,9 +178,8 @@ def main():
 
 
     import json
-    print("JSON ARG: %s" % args.json_output)
     if args.json_output:
-        check_results_json = json.dumps(check_results_dict, CheckResultJSONEncoder)
+        check_results_json = json.dumps(check_results_dict, cls=CheckResultJSONEncoder)
         print(check_results_json)
 
 
