@@ -30,7 +30,7 @@ from mcheck.main.input_parser import parse_data_objects
 from mcheck.results.results_processing import CheckResultsProcessing
 from mcheck.checks.mchecks_by_comparison import FileMetadataComparison
 from mcheck.checks.mchecks_by_type import MetadataSelfChecks
-from mcheck.results.checks_results import RESULT
+from mcheck.results.checks_results import RESULT, CheckResultJSONEncoder
 
 def process_output(issues_by_path, output_dir):
     for fpath, file_issues in issues_by_path.items():
@@ -165,17 +165,26 @@ def main():
     except AttributeError:
         reference = None
 
-    issues_dict = check_metadata(args.metadata_fetching_strategy, reference, filter_npg_qc,
+    check_results_dict = check_metadata(args.metadata_fetching_strategy, reference, filter_npg_qc,
                                  filter_target, file_types, study_name, study_acc_nr,
                                  study_internal_id, fpaths_irods, irods_zone)
 
-    # Outputting the CheckResults:
+
+    # OUTPUTTING THE CHECK RESULTS
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
 
-    process_output(issues_dict, args.output_dir)
+    process_output(check_results_dict, args.output_dir)
 
-    for fpath, check_res in issues_dict.items():
+
+    import json
+    print("JSON ARG: %s" % args.json_output)
+    if args.json_output:
+        check_results_json = json.dumps(check_results_dict, CheckResultJSONEncoder)
+        print(check_results_json)
+
+
+    for fpath, check_res in check_results_dict.items():
         for result in check_res:
             if result.result == RESULT.FAILURE:
                 sys.exit(1)
