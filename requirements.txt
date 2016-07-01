@@ -3,3 +3,4 @@ git+https://github.com/wtsi-hgi/python-baton-wrapper.git@a97af16b1435c8693c48aa6
 hgicommon==1.1.0
 PyHamcrest==1.8.5
 pbr==1.8.1
+hgijson==1.3.1
