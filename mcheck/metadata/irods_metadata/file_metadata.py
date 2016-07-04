@@ -91,13 +91,14 @@ class IrodsRawFileMetadata(ComparableMetadata):
 
     def check_attribute_count(self, avu_counts: List[AttributeCount]) -> List[CheckResult]:
         check_result = CheckResult(check_name=CHECK_NAMES.check_attribute_count,
-                                            severity=SEVERITY.IMPORTANT)
+                                   severity=SEVERITY.IMPORTANT)
         wrong_counts = []
         for avu_count in avu_counts:
             actual_count = self.get_values_count_for_attribute(avu_count.attribute)
             threshold = avu_count.count
             if not self._is_true_comparison(actual_count, threshold, avu_count.operator):
-                wrong_counts.append("attribute %s should appear %s %s times and appears %s" % (avu_count.attribute, avu_count.operator, threshold, actual_count))
+                wrong_counts.append("attribute %s should appear %s %s times and appears %s" % (
+                    avu_count.attribute, avu_count.operator, threshold, actual_count))
         if wrong_counts:
             check_result.result = RESULT.FAILURE
             check_result.error_message = ','.join(wrong_counts)
@@ -126,7 +127,8 @@ class IrodsRawFileMetadata(ComparableMetadata):
             for replica in replicas:
                 if not replica.checksum == first_replica.checksum:
                     result.result = RESULT.FAILURE
-                    error_message += "Replica: " + str(replica) + " has different checksum than replica: " + str(first_replica)
+                    error_message += "Replica: " + str(replica) + " has different checksum than replica: " + str(
+                        first_replica)
             if error_message:
                 result.error_message = error_message
             return result
@@ -137,7 +139,7 @@ class IrodsRawFileMetadata(ComparableMetadata):
             if len(replicas) <= 1:
                 check_result.executed = True
                 check_result.result = RESULT.FAILURE
-                check_result.error_message="File has " + str(len(replicas)) + " replicas"
+                check_result.error_message = "File has " + str(len(replicas)) + " replicas"
             return check_result
 
         # Checking the replicas:
@@ -158,7 +160,7 @@ class IrodsRawFileMetadata(ComparableMetadata):
             :param acls:
             :return:
             """
-            #problems = []
+            # problems = []
             check_result = CheckResult(check_name=CHECK_NAMES.check_no_public_acl, severity=SEVERITY.WARNING)
             if not acls:
                 check_result.result = None
@@ -167,7 +169,7 @@ class IrodsRawFileMetadata(ComparableMetadata):
                 return check_result
             for acl in acls:
                 if acl.provides_public_access():
-                    check_result.error_message = error_message="The following ACL was found: " + str(acl)
+                    check_result.error_message = error_message = "The following ACL was found: " + str(acl)
                     check_result.result = RESULT.FAILURE
                     break
             return check_result
@@ -179,16 +181,18 @@ class IrodsRawFileMetadata(ComparableMetadata):
             :param acls:
             :return:
             """
-            #problems = []
-            check_result_read_permission = CheckResult(check_name=CHECK_NAMES.check_ss_irods_group_read_permission, severity=SEVERITY.WARNING)
-            check_result_ss_group_present = CheckResult(check_name=CHECK_NAMES.check_there_is_ss_irods_group, severity=SEVERITY.WARNING)
+            # problems = []
+            check_result_read_permission = CheckResult(check_name=CHECK_NAMES.check_ss_irods_group_read_permission,
+                                                       severity=SEVERITY.WARNING)
+            check_result_ss_group_present = CheckResult(check_name=CHECK_NAMES.check_there_is_ss_irods_group,
+                                                        severity=SEVERITY.WARNING)
             found_ss_gr_acl = False
             for acl in acls:
                 if acl.provides_access_for_ss_group():
                     found_ss_gr_acl = True
                     if not acl.provides_read_permission():
                         check_result_read_permission.result = RESULT.FAILURE
-                        check_result_read_permission.error_message="ACL found: " + str(acl)
+                        check_result_read_permission.error_message = "ACL found: " + str(acl)
                     break
             if not found_ss_gr_acl:
                 check_result_ss_group_present.result = RESULT.FAILURE
@@ -212,10 +216,103 @@ class IrodsRawFileMetadata(ComparableMetadata):
             return check_results
 
 
+    class CompleteMetadataChecks:
+        GENERAL_ATTRIBUTE_FREQUENCY_CONFIG_FILE = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                                                               'conf_files/general.conf')
+
+        @classmethod
+        def read_and_parse_config_file(cls, path):
+            attributes_frequency = {}
+            config_file = open(path)
+            for line in config_file:
+                line = line.strip()
+                tokens = line.split()
+                if len(tokens) != 2:
+                    raise ValueError(
+                        "Non standard config file - each line must have 2 items. This line looks like:" + str(line))
+                attribute = tokens[0]
+                if not tokens[1].isdigit():
+                    raise ValueError("The config file doesn't contain integers as frequencies" + str(line))
+                freq = int(tokens[1])
+                attributes_frequency[attribute] = freq
+            return attributes_frequency
+
+
+        @classmethod
+        def build_freq_dict_from_avus_list(cls, avus_list):
+            print("Type of avu list element: %s" % str(avus_list))
+            freq_dict = {}
+            for attribute, values in avus_list.items():
+                freq_dict[attribute] = len(values)
+            return freq_dict
+            #
+            # for avu in avus_list:
+            #     freq_dict[avu.attribute] += 1
+            # return freq_dict
+
+
+        # @classmethod
+        # def get_dict_differences(cls, dict1, dict2):
+        #     diffs = []
+        #     for k, v, in list(dict1.items()):
+        #         if not dict2.get(k):
+        #             diffs.append((k, v, 0))
+        #         elif v != dict2[k]:
+        #             diffs.append((k, v, dict2[k]))
+        #     return diffs
+
+        @classmethod
+        def check_attributes_have_the_right_frequency(cls, standard_attr_dict, actual_attr_dict):
+            check_results = []
+            for attr, freq in standard_attr_dict.items():
+                if not attr in actual_attr_dict:
+                    check_results.append(CheckResult(check_name=CHECK_NAMES.check_attribute_count, executed=True, result=RESULT.FAILURE, error_message="Missing attribute %s" % attr))
+                elif freq != actual_attr_dict[attr]:
+                    check_results.append(CheckResult(check_name=CHECK_NAMES.check_attribute_count, executed=True,
+                                                     result=RESULT.FAILURE,
+                                                     error_message="Attribute %s should appear %s times and instead appears %s times" % (attr, freq, actual_attr_dict[attr])))
+            return check_results
+
+
+        @classmethod
+        def from_tuples_to_exceptions(cls, tuples_list):
+            excs = []
+            for attr_name, desired_freq, actual_freq in tuples_list:
+                excs.append(error_types.MetadataAttributeCountError(fpath=None, attribute=attr_name,
+                                                                    desired_occurances=desired_freq,
+                                                                    actual_occurances=actual_freq))
+            return excs
+            # should return: check_names.check_attribute_count
+
+        @classmethod
+        def check_attribute_frequencies(cls, avus):
+            #print("PATH To config file: %s" % cls.GENERAL_ATTRIBUTE_FREQUENCY_CONFIG_FILE)
+            general_attribute_frequencies = cls.read_and_parse_config_file(cls.GENERAL_ATTRIBUTE_FREQUENCY_CONFIG_FILE)
+            crt_attribute_frequencies = cls.build_freq_dict_from_avus_list(avus)
+            #print("General attribute frequencies: %s" % general_attribute_frequencies)
+            #print("Crt attribute frequencies: %s" % crt_attribute_frequencies)
+            diffs = cls.check_attributes_have_the_right_frequency(general_attribute_frequencies, crt_attribute_frequencies)
+            #diffs = cls.get_dict_differences(general_attribute_frequencies, crt_attribute_frequencies)
+            #print("Diffs: %s" % diffs)
+            return diffs
+
+            # @classmethod
+            # def check_irods_metadata_is_complete_for_file(cls, fpath, config_path):
+            # irods_avus = metadata_utils.iRODSiCmdsUtils.retrieve_irods_avus(fpath)
+            #     return check_avus_freq_vs_config_freq(irods_avus, config_path)
+            #
+            # @classmethod
+            # def check_avus_freq_vs_config_freq(cls, avus, config_path):
+            #     irods_attr_freq_dict = build_freq_dict_from_avus_list(avus)
+            #     config_attr_freq_dict = read_and_parse_config_file(config_path)
+            #     return get_dict_differences(config_attr_freq_dict, irods_attr_freq_dict)
+
+
     def check_metadata(self, avu_counts=None):
         check_results = []
         check_results.extend(self.ACLsChecks.check(self.acls))
         check_results.extend(self.ReplicasChecks.check(self.file_replicas))
+        check_results.extend(self.CompleteMetadataChecks.check_attribute_frequencies(self.avus))
         if avu_counts:
             check_results.append(self.check_attribute_count(avu_counts))
         return check_results
@@ -249,22 +346,22 @@ class IrodsSeqFileMetadata(IrodsRawFileMetadata):
     def set_attributes_from_avus(cls, obj_to_set):
         # Sample
         obj_to_set.samples = {'name': obj_to_set.get_values_for_attribute('sample'),
-                                  'accession_number': obj_to_set.get_values_for_attribute(
-                                      'sample_accession_number'),
-                                  'internal_id': obj_to_set.get_values_for_attribute('sample_id')
+                              'accession_number': obj_to_set.get_values_for_attribute(
+                                  'sample_accession_number'),
+                              'internal_id': obj_to_set.get_values_for_attribute('sample_id')
         }
 
         # Library: Hack to correct NPG mistakes (they submit under library names the actual library ids)
-        library_identifiers = obj_to_set.get_values_for_attribute('library')\
+        library_identifiers = obj_to_set.get_values_for_attribute('library')
 
         library_identifiers = library_identifiers.union(obj_to_set.get_values_for_attribute('library_id'))
         obj_to_set.libraries = EntityIdentifier.separate_identifiers_by_type(library_identifiers)
 
         # Study:
         obj_to_set.studies = {'name': obj_to_set.get_values_for_attribute('study'),
-                                  'accession_number': obj_to_set.get_values_for_attribute(
-                                      'study_accession_number'),
-                                  'internal_id': obj_to_set.get_values_for_attribute('study_id')
+                              'accession_number': obj_to_set.get_values_for_attribute(
+                                  'study_accession_number'),
+                              'internal_id': obj_to_set.get_values_for_attribute('study_id')
         }
 
         obj_to_set.checksum_in_meta = obj_to_set.get_values_for_attribute('md5')
@@ -278,7 +375,8 @@ class IrodsSeqFileMetadata(IrodsRawFileMetadata):
         irods_metadata = super().from_baton_wrapper(data_object)
         irods_metadata.checksum_at_upload = {replica.checksum for replica in irods_metadata.file_replicas}
         irods_metadata.file_replicas = irods_metadata.file_replicas
-        irods_metadata.acls = [IrodsACL.from_baton_wrapper(ac_item) for ac_item in data_object.access_controls if ac_item]
+        irods_metadata.acls = [IrodsACL.from_baton_wrapper(ac_item) for ac_item in data_object.access_controls if
+                               ac_item]
         irods_metadata.avus = data_object.metadata
         cls.set_attributes_from_avus(irods_metadata)
         return irods_metadata
@@ -404,7 +502,7 @@ class IrodsSeqFileMetadata(IrodsRawFileMetadata):
             if self.checksum_in_meta != self.checksum_at_upload:
                 comp_check.result = RESULT.FAILURE
                 comp_check.error_message = "The checksum in metadata = %s different than checksum at upload = %s" % \
-                                         (self.checksum_in_meta, self.checksum_at_upload)
+                                           (self.checksum_in_meta, self.checksum_at_upload)
             else:
                 comp_check.result = RESULT.SUCCESS
         else:
@@ -435,7 +533,8 @@ class IrodsSeqFileMetadata(IrodsRawFileMetadata):
             for ref in self.get_references():
                 if ref.lower().find(desired_ref_name.lower()) == -1:
                     check_result.result = RESULT.FAILURE
-                    check_result.error_message = "The desired reference is: %s is different thant the metadata reference: %s" % (desired_ref_name, ref)
+                    check_result.error_message = "The desired reference is: %s is different thant the metadata reference: %s" % (
+                        desired_ref_name, ref)
         return check_result
 
     def check_metadata(self, desired_reference: str=None) -> List[CheckResult]:
@@ -449,7 +548,8 @@ class IrodsSeqFileMetadata(IrodsRawFileMetadata):
 
     def __str__(self):
         return "Fpath = " + str(self.fpath) + ", samples = " + str(self.samples) + \
-               ", libraries = " + str(self.libraries) + ", studies = " + str(self.studies) + ", md5 = " + str(self.checksum_in_meta) \
+               ", libraries = " + str(self.libraries) + ", studies = " + str(self.studies) + ", md5 = " + str(
+            self.checksum_in_meta) \
                + ", ichksum_md5 = " + str(self.checksum_at_upload) + ", reference = " + str(self.get_reference_paths())
 
     def __repr__(self):
