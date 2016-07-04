@@ -259,7 +259,7 @@ class ComparisonFetchByMetadataVsStreamTest(unittest.TestCase):
                                                              study_name='SEQCAP_WGS_GDAP_AADM', irods_zone='seq')
 
         self.assertSetEqual(set(result_stream_metadata.keys()), set(result_fetch_by_metadata.keys()))
-        for fpath, results in result_fetch_by_metadata:
+        for fpath, results in result_fetch_by_metadata.items():
             self.assertSetEqual(set(results), set(result_stream_metadata[fpath]))
 
 
