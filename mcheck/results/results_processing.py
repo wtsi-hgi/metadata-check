@@ -64,12 +64,12 @@ class CheckResultsProcessing:
 
     @staticmethod
     def failed_check_results_stats(checks_by_fpath):
-        results_by_check_type_counter = Counter()
+        nr_files_per_failed_check = {}
         for fpath, check_results in checks_by_fpath.items():
             for check in check_results:
                 if check.result == RESULT.FAILURE:
-                    results_by_check_type_counter[check.check_name] += 1
-        return results_by_check_type_counter
+                    nr_files_per_failed_check[check.check_name] = 1
+        return nr_files_per_failed_check
 
 
 
