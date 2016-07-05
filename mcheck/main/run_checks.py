@@ -33,6 +33,9 @@ from mcheck.metadata.irods_metadata.file_metadata import IrodsSeqFileMetadata
 from mcheck.results.checks_results import RESULT, CheckResultJSONEncoder
 
 def process_output(issues_by_path, output_dir):
+    stats = CheckResultsProcessing.failed_check_results_stats(issues_by_path)
+    print("STATS---------------: %s " % stats)
+    print("---------- END of STATS -----------------")
     for fpath, issues in issues_by_path.items():
         sorted_by_executed = CheckResultsProcessing.group_by_executed(issues)
         sorted_by_result = CheckResultsProcessing.group_by_result(sorted_by_executed[True])
@@ -40,6 +43,10 @@ def process_output(issues_by_path, output_dir):
         for severity, failure_issues in sorted_by_severity.items():
             utils.write_list_to_file(failure_issues, os.path.join(output_dir, severity+'.txt'), fpath)
         utils.write_list_to_file(issues, os.path.join(output_dir, 'all_issues.txt'), fpath)
+    print("FAILED---------")
+    for failure in sorted_by_result[RESULT.FAILURE]:
+        print(failure)
+
 
 
 def process_output_and_print(issues_by_path, output_dir):
