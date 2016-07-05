@@ -219,7 +219,6 @@ class IrodsRawFileMetadata(ComparableMetadata):
     class CompleteMetadataChecks:
         GENERAL_ATTRIBUTE_FREQUENCY_CONFIG_FILE = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                                                'conf_files/general.conf')
-
         @classmethod
         def read_and_parse_config_file(cls, path):
             attributes_frequency = {}
@@ -249,25 +248,26 @@ class IrodsRawFileMetadata(ComparableMetadata):
 
         @classmethod
         def check_attributes_have_the_right_frequency(cls, standard_attr_dict, actual_attr_dict):
-            check_results = []
+            check_result = CheckResult(check_name=CHECK_NAMES.check_attribute_count, executed=True, result=RESULT.SUCCESS, error_message=[])
             for attr, freq in standard_attr_dict.items():
                 if not attr in actual_attr_dict:
-                    check_results.append(CheckResult(check_name=CHECK_NAMES.check_attribute_count, executed=True, result=RESULT.FAILURE, error_message="Missing attribute %s" % attr))
+                    check_result.result = RESULT.FAILURE
+                    check_result.error_message.append('Missing attribute %s' % attr)
+                    #check_results.append(CheckResult(check_name=CHECK_NAMES.check_attribute_count, executed=True, result=RESULT.FAILURE, error_message="Missing attribute %s" % attr))
                 elif freq != actual_attr_dict[attr]:
-                    check_results.append(CheckResult(check_name=CHECK_NAMES.check_attribute_count, executed=True,
-                                                     result=RESULT.FAILURE,
-                                                     error_message="Attribute %s should appear %s times and instead appears %s times" % (attr, freq, actual_attr_dict[attr])))
-            return check_results
+                    check_result.result = RESULT.FAILURE
+                    check_result.error_message.append("Attribute %s should appear %s times and instead appears %s times" % (attr, freq, actual_attr_dict[attr]))
+            return check_result
 
 
-        @classmethod
-        def from_tuples_to_exceptions(cls, tuples_list):
-            excs = []
-            for attr_name, desired_freq, actual_freq in tuples_list:
-                excs.append(error_types.MetadataAttributeCountError(fpath=None, attribute=attr_name,
-                                                                    desired_occurances=desired_freq,
-                                                                    actual_occurances=actual_freq))
-            return excs
+        # @classmethod
+        # def from_tuples_to_exceptions(cls, tuples_list):
+        #     excs = []
+        #     for attr_name, desired_freq, actual_freq in tuples_list:
+        #         excs.append(error_types.MetadataAttributeCountError(fpath=None, attribute=attr_name,
+        #                                                             desired_occurances=desired_freq,
+        #                                                             actual_occurances=actual_freq))
+        #     return excs
             # should return: check_names.check_attribute_count
 
         @classmethod
@@ -283,23 +283,13 @@ class IrodsRawFileMetadata(ComparableMetadata):
             print("Diffs: %s" % diffs)
             return diffs
 
-            # @classmethod
-            # def check_irods_metadata_is_complete_for_file(cls, fpath, config_path):
-            # irods_avus = metadata_utils.iRODSiCmdsUtils.retrieve_irods_avus(fpath)
-            #     return check_avus_freq_vs_config_freq(irods_avus, config_path)
-            #
-            # @classmethod
-            # def check_avus_freq_vs_config_freq(cls, avus, config_path):
-            #     irods_attr_freq_dict = build_freq_dict_from_avus_list(avus)
-            #     config_attr_freq_dict = read_and_parse_config_file(config_path)
-            #     return get_dict_differences(config_attr_freq_dict, irods_attr_freq_dict)
 
 
     def check_metadata(self, avu_counts=None):
         check_results = []
         check_results.extend(self.ACLsChecks.check(self.acls))
         check_results.extend(self.ReplicasChecks.check(self.file_replicas))
-        check_results.extend(self.CompleteMetadataChecks.check_attribute_frequencies(self.avus))
+        #check_results.append(self.CompleteMetadataChecks.check_attribute_frequencies(self.avus))
         if avu_counts:
             check_results.append(self.check_attribute_count(avu_counts))
         return check_results
@@ -538,6 +528,7 @@ class IrodsSeqFileMetadata(IrodsRawFileMetadata):
         check_results = []
         check_results.extend(super().check_metadata())
         check_results.extend(self.validate_fields())
+        check_results.append(self.CompleteMetadataChecks.check_attribute_frequencies(self.avus))
         if desired_reference:
             check_results.append(self.check_reference(desired_reference))
         return check_results
