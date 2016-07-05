@@ -245,21 +245,7 @@ class IrodsRawFileMetadata(ComparableMetadata):
             for attribute, values in avus_list.items():
                 freq_dict[attribute] = len(values)
             return freq_dict
-            #
-            # for avu in avus_list:
-            #     freq_dict[avu.attribute] += 1
-            # return freq_dict
 
-
-        # @classmethod
-        # def get_dict_differences(cls, dict1, dict2):
-        #     diffs = []
-        #     for k, v, in list(dict1.items()):
-        #         if not dict2.get(k):
-        #             diffs.append((k, v, 0))
-        #         elif v != dict2[k]:
-        #             diffs.append((k, v, dict2[k]))
-        #     return diffs
 
         @classmethod
         def check_attributes_have_the_right_frequency(cls, standard_attr_dict, actual_attr_dict):
@@ -287,13 +273,14 @@ class IrodsRawFileMetadata(ComparableMetadata):
         @classmethod
         def check_attribute_frequencies(cls, avus):
             #print("PATH To config file: %s" % cls.GENERAL_ATTRIBUTE_FREQUENCY_CONFIG_FILE)
+            print("AVUs: %s" % avus)
             general_attribute_frequencies = cls.read_and_parse_config_file(cls.GENERAL_ATTRIBUTE_FREQUENCY_CONFIG_FILE)
             crt_attribute_frequencies = cls.build_freq_dict_from_avus_list(avus)
             #print("General attribute frequencies: %s" % general_attribute_frequencies)
             #print("Crt attribute frequencies: %s" % crt_attribute_frequencies)
             diffs = cls.check_attributes_have_the_right_frequency(general_attribute_frequencies, crt_attribute_frequencies)
             #diffs = cls.get_dict_differences(general_attribute_frequencies, crt_attribute_frequencies)
-            #print("Diffs: %s" % diffs)
+            print("Diffs: %s" % diffs)
             return diffs
 
             # @classmethod
@@ -536,6 +523,16 @@ class IrodsSeqFileMetadata(IrodsRawFileMetadata):
                     check_result.error_message = "The desired reference is: %s is different thant the metadata reference: %s" % (
                         desired_ref_name, ref)
         return check_result
+
+
+    class CompleteMetadataChecks(IrodsRawFileMetadata.CompleteMetadataChecks):
+
+        @classmethod
+        def check_attribute_frequencies(cls, avus):
+            res = super().check_attribute_frequencies(avus)
+            #TODO: implement the library-specific code when we know the requirements
+            return res
+
 
     def check_metadata(self, desired_reference: str=None) -> List[CheckResult]:
         check_results = []
