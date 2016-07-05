@@ -231,69 +231,50 @@ class ComparisonFetchByMetadataVsFetchByPathTest(unittest.TestCase):
 
 
 
-@unittest.skip
+#@unittest.skip
 class ComparisonFetchByMetadataVsStreamTest(unittest.TestCase):
 
-    @unittest.skip
-    def test_fetch_study_metadata_vs_stream_study_metadata1(self):
-        fpath = "/nfs/users/nfs_i/ic4/Projects/python3/meta-check/aadm.json"
-
-        with patch.object(run_checks, "stdin.read", create=True, return_value=open(fpath).read):
-            result = run_checks.check_metadata(metadata_fetching_strategy='given_by_user')
-
-            for fpath, check_results in result.items():
-                for check_res in check_results:
-                    if check_res.check_name == CHECK_NAMES.check_for_samples_in_more_studies:
-                        self.assertEqual(check_res.result, RESULT.FAILURE)
-                    elif check_res.executed:
-                        self.assertEqual(check_res.result, RESULT.SUCCESS)
+    # #@unittest.skip
+    # def test_fetch_study_metadata_vs_stream_study_metadata1(self):
+    #     fpath = "/nfs/users/nfs_i/ic4/Projects/python3/meta-check/aadm.json"
+    #
+    #     with patch.object(run_checks, "stdin.read", create=True, return_value=open(fpath).read):
+    #         result = run_checks.check_metadata(metadata_fetching_strategy='given_by_user')
+    #
+    #         for fpath, check_results in result.items():
+    #             for check_res in check_results:
+    #                 if check_res.check_name == CHECK_NAMES.check_for_samples_in_more_studies:
+    #                     self.assertEqual(check_res.result, RESULT.FAILURE)
+    #                 elif check_res.executed:
+    #                     self.assertEqual(check_res.result, RESULT.SUCCESS)
 
 
     @patch('mcheck.main.run_checks.stdin.read')
     def test_fetch_study_metadata_vs_stream_study_metadata(self, stdin):
         fpath = "/nfs/users/nfs_i/ic4/Projects/python3/meta-check/aadm.json"
         stdin.return_value = open(fpath).read()
-        result = run_checks.check_metadata(metadata_fetching_strategy='given_by_user')
+        result_stream_metadata = run_checks.check_metadata(metadata_fetching_strategy='given_by_user')
+        result_fetch_by_metadata = run_checks.check_metadata(metadata_fetching_strategy='fetch_by_metadata',
+                                                             filter_npg_qc=1, filter_target=1,
+                                                             study_name='SEQCAP_WGS_GDAP_AADM', irods_zone='seq')
 
-        for fpath, check_results in result.items():
-            for check_res in check_results:
-                if check_res.check_name == CHECK_NAMES.check_for_samples_in_more_studies:
-                    self.assertEqual(check_res.result, RESULT.FAILURE)
-                elif check_res.executed:
-                    self.assertEqual(check_res.result, RESULT.SUCCESS)
+        self.assertSetEqual(set(result_stream_metadata.keys()), set(result_fetch_by_metadata.keys()))
+        for fpath, results in result_fetch_by_metadata.items():
+            self.assertSetEqual(set(results), set(result_stream_metadata[fpath]))
 
 
 
-# class MyTestCase(unittest.TestCase):
-#
-#     def setUp(self):
-#         # raw_input is untouched before test
-#         assert module_under_test.raw_input is __builtins__.raw_input
 
-    # def test_using_with(self):
-    #     input_data = "123"
-    #     expected = int(input_data)
-    #
-    #     with patch.object(module_under_test, "raw_input", create=True,
-    #             return_value=expected):
-    #         # create=True is needed as raw_input is not in the globals of
-    #         # module_under_test, but actually found in __builtins__ .
-    #         actual = module_under_test.function()
-    #
-    #     self.assertEqual(expected, actual)
-    #
-    # @patch.object(module_under_test, "raw_input", create=True)
-    # def test_using_decorator(self, raw_input):
-    #     raw_input.return_value = input_data = "123"
-    #     expected = int(input_data)
-    #
-    #     actual = module_under_test.function()
-    #
-    #     self.assertEqual(expected, actual)
-    #
-    # def tearDown(self):
-    #     # raw input is restored after test
-    #     assert module_under_test.raw_input is __builtins__.raw_input
+# check_metadata(metadata_fetching_strategy, reference=None, filter_npg_qc=None, filter_target=None, file_types=None,
+#                    study_name=None, study_acc_nr=None, study_internal_id=None, irods_fpaths=None, irods_zone=None):
+
+        # for fpath, check_results in result_stream_metadata.items():
+        #     for check_res in check_results:
+        #         if check_res.check_name == CHECK_NAMES.check_for_samples_in_more_studies:
+        #             print("Fpath before testing: %s and test result: %s" % (fpath, check_res.result))
+        #             self.assertEqual(check_res.result, RESULT.FAILURE)
+        #         elif check_res.executed:
+        #             self.assertEqual(check_res.result, RESULT.SUCCESS)
 
 
 
