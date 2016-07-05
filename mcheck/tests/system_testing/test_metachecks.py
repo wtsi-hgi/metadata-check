@@ -231,7 +231,7 @@ class ComparisonFetchByMetadataVsFetchByPathTest(unittest.TestCase):
 
 
 
-#@unittest.skip
+@unittest.skip
 class ComparisonFetchByMetadataVsStreamTest(unittest.TestCase):
 
     # #@unittest.skip
