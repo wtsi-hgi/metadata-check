@@ -25,8 +25,6 @@ from collections import defaultdict, Iterable
 from typing import List, Dict, Union, Set
 
 from mcheck.com.operators import Operators
-from mcheck.main import error_types
-from mcheck.com import wrappers
 from mcheck.metadata.common.comparable_metadata import ComparableMetadata
 from mcheck.metadata.common.identifiers import EntityIdentifier
 from mcheck.metadata.common.attribute_count import AttributeCount
@@ -253,35 +251,18 @@ class IrodsRawFileMetadata(ComparableMetadata):
                 if not attr in actual_attr_dict:
                     check_result.result = RESULT.FAILURE
                     check_result.error_message.append('Missing attribute %s' % attr)
-                    #check_results.append(CheckResult(check_name=CHECK_NAMES.check_attribute_count, executed=True, result=RESULT.FAILURE, error_message="Missing attribute %s" % attr))
                 elif freq != actual_attr_dict[attr]:
                     check_result.result = RESULT.FAILURE
                     check_result.error_message.append("Attribute %s should appear %s times and instead appears %s times" % (attr, freq, actual_attr_dict[attr]))
             return check_result
 
 
-        # @classmethod
-        # def from_tuples_to_exceptions(cls, tuples_list):
-        #     excs = []
-        #     for attr_name, desired_freq, actual_freq in tuples_list:
-        #         excs.append(error_types.MetadataAttributeCountError(fpath=None, attribute=attr_name,
-        #                                                             desired_occurances=desired_freq,
-        #                                                             actual_occurances=actual_freq))
-        #     return excs
-            # should return: check_names.check_attribute_count
-
         @classmethod
         def check_attribute_frequencies(cls, avus):
-            #print("PATH To config file: %s" % cls.GENERAL_ATTRIBUTE_FREQUENCY_CONFIG_FILE)
-            print("AVUs: %s" % avus)
             general_attribute_frequencies = cls.read_and_parse_config_file(cls.GENERAL_ATTRIBUTE_FREQUENCY_CONFIG_FILE)
             crt_attribute_frequencies = cls.build_freq_dict_from_avus_list(avus)
-            #print("General attribute frequencies: %s" % general_attribute_frequencies)
-            #print("Crt attribute frequencies: %s" % crt_attribute_frequencies)
-            diffs = cls.check_attributes_have_the_right_frequency(general_attribute_frequencies, crt_attribute_frequencies)
-            #diffs = cls.get_dict_differences(general_attribute_frequencies, crt_attribute_frequencies)
-            print("Diffs: %s" % diffs)
-            return diffs
+            attr_freq_check_result = cls.check_attributes_have_the_right_frequency(general_attribute_frequencies, crt_attribute_frequencies)
+            return attr_freq_check_result
 
 
 
@@ -289,7 +270,7 @@ class IrodsRawFileMetadata(ComparableMetadata):
         check_results = []
         check_results.extend(self.ACLsChecks.check(self.acls))
         check_results.extend(self.ReplicasChecks.check(self.file_replicas))
-        #check_results.append(self.CompleteMetadataChecks.check_attribute_frequencies(self.avus))
+        check_results.append(self.CompleteMetadataChecks.check_attribute_frequencies(self.avus))
         if avu_counts:
             check_results.append(self.check_attribute_count(avu_counts))
         return check_results
@@ -521,6 +502,7 @@ class IrodsSeqFileMetadata(IrodsRawFileMetadata):
         def check_attribute_frequencies(cls, avus):
             res = super().check_attribute_frequencies(avus)
             #TODO: implement the library-specific code when we know the requirements
+            print("In B's check_attributes...")
             return res
 
 
@@ -528,7 +510,6 @@ class IrodsSeqFileMetadata(IrodsRawFileMetadata):
         check_results = []
         check_results.extend(super().check_metadata())
         check_results.extend(self.validate_fields())
-        check_results.append(self.CompleteMetadataChecks.check_attribute_frequencies(self.avus))
         if desired_reference:
             check_results.append(self.check_reference(desired_reference))
         return check_results
