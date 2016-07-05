@@ -31,6 +31,7 @@ from mcheck.metadata.irods_metadata.acl import IrodsACL
 from baton import models as baton_models
 from baton import collections as baton_coll
 from mcheck.metadata.common.attribute_count import AttributeCount
+from mcheck.check_names import CHECK_NAMES
 
 
 
@@ -338,36 +339,6 @@ class TestIrodsSeqFileMetadata(unittest.TestCase):
         ref_path = '/lustre/scratch110/srpipe/references/Homo_sapiens/GRCh37_53/all/bwa/Homo_sapiens.bam'
         self.assertRaises(ValueError, IrodsSeqFileMetadata.extract_reference_name_from_ref_path, ref_path)
 
-    #
-    # def test_is_checksum_valid_1(self):
-    #     checksum = 'abcdref123asssssdaf'
-    #     result = IrodsSeqFileMetadata._check_checksum(checksum)
-    #     self.assertEqual(len(result), 0)
-    #
-    # def test_is_checksum_valid_2(self):
-    #     checksum = 'abcdref123asssssdafAAA'
-    #     result = IrodsSeqFileMetadata._check_checksum(checksum)
-    #     self.assertEqual(len(result), 0)
-    #
-    # def test_is_checksum_valid_3(self):
-    #     checksum = ''
-    #     result = IrodsSeqFileMetadata._check_checksum(checksum)
-    #     self.assertEqual(len(result), 1)
-    #
-    # def test_is_checksum_valid_when_valid(self):
-    #     checksum = '123'
-    #     result = IrodsSeqFileMetadata._check_checksum(checksum)
-    #     self.assertEqual(len(result), 0)
-    #
-    # def test_is_checksum_valid_when_invalid_because_capitals(self):
-    #     checksum = 'AAA'
-    #     result = IrodsSeqFileMetadata._check_checksum(checksum)
-    #     self.assertEqual(len(result), 0)
-    #
-    # def test_is_checksum_valid_6(self):
-    #     checksum = 123
-    #     self.assertRaises(TypeError, IrodsSeqFileMetadata._check_checksum, checksum)
-
 
     def test_is_npg_qc_valid_1(self):
         npq_qc = 1
@@ -529,6 +500,41 @@ class TestIrodsSeqFileMetadata(unittest.TestCase):
         result = irods_metadata.check_checksum_in_meta_present()
         self.assertEqual(result.result, RESULT.FAILURE)
 
+    def test_check_attribute_frequencies_when_missing_acc_nr(self):
+        avus = {'study_id': {'3257'}, 'sample_id': {'1248216'}, 'target': {'1'},
+                'study_accession_number': {'EGAS00001000929'}, 'library_id': {'14820960'}, 'study': {'GDAP_XTEN'},
+                'sample': {'APP5201296'}, 'md5': {'123abc'}, 'manual_qc': {'1'}, 'sample_common_name': {'Homo sapiens'},
+                'reference': {'hla/all/bwa0_6/Homo_sapiens.GRCh38_full_analysis_set_plus_decoy_hla.fa'}, 'type': {'cram'}}
+        check_result = IrodsSeqFileMetadata.CompleteMetadataChecks.check_attribute_frequencies(avus)
+        self.assertEqual(check_result.result, RESULT.FAILURE)
+        self.assertEqual(len(check_result.error_message), 1)
+
+    def test_check_attribute_frequencies_when_ok(self):
+        avus = {'study_id': {'3257'}, 'sample_id': {'1248216'}, 'sample_accession_number': {'EGA123'}, 'target': {'1'},
+                'study_accession_number': {'EGAS00001000929'}, 'library_id': {'14820960'}, 'study': {'GDAP_XTEN'},
+                'sample': {'APP5201296'}, 'md5': {'123abc'}, 'manual_qc': {'1'}, 'sample_common_name': {'Homo sapiens'},
+                'reference': {'hla/all/bwa0_6/Homo_sapiens.GRCh38_full_analysis_set_plus_decoy_hla.fa'}, 'type': {'cram'}}
+        check_result = IrodsSeqFileMetadata.CompleteMetadataChecks.check_attribute_frequencies(avus)
+        self.assertEqual(check_result.result, RESULT.SUCCESS)
+
+    def test_check_attribute_frequencies_when_missing3_fields(self):
+        avus = {'study_id': {'3257'}, 'sample_id': {'1248216'},
+                'study_accession_number': {'EGAS00001000929'}, 'library_id': {'14820960'}, 'study': {'GDAP_XTEN'},
+                'sample': {'APP5201296'}, 'md5': {'123abc'}, 'manual_qc': {'1'},
+                'reference': {'hla/all/bwa0_6/Homo_sapiens.GRCh38_full_analysis_set_plus_decoy_hla.fa'}, 'type': {'cram'}}
+        check_result = IrodsSeqFileMetadata.CompleteMetadataChecks.check_attribute_frequencies(avus)
+        self.assertEqual(check_result.result, RESULT.FAILURE)
+        self.assertEqual(len(check_result.error_message), 3)
+
+
+    def test_check_attribute_frequencies_when_ok_and_extra_meta(self):
+        avus = {'study_id': {'3257'}, 'sample_id': {'1248216'}, 'sample_accession_number': {'EGA123'}, 'target': {'1'},
+                'study_accession_number': {'EGAS00001000929'}, 'library_id': {'14820960'}, 'study': {'GDAP_XTEN'},
+                'sample': {'APP5201296'}, 'md5': {'123abc'}, 'manual_qc': {'1'}, 'sample_common_name': {'Homo sapiens'},
+                'reference': {'hla/all/bwa0_6/Homo_sapiens.GRCh38_full_analysis_set_plus_decoy_hla.fa'}, 'type': {'cram'},
+                'some_tag': {'some_val'}}
+        check_result = IrodsSeqFileMetadata.CompleteMetadataChecks.check_attribute_frequencies(avus)
+        self.assertEqual(check_result.result, RESULT.SUCCESS)
 
 
 if __name__ == "__main__":
