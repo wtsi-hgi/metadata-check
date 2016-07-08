@@ -60,7 +60,6 @@ class TestRawFileMetadataFromBaton(unittest.TestCase):
         acl = [baton_models.AccessControl(user, level=baton_models.AccessControl.Level.WRITE)]
         data_obj = baton_models.DataObject(path='/somepath/file.txt', access_controls=acl)
         raw_meta = IrodsRawFileMetadata.from_baton_wrapper(data_obj)
-        print("RAW data: %s" % raw_meta.acls)
         self.assertEqual(len(raw_meta.acls), 1)
         self.assertEqual(raw_meta.acls[0].access_group, 'hgi')
         self.assertEqual(raw_meta.acls[0].permission, IrodsPermission.WRITE)
@@ -111,7 +110,6 @@ class TestRawFileMetadataFromBaton(unittest.TestCase):
         data_obj = baton_models.DataObject(path='/somepath/file.txt', metadata=metadata)
         raw_meta = IrodsRawFileMetadata.from_baton_wrapper(data_obj)
 
-        print(raw_meta.get_values_for_attribute('study'))
         self.assertEqual(raw_meta.get_values_for_attribute('study'), set(['BLUEPRINT']))
 
 
