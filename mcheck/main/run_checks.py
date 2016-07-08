@@ -109,33 +109,40 @@ def convert_args_to_search_criteria(filter_by_npg_qc=None, filter_by_target=None
         search_criteria.append(('study_internal_id', str(match_study_id)))
     return search_criteria
 
+def fetch_irods_metadata_by_metadata(issues_dict, filter_npg_qc=None, filter_target=None, file_types=None, study_name=None,
+                                     study_acc_nr=None, study_internal_id=None, irods_zone=None, reference=None):
+    search_criteria = convert_args_to_search_criteria(filter_npg_qc, filter_target,
+                                                      file_types, study_name,
+                                                      study_acc_nr, study_internal_id)
+    irods_metadata_dict = MetadataSelfChecks.fetch_and_preprocess_irods_metadata_by_metadata(search_criteria, irods_zone, issues_dict, reference)
+    return irods_metadata_dict
+
+
+def fetch_irods_metadata_by_path(issues_dict, irods_fpaths, reference):
+    return MetadataSelfChecks.fetch_and_preprocess_irods_metadata_by_path(irods_fpaths, issues_dict, reference)
+
+
+def fetch_irods_metadata_from_json(json_data_objects):
+    baton_data_objects_list = convert_json_to_baton_objs(json_data_objects)
+    irods_metadata_dict = {}
+    for data_obj in baton_data_objects_list:
+        print("FPATH that I am now going to turn into IrodsSeq meta obj: %s" % data_obj.get_name())
+        meta = IrodsSeqFileMetadata.from_baton_wrapper(data_obj)
+        irods_metadata_dict[meta.fpath] = meta
+    return irods_metadata_dict
+
 
 def check_metadata(metadata_fetching_strategy, reference=None, filter_npg_qc=None, filter_target=None, file_types=None,
                    study_name=None, study_acc_nr=None, study_internal_id=None, irods_fpaths=None, irods_zone=None):
     issues_dict = defaultdict(list)
-    # Getting iRODS metadata for files and checking before bringing it a "normalized" form:
     if metadata_fetching_strategy == 'fetch_by_metadata':
-        search_criteria = convert_args_to_search_criteria(filter_npg_qc, filter_target,
-                                                          file_types, study_name,
-                                                          study_acc_nr, study_internal_id)
-        print("SEARCH CRITERIA: %s" % search_criteria)
-        irods_metadata_dict = MetadataSelfChecks.fetch_and_preprocess_irods_metadata_by_metadata(search_criteria, irods_zone, issues_dict, reference)
-
+        irods_metadata_dict = fetch_irods_metadata_by_metadata(issues_dict, filter_npg_qc, filter_target, file_types,
+                                                               study_name, study_acc_nr, study_internal_id, irods_zone, reference)
     elif metadata_fetching_strategy == 'fetch_by_path':
-        irods_metadata_dict = MetadataSelfChecks.fetch_and_preprocess_irods_metadata_by_path(irods_fpaths, issues_dict, reference)
-        print("Irods metadata dict: %s" % irods_metadata_dict)
+        fetch_irods_metadata_by_path(issues_dict, irods_fpaths, reference)
     else:
         input_data_objects = stdin.read()
-        baton_data_objects_list = convert_json_to_baton_objs(input_data_objects)
-        irods_metadata_dict = {}
-        for data_obj in baton_data_objects_list:
-            meta = IrodsSeqFileMetadata.from_baton_wrapper(data_obj)
-            irods_metadata_dict[meta.fpath] = meta
-
-    # TODO: add the option of getting the metadata as a json from the command line...
-    # if ("some_setting_indicates_read_from_stdin" or "read_from_stdin_is_standard") and False:
-    #     input_data_objects = stdin.read()
-    #     irods_seq_file_metadata_collection = parse_data_objects(input_data_objects)
+        irods_metadata_dict = fetch_irods_metadata_from_json(input_data_objects)
 
     # Getting HEADER metadata:
     header_metadata_dict = MetadataSelfChecks.fetch_and_preprocess_header_metadata(irods_metadata_dict.keys(), issues_dict)
