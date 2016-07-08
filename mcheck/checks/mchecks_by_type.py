@@ -83,8 +83,6 @@ class MetadataSelfChecks:
                 #check_results = raw_metadata.check_metadata()
                 check_results = []
                 file_metadata = IrodsSeqFileMetadata.from_raw_metadata(raw_metadata)
-                print("Raw metadata from fetch_raw_file_metadata_by_path: %s" % file_metadata)
-
                 check_results.extend(file_metadata.check_metadata(reference))
                 irods_metadata_dict[fpath] = file_metadata
                 issues_dict[fpath].extend(check_results)
