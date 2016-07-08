@@ -43,14 +43,11 @@ class MetadataFetchedByPathTest(unittest.TestCase):
         irods_fpath = "/humgen/projects/serapis_staging/test-metacheck/test_metadata.txt"
 
         result = run_checks.check_metadata(metadata_fetching_strategy='fetch_by_path', irods_fpaths=[irods_fpath])
-        print("Comparisong checks: %s" % self.comparison_checks)
         for fpath, check_results in result.items():
             check_names = [c.check_name for c in check_results]
             self.assertSetEqual(set(check_names), set(CHECK_NAMES.get_only_mandatory_check_names()))
             for check_res in check_results:
-                print("Printing check name: %s " % check_res.check_name)
                 if check_res.check_name in self.comparison_checks:
-                    print("Found match with %s " % (check_res.check_name))
                     self.assertFalse(check_res.executed)
                 elif check_res.check_name in [
                     CHECK_NAMES.check_ss_irods_group_read_permission,
@@ -58,7 +55,6 @@ class MetadataFetchedByPathTest(unittest.TestCase):
                     CHECK_NAMES.check_studies_in_irods_with_studies_in_seqscape_fetched_by_samples,
                     CHECK_NAMES.check_samples_in_irods_same_as_samples_fetched_by_study_from_seqscape
                 ]:
-                    print("Found match in the failed category: %s" % check_res.check_name)
                     self.assertTrue(check_res.executed)
                     self.assertEqual(check_res.result, RESULT.FAILURE)
 
@@ -124,7 +120,8 @@ class MetadataFetchedByPathTest(unittest.TestCase):
                     CHECK_NAMES.check_for_samples_in_more_studies,
                     CHECK_NAMES.check_samples_in_irods_same_as_samples_fetched_by_study_from_seqscape,
                     CHECK_NAMES.check_there_is_ss_irods_group,
-                    CHECK_NAMES.check_ss_irods_group_read_permission
+                    CHECK_NAMES.check_ss_irods_group_read_permission,
+                    CHECK_NAMES.check_attribute_count
                     ]:
                     self.assertEqual(check_res.result, RESULT.FAILURE)
                 else:
@@ -143,7 +140,8 @@ class MetadataFetchedByPathTest(unittest.TestCase):
                     CHECK_NAMES.check_header_ids_compared_to_irods_ids,
                     CHECK_NAMES.check_header_ids_compared_to_seqscape_ids,
                     CHECK_NAMES.check_seqscape_ids_compared_to_header_ids,
-                    CHECK_NAMES.check_for_samples_in_more_studies
+                    CHECK_NAMES.check_for_samples_in_more_studies,
+                    CHECK_NAMES.check_attribute_count
                     ]:
                     self.assertEqual(check_res.result, RESULT.FAILURE)
                 else:
@@ -160,7 +158,8 @@ class MetadataFetchedByPathTest(unittest.TestCase):
                     CHECK_NAMES.check_for_samples_in_more_studies,
                     CHECK_NAMES.check_replica_checksum_valid,
                     CHECK_NAMES.check_more_than_one_replica,
-                    CHECK_NAMES.check_by_comparison_checksum_in_meta_with_checksum_at_upload
+                    CHECK_NAMES.check_by_comparison_checksum_in_meta_with_checksum_at_upload,
+                    CHECK_NAMES.check_attribute_count
                     ]:
                     self.assertEqual(check_res.result, RESULT.FAILURE)
                 else:
@@ -184,7 +183,10 @@ class MetadataFetchedByPathTest(unittest.TestCase):
                     self.assertEqual(check_res.result, RESULT.FAILURE)
                 else:
                     if check_res.executed:
-                        self.assertEqual(check_res.result, RESULT.SUCCESS)
+                        if check_res.check_name == CHECK_NAMES.check_attribute_count:
+                            self.assertEqual(check_res.result, RESULT.FAILURE)
+                        else:
+                            self.assertEqual(check_res.result, RESULT.SUCCESS)
                     else:
                         self.assertIsNone(check_res.result)
 
@@ -202,9 +204,6 @@ class MetadataFetchedByMetadataTest(unittest.TestCase):
                 elif check_res.executed:
                     self.assertEqual(check_res.result, RESULT.SUCCESS)
 
-
-        # check_metadata(metadata_fetching_strategy, reference=None, filter_npg_qc=None, filter_target=None, file_types=None,
-        #       study_name=None, study_acc_nr=None, study_internal_id=None, irods_fpaths=None, irods_zone=None):
 
 @unittest.skip
 class ComparisonFetchByMetadataVsFetchByPathTest(unittest.TestCase):
@@ -234,21 +233,6 @@ class ComparisonFetchByMetadataVsFetchByPathTest(unittest.TestCase):
 @unittest.skip
 class ComparisonFetchByMetadataVsStreamTest(unittest.TestCase):
 
-    # #@unittest.skip
-    # def test_fetch_study_metadata_vs_stream_study_metadata1(self):
-    #     fpath = "/nfs/users/nfs_i/ic4/Projects/python3/meta-check/aadm.json"
-    #
-    #     with patch.object(run_checks, "stdin.read", create=True, return_value=open(fpath).read):
-    #         result = run_checks.check_metadata(metadata_fetching_strategy='given_by_user')
-    #
-    #         for fpath, check_results in result.items():
-    #             for check_res in check_results:
-    #                 if check_res.check_name == CHECK_NAMES.check_for_samples_in_more_studies:
-    #                     self.assertEqual(check_res.result, RESULT.FAILURE)
-    #                 elif check_res.executed:
-    #                     self.assertEqual(check_res.result, RESULT.SUCCESS)
-
-
     @patch('mcheck.main.run_checks.stdin.read')
     def test_fetch_study_metadata_vs_stream_study_metadata(self, stdin):
         fpath = "/nfs/users/nfs_i/ic4/Projects/python3/meta-check/aadm.json"
@@ -260,22 +244,28 @@ class ComparisonFetchByMetadataVsStreamTest(unittest.TestCase):
 
         self.assertSetEqual(set(result_stream_metadata.keys()), set(result_fetch_by_metadata.keys()))
         for fpath, results in result_fetch_by_metadata.items():
+            if set(results) != set(result_stream_metadata[fpath]):
+                print("Fpath: %s" % fpath)
+                print("First set--------------------------------------: %s" % results)
+                print("second set-------------------------------------: %s" % result_stream_metadata[fpath])
             self.assertSetEqual(set(results), set(result_stream_metadata[fpath]))
 
+@unittest.skip
+class ComparisonFetchByPathVsStreamTest(unittest.TestCase):
 
+    @patch('mcheck.main.run_checks.stdin.read')
+    def test_fetch_study_metadata_vs_stream_study_metadata(self, stdin):
+        fpath = "/nfs/users/nfs_i/ic4/Projects/python3/meta-check/16006_5.json"
+        stdin.return_value = open(fpath).read()
+        result_stream_metadata = run_checks.check_metadata(metadata_fetching_strategy='given_by_user')
+        result_fetch_by_metadata = run_checks.check_metadata(metadata_fetching_strategy='fetch_by_path')
 
-
-# check_metadata(metadata_fetching_strategy, reference=None, filter_npg_qc=None, filter_target=None, file_types=None,
-#                    study_name=None, study_acc_nr=None, study_internal_id=None, irods_fpaths=None, irods_zone=None):
-
-        # for fpath, check_results in result_stream_metadata.items():
-        #     for check_res in check_results:
-        #         if check_res.check_name == CHECK_NAMES.check_for_samples_in_more_studies:
-        #             print("Fpath before testing: %s and test result: %s" % (fpath, check_res.result))
-        #             self.assertEqual(check_res.result, RESULT.FAILURE)
-        #         elif check_res.executed:
-        #             self.assertEqual(check_res.result, RESULT.SUCCESS)
-
-
-
+        self.assertSetEqual(set(result_stream_metadata.keys()), set(result_fetch_by_metadata.keys()))
+        print()
+        for fpath, results in result_fetch_by_metadata.items():
+            if set(results) != set(result_stream_metadata[fpath]):
+                print("Fpath: %s" % fpath)
+                print("First set--------------------------------------: %s" % results)
+                print("second set-------------------------------------: %s" % result_stream_metadata[fpath])
+            self.assertSetEqual(set(results), set(result_stream_metadata[fpath]))
 
