@@ -44,6 +44,7 @@ def process_output(issues_by_path, output_dir):
             utils.write_list_to_file(failure_issues, os.path.join(output_dir, severity+'.txt'), fpath)
         utils.write_list_to_file(issues, os.path.join(output_dir, 'all_issues.txt'), fpath)
     print("FAILED---------")
+    utils.write_dict_to_file(stats, os.path.join(output_dir, 'stats.txt'), fpath)
     for failure in sorted_by_result[RESULT.FAILURE]:
         print(failure)
 
