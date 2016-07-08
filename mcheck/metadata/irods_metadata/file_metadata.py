@@ -237,7 +237,6 @@ class IrodsRawFileMetadata(ComparableMetadata):
 
         @classmethod
         def build_freq_dict_from_avus_list(cls, avus_list):
-            print("Type of avu list element: %s" % str(avus_list))
             freq_dict = {}
             for attribute, values in avus_list.items():
                 freq_dict[attribute] = len(values)
@@ -502,7 +501,6 @@ class IrodsSeqFileMetadata(IrodsRawFileMetadata):
         def check_attribute_frequencies(cls, avus):
             res = super().check_attribute_frequencies(avus)
             #TODO: implement the library-specific code when we know the requirements
-            print("In B's check_attributes...")
             return res
 
 
