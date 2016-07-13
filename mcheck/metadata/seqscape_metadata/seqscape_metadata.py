@@ -362,12 +362,6 @@ class SeqscapeMetadata(ComparableMetadata):
             return {getattr(ent, id_type) for ent in entities if
                     hasattr(ent, id_type) and getattr(ent, id_type) is not None}
 
-        # print("In _Extract, entities: %s" % entities)
-        # for ent in entities:
-        #
-        #     id_val = getattr(ent, id_type) if hasattr(ent, id_type) else None
-        #     print("ID type: %s and ID value %s" % (id_type, id_val))
-
     @classmethod
     def _group_entity_ids_by_id_type(cls, entities):
         names = cls._extract_list_of_ids_from_entities_grouped_by_id_type(entities, 'name')
