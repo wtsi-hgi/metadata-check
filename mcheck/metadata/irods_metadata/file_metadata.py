@@ -57,9 +57,11 @@ class IrodsRawFileMetadata(ComparableMetadata):
             acls = [IrodsACL.from_baton_wrapper(ac_item) for ac_item in data_object.access_controls if ac_item]
         else:
             acls = []
-        raw_meta = cls(fpath=os.path.join(collection, fname), file_replicas=replicas, acls=acls)
         if data_object.metadata:
-            raw_meta.avus = dict(data_object.metadata)
+            avus = dict(data_object.metadata)
+        else:
+            avus = {}
+        raw_meta = cls(fpath=os.path.join(collection, fname), file_replicas=replicas, acls=acls, avus=avus)
         return raw_meta
 
 
@@ -286,7 +288,8 @@ class IrodsSeqFileMetadata(IrodsRawFileMetadata):
     def __init__(self, fpath: str, samples=None, libraries=None, studies=None,
                  checksum_in_meta:str=None, checksum_at_upload:str=None, references:List[str]=None,
                  run_ids:List[str]=None, lane_ids:List[str]=None, npg_qc:str=None, target:str=None, file_replicas=None,
-                 acls=None):
+                 acls=None, avus=None):
+        super().__init__(fpath=fpath, file_replicas=file_replicas, acls=acls, avus=avus)
         self.samples = samples
         self.libraries = libraries
         self.studies = studies
@@ -297,7 +300,7 @@ class IrodsSeqFileMetadata(IrodsRawFileMetadata):
         self.lane_ids = lane_ids if lane_ids else []
         self._npg_qc_values = [npg_qc]
         self._target_values = [target]
-        super().__init__(fpath=fpath, file_replicas=file_replicas, acls=acls)
+
 
     @classmethod
     def set_attributes_from_avus(cls, obj_to_set):
@@ -331,10 +334,6 @@ class IrodsSeqFileMetadata(IrodsRawFileMetadata):
     def from_baton_wrapper(cls, data_object):
         irods_metadata = super().from_baton_wrapper(data_object)
         irods_metadata.checksum_at_upload = {replica.checksum for replica in irods_metadata.file_replicas}
-        irods_metadata.file_replicas = irods_metadata.file_replicas
-        irods_metadata.acls = [IrodsACL.from_baton_wrapper(ac_item) for ac_item in data_object.access_controls if
-                               ac_item]
-        irods_metadata.avus = data_object.metadata
         cls.set_attributes_from_avus(irods_metadata)
         return irods_metadata
 
@@ -347,13 +346,12 @@ class IrodsSeqFileMetadata(IrodsRawFileMetadata):
         :param raw_metadata:
         :return:
         """
-        irods_metadata = IrodsSeqFileMetadata(raw_metadata.fpath)
+        irods_metadata = IrodsSeqFileMetadata(raw_metadata.fpath, file_replicas=raw_metadata.file_replicas, acls=raw_metadata.acls, avus=raw_metadata.avus)
         irods_metadata.checksum_at_upload = {replica.checksum for replica in raw_metadata.file_replicas}
-        irods_metadata.file_replicas = raw_metadata.file_replicas
-        irods_metadata.acls = raw_metadata.acls
-        irods_metadata.avus = raw_metadata.avus
+        # irods_metadata.file_replicas = raw_metadata.file_replicas
+        # irods_metadata.acls = raw_metadata.acls
+        # irods_metadata.avus = raw_metadata.avus
         irods_metadata = cls.set_attributes_from_avus(irods_metadata)
-
         return irods_metadata
 
 
@@ -403,7 +401,6 @@ class IrodsSeqFileMetadata(IrodsRawFileMetadata):
 
     def check_npg_qc_field(self):
         check_npg_qc = CheckResult(check_name=CHECK_NAMES.check_npg_qc_field)
-        npg_qc = self.get_npg_qc()
         if self.get_npg_qc() is None:
             check_npg_qc.result = RESULT.FAILURE
             check_npg_qc.error_message = "Missing npg_qc field"
@@ -521,3 +518,6 @@ class IrodsSeqFileMetadata(IrodsRawFileMetadata):
 
     def __repr__(self):
         return self.__str__()
+
+
+
