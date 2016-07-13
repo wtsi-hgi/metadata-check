@@ -27,6 +27,11 @@ from baton.models import SearchCriterion
 from typing import List, Tuple
 
 
+import logging
+logging.getLogger("baton.api").setLevel(logging.WARNING)
+logging.getLogger("baton.models").setLevel(logging.WARNING)
+#logging.disable(logging.DEBUG)
+
 
 class iRODSMetadataProvider:
 
@@ -48,15 +53,15 @@ class iRODSMetadataProvider:
 
     @classmethod
     def retrieve_raw_files_metadata_by_metadata(cls, search_criteria_list: List[Tuple], zone=None):
-        search_crit_list = []
+        search_criteria_objs = []
         for k, v in search_criteria_list:
             search_criterion = SearchCriterion(k, v)
-            search_crit_list.append(search_criterion)
+            search_criteria_objs.append(search_criterion)
 
         # Getting metadata from iRODS:
         try:
             connection = connect_to_irods_with_baton(config.BATON_BIN)  # skip_baton_binaries_validation=True) # type: Connection
-            list_of_data_objs_and_metadata = connection.data_object.get_by_metadata(search_crit_list, zone=zone)
+            list_of_data_objs_and_metadata = connection.data_object.get_by_metadata(search_criteria_objs, zone=zone)
         except RuntimeError as e:
             if str(e).find('KRB_ERROR_ACQUIRING_CREDS') != -1:
                 raise OSError("ERROR: you need to log into iRODS and aquire the KERBEROS credentials.") from None
@@ -76,5 +81,9 @@ class iRODSMetadataProvider:
 #     sys.exit(1)
 
 #objs = iRODSMetadataProvider.retrieve_raw_files_metadata_by_metadata({'study': 'SCG_sperm'}, zone='seq')
+
+# objs = iRODSMetadataProvider.retrieve_raw_files_metadata_by_metadata({'study': "De novo mutations in cell-free foetal DNA (cffDNA)"}, zone='seq')
+# print("Objects: %s" % objs)
+
 #objs = iRODSMetadataProvider.retrieve_raw_files_metadata_by_metadata({'file_type': 'tox'}, zone='Sanger1')
 #print("Objects found by metadata: %s" % str(len(objs)))
