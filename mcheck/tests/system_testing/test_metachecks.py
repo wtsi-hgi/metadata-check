@@ -235,20 +235,33 @@ class ComparisonFetchByMetadataVsStreamTest(unittest.TestCase):
 
     @patch('mcheck.main.run_checks.stdin.read')
     def test_fetch_study_metadata_vs_stream_study_metadata(self, stdin):
-        fpath = "/nfs/users/nfs_i/ic4/Projects/python3/meta-check/aadm.json"
+        fpath = "/nfs/users/nfs_i/ic4/Projects/python3/meta-check/aadm6.json"
         stdin.return_value = open(fpath).read()
         result_stream_metadata = run_checks.check_metadata(metadata_fetching_strategy='given_by_user')
+
         result_fetch_by_metadata = run_checks.check_metadata(metadata_fetching_strategy='fetch_by_metadata',
                                                              filter_npg_qc=1, filter_target=1,
                                                              study_name='SEQCAP_WGS_GDAP_AADM', irods_zone='seq')
 
         self.assertSetEqual(set(result_stream_metadata.keys()), set(result_fetch_by_metadata.keys()))
         for fpath, results in result_fetch_by_metadata.items():
-            if set(results) != set(result_stream_metadata[fpath]):
-                print("Fpath: %s" % fpath)
-                print("First set--------------------------------------: %s" % results)
-                print("second set-------------------------------------: %s" % result_stream_metadata[fpath])
             self.assertSetEqual(set(results), set(result_stream_metadata[fpath]))
+
+
+    @patch('mcheck.main.run_checks.stdin.read')
+    def test_fetch_study_metadata_vs_stream_study_metadata(self, stdin):
+        fpath = "/nfs/users/nfs_i/ic4/Projects/python3/meta-check/cffdna.json"
+        stdin.return_value = open(fpath).read()
+        result_stream_metadata = run_checks.check_metadata(metadata_fetching_strategy='given_by_user')
+        result_fetch_by_metadata = run_checks.check_metadata(metadata_fetching_strategy='fetch_by_metadata',
+                                                             filter_npg_qc=1, filter_target=1,
+                                                             study_name='De novo mutations in cell-free foetal DNA (cffDNA)', irods_zone='seq')
+
+        self.assertSetEqual(set(result_stream_metadata.keys()), set(result_fetch_by_metadata.keys()))
+        for fpath, results in result_fetch_by_metadata.items():
+            self.assertSetEqual(set(results), set(result_stream_metadata[fpath]))
+
+
 
 @unittest.skip
 class ComparisonFetchByPathVsStreamTest(unittest.TestCase):
@@ -263,9 +276,5 @@ class ComparisonFetchByPathVsStreamTest(unittest.TestCase):
         self.assertSetEqual(set(result_stream_metadata.keys()), set(result_fetch_by_metadata.keys()))
         print()
         for fpath, results in result_fetch_by_metadata.items():
-            if set(results) != set(result_stream_metadata[fpath]):
-                print("Fpath: %s" % fpath)
-                print("First set--------------------------------------: %s" % results)
-                print("second set-------------------------------------: %s" % result_stream_metadata[fpath])
             self.assertSetEqual(set(results), set(result_stream_metadata[fpath]))
 
