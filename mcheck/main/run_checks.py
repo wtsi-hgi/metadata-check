@@ -32,6 +32,7 @@ from mcheck.checks.mchecks_by_comparison import FileMetadataComparison
 from mcheck.checks.mchecks_by_type import MetadataSelfChecks
 from mcheck.metadata.irods_metadata.file_metadata import IrodsSeqFileMetadata
 from mcheck.results.checks_results import RESULT, CheckResultJSONEncoder
+from mcheck.check_names import CHECK_NAMES
 
 my_logger = logging.getLogger('MyLogger')
 my_logger.setLevel(logging.DEBUG)
@@ -126,22 +127,14 @@ def fetch_irods_metadata_by_path(issues_dict, irods_fpaths, reference):
     return MetadataSelfChecks.fetch_and_preprocess_irods_metadata_by_path(irods_fpaths, issues_dict, reference)
 
 
-def fetch_irods_metadata_from_json(json_data_objects):
+def fetch_irods_metadata_from_json(issues_dict, json_data_objects, reference=None):
     baton_data_objects_list = convert_json_to_baton_objs(json_data_objects)
     irods_metadata_dict = {}
     for data_obj in baton_data_objects_list:
-        #print("FPATH and data object that I am now going to turn into IrodsSeq meta obj: %s" % data_obj)
         meta = IrodsSeqFileMetadata.from_baton_wrapper(data_obj)
+        issues_dict[meta.fpath].extend(meta.check_metadata(reference))
         irods_metadata_dict[meta.fpath] = meta
     return irods_metadata_dict
-
-
-# json_ob = '{"avus": [{"value": "10080", "attribute": "id_run"}, {"value": "F31_FET", "attribute": "sample_supplier_name"}, {"value": "bam", "attribute": "type"}, {"value": "8", "attribute": "lane"}, {"value": "SEQCAP_Abnormal_foetal_development_exome_trios", "attribute": "study"}, {"value": "1", "attribute": "is_paired_read"}, {"value": "dd6163040f095c571f714169e079f50d", "attribute": "md5"}, {"value": "TCTCTTCA", "attribute": "tag"}, {"value": "EGAS00001000167", "attribute": "study_accession_number"}, {"value": "7353571", "attribute": "library"}, {"value": "44470502", "attribute": "total_reads"}, {"value": "Abnormal foetal development exome trios", "attribute": "study_title"}, {"value": "Homo Sapien", "attribute": "sample_common_name"}, {"value": "1", "attribute": "manual_qc"}, {"value": "EGAN00001098854", "attribute": "sample_accession_number"}, {"value": "/lustre/scratch109/srpipe/references/Homo_sapiens/1000Genomes_hs37d5/all/bwa/hs37d5.fa", "attribute": "reference"}, {"value": "SC_AFD5518355", "attribute": "sample"}, {"value": "64", "attribute": "tag_index"}, {"value": "1", "attribute": "target"}, {"value": "1613348", "attribute": "sample_id"}, {"value": "7353571", "attribute": "library_id"}, {"value": "1", "attribute": "alignment"}, {"value": "2034", "attribute": "study_id"}], "data_object": "10080_8#64.bam", "collection": "/seq/10080", "replicates": [{"valid": true, "number": 0, "resource": "irods-seq-sr04-ddn-gc10-30-31-32", "location": "irods-seq-sr04", "checksum": "dd6163040f095c571f714169e079f50d"}, {"valid": true, "number": 1, "resource": "irods-seq-i10-bc", "location": "irods-seq-i10", "checksum": "dd6163040f095c571f714169e079f50d"}], "checksum": "dd6163040f095c571f714169e079f50d", "access": [{"owner": "trace", "zone": "Sanger1", "level": "read"}, {"owner": "dnap_ro", "zone": "seq", "level": "read"}, {"owner": "ss_2034", "zone": "seq", "level": "read"}, {"owner": "srpipe", "zone": "Sanger1", "level": "own"}, {"owner": "rodsBoot", "zone": "seq", "level": "own"}, {"owner": "irods-g1", "zone": "seq", "level": "own"}, {"owner": "psdpipe", "zone": "Sanger1", "level": "read"}], "timestamps": [{"created": "2013-06-27T12:37:36", "replicates": 0}, {"modified": "2013-06-27T12:37:36", "replicates": 0}, {"created": "2013-06-27T12:38:48", "replicates": 1}, {"modified": "2013-06-27T12:38:48", "replicates": 1}]}'
-# print("Converted json: %s" % convert_json_to_baton_objs(json_ob))
-# baton_ob = convert_json_to_baton_objs(json_ob)
-# print("BATON object before calling from_baton_Wrapper: ------------------------------%s" % baton_ob)
-# irods_meta = IrodsSeqFileMetadata.from_baton_wrapper(baton_ob[0])
-# print(irods_meta)
 
 
 
@@ -149,14 +142,13 @@ def check_metadata(metadata_fetching_strategy, reference=None, filter_npg_qc=Non
                    study_name=None, study_acc_nr=None, study_internal_id=None, irods_fpaths=None, irods_zone=None):
     issues_dict = defaultdict(list)
     if metadata_fetching_strategy == 'fetch_by_metadata':
-        print("Fetch by metadata called................................................")
         irods_metadata_dict = fetch_irods_metadata_by_metadata(issues_dict, filter_npg_qc, filter_target, file_types,
                                                                study_name, study_acc_nr, study_internal_id, irods_zone, reference)
     elif metadata_fetching_strategy == 'fetch_by_path':
         irods_metadata_dict = fetch_irods_metadata_by_path(issues_dict, irods_fpaths, reference)
     elif metadata_fetching_strategy == 'given_by_user':
         input_data_objects = stdin.read()
-        irods_metadata_dict = fetch_irods_metadata_from_json(input_data_objects)
+        irods_metadata_dict = fetch_irods_metadata_from_json(issues_dict, input_data_objects, reference)
     else:
         raise ValueError("Fetching strategy not supported")
 
