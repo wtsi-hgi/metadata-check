@@ -270,11 +270,10 @@ class ComparisonFetchByPathVsStreamTest(unittest.TestCase):
     def test_fetch_study_metadata_vs_stream_study_metadata(self, stdin):
         fpath = "/nfs/users/nfs_i/ic4/Projects/python3/meta-check/16006_5.json"
         stdin.return_value = open(fpath).read()
+        result_fetch_by_metadata = run_checks.check_metadata(metadata_fetching_strategy='fetch_by_path', irods_fpaths=['/seq/16006/16006_5.cram'])
         result_stream_metadata = run_checks.check_metadata(metadata_fetching_strategy='given_by_user')
-        result_fetch_by_metadata = run_checks.check_metadata(metadata_fetching_strategy='fetch_by_path')
 
         self.assertSetEqual(set(result_stream_metadata.keys()), set(result_fetch_by_metadata.keys()))
         print()
         for fpath, results in result_fetch_by_metadata.items():
             self.assertSetEqual(set(results), set(result_stream_metadata[fpath]))
-
