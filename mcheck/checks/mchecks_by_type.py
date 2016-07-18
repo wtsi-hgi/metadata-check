@@ -56,7 +56,7 @@ class MetadataSelfChecks:
                 check_results.extend(file_metadata.check_metadata(reference))
                 irods_metadata_by_path[raw_metadata.fpath] = file_metadata
                 issues_dict[raw_metadata.fpath].extend(check_results)
-            return irods_metadata_by_path
+        return irods_metadata_by_path
 
 
     @staticmethod
