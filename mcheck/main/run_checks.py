@@ -20,6 +20,7 @@ This file has been created on May 05, 2016.
 """
 
 import os
+import sys
 from collections import defaultdict
 from sys import stdin, exit
 import logging
@@ -32,7 +33,6 @@ from mcheck.checks.mchecks_by_comparison import FileMetadataComparison
 from mcheck.checks.mchecks_by_type import MetadataSelfChecks
 from mcheck.metadata.irods_metadata.file_metadata import IrodsSeqFileMetadata
 from mcheck.results.checks_results import RESULT, CheckResultJSONEncoder
-from mcheck.check_names import CHECK_NAMES
 
 my_logger = logging.getLogger('MyLogger')
 my_logger.setLevel(logging.DEBUG)
@@ -240,14 +240,3 @@ def main():
 if __name__ == '__main__':
     main()
 
-
-# fpath = '/seq/illumina/library_merge/13841100.CCXX.paired310.4199421624/13841100.CCXX.paired310.4199421624.cram'
-# python mcheck/main/run_checks.py fetch_by_metadata --output_dir /lustre/scratch113/teams/hgi/users/ic4/mercury/meta-checks/testing-outputs/test/ --study_name "SEQCAP_WGS_GDAP_AADM" --file_types cram --filter_npg_qc 1 --filter_target 1 --irods_zone seq
-# (ENV) mercury@hgi-serapis-farm3-dev:/nfs/users/nfs_i/ic4/Projects/python3/meta-check$ bsub  -G hgi -q long -R"select[mem>4000] rusage[mem=4000]" -M4000 -o  /lustre/scratch113/teams/hgi/users/ic4/mercury/meta-checks/testing-outputs/interval-all.out "python mcheck/main/run_checks.py fetch_by_metadata --output_dir /lustre/scratch113/teams/hgi/users/ic4/mercury/meta-checks/testing-outputs/interval-all --study_name 'IHTP_WGS_INTERVAL Cohort (15x)' --file_types cram --filter_npg_qc 1 --irods_zone seq"
-# Job <7876533> is submitted to queue <long>.
-# (ENV) mercury@hgi-serapis-farm3-dev:/nfs/users/nfs_i/ic4/Projects/python3/meta-check$ bsub  -G hgi -q long -R"select[mem>4000] rusage[mem=4000]" -M4000 -o  /lustre/scratch113/teams/hgi/users/ic4/mercury/meta-checks/testing-outputs/helic-manolis.out "python mcheck/main/run_checks.py fetch_by_metadata --output_dir /lustre/scratch113/teams/hgi/users/ic4/mercury/meta-checks/testing-outputs/helic-manolis --study_name 'IHTP_MWGS_HELICMANOLIS' --file_types cram --filter_npg_qc 1 --filter_target library --irods_zone seq"
-# Job <7876571> is submitted to queue <long>.
-# (ENV) mercury@hgi-serapis-farm3-dev:/nfs/users/nfs_i/ic4/Projects/python3/meta-check$ bsub  -G hgi -q long -R"select[mem>4000] rusage[mem=4000]" -M4000 -o  /lustre/scratch113/teams/hgi/users/ic4/mercury/meta-checks/testing-outputs/helic-pomak.out "python mcheck/main/run_checks.py fetch_by_metadata --output_dir /lustre/scratch113/teams/hgi/users/ic4/mercury/meta-checks/testing-outputs/helic-pomak --study_name 'IHTP_MWGS_HELICPOMAK' --file_types cram --filter_npg_qc 1 --filter_target library --irods_zone seq"
-# Job <7876591> is submitted to queue <long>.
-# bsub  -G hgi -q long -R"select[mem>4000] rusage[mem=4000]" -M4000 -o  /lustre/scratch113/teams/hgi/users/ic4/mercury/meta-checks/testing-outputs/helic-manolis-nonlibrary.out "python mcheck/main/run_checks.py fetch_by_metadata --output_dir /lustre/scratch113/teams/hgi/users/ic4/mercury/meta-checks/testing-outputs/helic-manolis-nonlibrary --study_name 'IHTP_MWGS_HELICMANOLIS' --file_types cram --filter_npg_qc 1 --filter_target 1 --irods_zone seq"
-#
