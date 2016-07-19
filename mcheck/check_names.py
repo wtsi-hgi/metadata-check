@@ -57,6 +57,6 @@ class CHECK_NAMES:
 
     @classmethod
     def get_only_mandatory_check_names(cls):
-        optional_checks = ['check_desired_reference', 'check_attribute_count' ]
+        optional_checks = ['check_desired_reference']    #, 'check_attribute_count' ]
         checks = dir(CHECK_NAMES)
         return [getattr(CHECK_NAMES, c) for c in checks if c.startswith('check_') and not c in optional_checks]
