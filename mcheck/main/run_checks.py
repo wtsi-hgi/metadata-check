@@ -37,6 +37,7 @@ from mcheck.results.checks_results import RESULT, CheckResultJSONEncoder
 my_logger = logging.getLogger('MyLogger')
 my_logger.setLevel(logging.DEBUG)
 
+# Not used at the moment, useful for debugging and printing more detailed reports
 def process_output(issues_by_path, output_dir):
     stats = CheckResultsProcessing.failed_check_results_stats(issues_by_path)
     print("STATS---------------: %s " % stats)
@@ -52,6 +53,14 @@ def process_output(issues_by_path, output_dir):
     utils.write_dict_to_file(stats, os.path.join(output_dir, 'stats.txt'))
     for failure in sorted_by_result[RESULT.FAILURE]:
         print(failure)
+
+
+def output_as_tsv(check_results_by_path):
+    print("Fpath\tExecuted\tResult\tErrors\t")
+    for fpath, issues in check_results_by_path.items():
+        for issue in issues:
+            errors = issue.error_message if (issue.error_message or issue.error_message is None) else None
+            print(str(fpath) + '\t' + str(issue.check_name) + '\t' + str(issue.executed) + '\t' + str(issue.result) + '\t' + str(errors))
 
 
 
@@ -220,14 +229,16 @@ def main():
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
 
-    process_output(check_results_dict, args.output_dir)
+    #process_output(check_results_dict, args.output_dir)
+
 
 
     import json
     if args.json_output:
         check_results_json = json.dumps(check_results_dict, cls=CheckResultJSONEncoder)
         print(check_results_json)
-
+    else:
+        output_as_tsv(check_results_dict)
 
     for fpath, check_res in check_results_dict.items():
         for result in check_res:
