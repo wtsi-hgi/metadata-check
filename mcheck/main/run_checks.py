@@ -120,7 +120,7 @@ def convert_args_to_search_criteria(filter_by_npg_qc=None, filter_by_target=None
     elif match_study_acc_nr:
         search_criteria.append(('study_accession_number', str(match_study_acc_nr)))
     elif match_study_id:
-        search_criteria.append(('study_internal_id', str(match_study_id)))
+        search_criteria.append(('study_id', str(match_study_id)))
     return search_criteria
 
 def fetch_irods_metadata_by_metadata(issues_dict, filter_npg_qc=None, filter_target=None, file_types=None, study_name=None,
@@ -161,6 +161,10 @@ def check_metadata(metadata_fetching_strategy, reference=None, filter_npg_qc=Non
     else:
         raise ValueError("Fetching strategy not supported")
 
+    if not irods_metadata_dict:
+        print("No irods metadata found. No checks performed.")
+        sys.exit(1)
+
     # Getting HEADER metadata:
     header_metadata_dict = MetadataSelfChecks.fetch_and_preprocess_header_metadata(irods_metadata_dict.keys(), issues_dict)
 
@@ -174,7 +178,6 @@ def check_metadata(metadata_fetching_strategy, reference=None, filter_npg_qc=Non
 
 def main():
     args = arg_parser.parse_args()
-    print("ARGS: %s" % args)
     try:
         filter_npg_qc = args.filter_npg_qc
     except AttributeError:
@@ -225,9 +228,9 @@ def main():
                                  study_internal_id, fpaths_irods, irods_zone)
 
 
-    # OUTPUTTING THE CHECK RESULTS
-    if not os.path.exists(args.output_dir):
-        os.makedirs(args.output_dir)
+    # # OUTPUTTING THE CHECK RESULTS
+    # if not os.path.exists(args.output_dir):
+    #     os.makedirs(args.output_dir)
 
     #process_output(check_results_dict, args.output_dir)
 
