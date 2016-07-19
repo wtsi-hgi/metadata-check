@@ -88,7 +88,8 @@ def write_tuples_to_file(tuples, output_file, header_tuple=None):
 
 def write_dict_to_file(input_dict, output_file, header=None):
     out_fd = open(output_file, 'a')
-    out_fd.write(header + "\n")
+    if header:
+        out_fd.write(header + "\n")
     for k, v in input_dict.items():
         out_fd.write(str(k))
         out_fd.write("\n")

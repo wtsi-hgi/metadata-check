@@ -43,6 +43,7 @@ class MetadataFetchedByPathTest(unittest.TestCase):
         irods_fpath = "/humgen/projects/serapis_staging/test-metacheck/test_metadata.txt"
 
         result = run_checks.check_metadata(metadata_fetching_strategy='fetch_by_path', irods_fpaths=[irods_fpath])
+        print("Comparisong checks: %s" % self.comparison_checks)
         for fpath, check_results in result.items():
             check_names = [c.check_name for c in check_results]
             self.assertSetEqual(set(check_names), set(CHECK_NAMES.get_only_mandatory_check_names()))
@@ -168,6 +169,7 @@ class MetadataFetchedByPathTest(unittest.TestCase):
                     else:
                         self.assertIsNone(check_res.result)
 
+
     def test_when_more_than_1_md5s(self):
         irods_fpath = "/humgen/projects/serapis_staging/test-metacheck/test_more_than_one_md5s.out"
         result = run_checks.check_metadata(metadata_fetching_strategy='fetch_by_path', irods_fpaths=[irods_fpath], reference='grch38')
@@ -270,11 +272,10 @@ class ComparisonFetchByPathVsStreamTest(unittest.TestCase):
     def test_fetch_study_metadata_vs_stream_study_metadata(self, stdin):
         fpath = "/nfs/users/nfs_i/ic4/Projects/python3/meta-check/16006_5.json"
         stdin.return_value = open(fpath).read()
+        result_fetch_by_metadata = run_checks.check_metadata(metadata_fetching_strategy='fetch_by_path', irods_fpaths=['/seq/16006/16006_5.cram'])
         result_stream_metadata = run_checks.check_metadata(metadata_fetching_strategy='given_by_user')
-        result_fetch_by_metadata = run_checks.check_metadata(metadata_fetching_strategy='fetch_by_path')
 
         self.assertSetEqual(set(result_stream_metadata.keys()), set(result_fetch_by_metadata.keys()))
         print()
         for fpath, results in result_fetch_by_metadata.items():
             self.assertSetEqual(set(results), set(result_stream_metadata[fpath]))
-

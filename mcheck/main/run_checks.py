@@ -20,6 +20,7 @@ This file has been created on May 05, 2016.
 """
 
 import os
+import sys
 from collections import defaultdict
 from sys import stdin, exit
 import logging
@@ -32,11 +33,11 @@ from mcheck.checks.mchecks_by_comparison import FileMetadataComparison
 from mcheck.checks.mchecks_by_type import MetadataSelfChecks
 from mcheck.metadata.irods_metadata.file_metadata import IrodsSeqFileMetadata
 from mcheck.results.checks_results import RESULT, CheckResultJSONEncoder
-from mcheck.check_names import CHECK_NAMES
 
 my_logger = logging.getLogger('MyLogger')
 my_logger.setLevel(logging.DEBUG)
 
+# Not used at the moment, useful for debugging and printing more detailed reports
 def process_output(issues_by_path, output_dir):
     stats = CheckResultsProcessing.failed_check_results_stats(issues_by_path)
     print("STATS---------------: %s " % stats)
@@ -49,9 +50,17 @@ def process_output(issues_by_path, output_dir):
             utils.write_list_to_file(failure_issues, os.path.join(output_dir, severity+'.txt'), fpath)
         utils.write_list_to_file(issues, os.path.join(output_dir, 'all_issues.txt'), fpath)
     print("FAILED---------")
-    utils.write_dict_to_file(stats, os.path.join(output_dir, 'stats.txt'), fpath)
+    utils.write_dict_to_file(stats, os.path.join(output_dir, 'stats.txt'))
     for failure in sorted_by_result[RESULT.FAILURE]:
         print(failure)
+
+
+def output_as_tsv(check_results_by_path):
+    print("Fpath\tExecuted\tResult\tErrors\t")
+    for fpath, issues in check_results_by_path.items():
+        for issue in issues:
+            errors = issue.error_message if (issue.error_message or issue.error_message is None) else None
+            print(str(fpath) + '\t' + str(issue.check_name) + '\t' + str(issue.executed) + '\t' + str(issue.result) + '\t' + str(errors))
 
 
 
@@ -220,14 +229,16 @@ def main():
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
 
-    process_output(check_results_dict, args.output_dir)
+    #process_output(check_results_dict, args.output_dir)
+
 
 
     import json
     if args.json_output:
         check_results_json = json.dumps(check_results_dict, cls=CheckResultJSONEncoder)
         print(check_results_json)
-
+    else:
+        output_as_tsv(check_results_dict)
 
     for fpath, check_res in check_results_dict.items():
         for result in check_res:
@@ -240,14 +251,3 @@ def main():
 if __name__ == '__main__':
     main()
 
-
-# fpath = '/seq/illumina/library_merge/13841100.CCXX.paired310.4199421624/13841100.CCXX.paired310.4199421624.cram'
-# python mcheck/main/run_checks.py fetch_by_metadata --output_dir /lustre/scratch113/teams/hgi/users/ic4/mercury/meta-checks/testing-outputs/test/ --study_name "SEQCAP_WGS_GDAP_AADM" --file_types cram --filter_npg_qc 1 --filter_target 1 --irods_zone seq
-# (ENV) mercury@hgi-serapis-farm3-dev:/nfs/users/nfs_i/ic4/Projects/python3/meta-check$ bsub  -G hgi -q long -R"select[mem>4000] rusage[mem=4000]" -M4000 -o  /lustre/scratch113/teams/hgi/users/ic4/mercury/meta-checks/testing-outputs/interval-all.out "python mcheck/main/run_checks.py fetch_by_metadata --output_dir /lustre/scratch113/teams/hgi/users/ic4/mercury/meta-checks/testing-outputs/interval-all --study_name 'IHTP_WGS_INTERVAL Cohort (15x)' --file_types cram --filter_npg_qc 1 --irods_zone seq"
-# Job <7876533> is submitted to queue <long>.
-# (ENV) mercury@hgi-serapis-farm3-dev:/nfs/users/nfs_i/ic4/Projects/python3/meta-check$ bsub  -G hgi -q long -R"select[mem>4000] rusage[mem=4000]" -M4000 -o  /lustre/scratch113/teams/hgi/users/ic4/mercury/meta-checks/testing-outputs/helic-manolis.out "python mcheck/main/run_checks.py fetch_by_metadata --output_dir /lustre/scratch113/teams/hgi/users/ic4/mercury/meta-checks/testing-outputs/helic-manolis --study_name 'IHTP_MWGS_HELICMANOLIS' --file_types cram --filter_npg_qc 1 --filter_target library --irods_zone seq"
-# Job <7876571> is submitted to queue <long>.
-# (ENV) mercury@hgi-serapis-farm3-dev:/nfs/users/nfs_i/ic4/Projects/python3/meta-check$ bsub  -G hgi -q long -R"select[mem>4000] rusage[mem=4000]" -M4000 -o  /lustre/scratch113/teams/hgi/users/ic4/mercury/meta-checks/testing-outputs/helic-pomak.out "python mcheck/main/run_checks.py fetch_by_metadata --output_dir /lustre/scratch113/teams/hgi/users/ic4/mercury/meta-checks/testing-outputs/helic-pomak --study_name 'IHTP_MWGS_HELICPOMAK' --file_types cram --filter_npg_qc 1 --filter_target library --irods_zone seq"
-# Job <7876591> is submitted to queue <long>.
-# bsub  -G hgi -q long -R"select[mem>4000] rusage[mem=4000]" -M4000 -o  /lustre/scratch113/teams/hgi/users/ic4/mercury/meta-checks/testing-outputs/helic-manolis-nonlibrary.out "python mcheck/main/run_checks.py fetch_by_metadata --output_dir /lustre/scratch113/teams/hgi/users/ic4/mercury/meta-checks/testing-outputs/helic-manolis-nonlibrary --study_name 'IHTP_MWGS_HELICMANOLIS' --file_types cram --filter_npg_qc 1 --filter_target 1 --irods_zone seq"
-#

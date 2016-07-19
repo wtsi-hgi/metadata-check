@@ -443,6 +443,25 @@ class IrodsSeqFileMetadata(IrodsRawFileMetadata):
         return check_result
 
 
+    def checksum_comparison_check(self):
+        check_result = CheckResult(check_name=CHECK_NAMES.check_by_comparison_checksum_in_meta_with_checksum_at_upload,
+                                   error_message=[])
+        impossible_to_exec = False
+        if not self.checksum_at_upload:
+            check_result.executed = False
+            check_result.error_message.append("Missing ichecksum result.")
+            impossible_to_exec = True
+        if not self.checksum_in_meta:
+            check_result.executed = False
+            check_result.error_message.append("Missing checksum from metadata")
+            impossible_to_exec = True
+        if not impossible_to_exec and self.checksum_in_meta != self.checksum_at_upload:
+            check_result.result = RESULT.FAILURE
+            check_result.error_message = "The checksum in metadata = %s different than checksum at upload = %s" % \
+                                         (self.checksum_in_meta, self.checksum_at_upload)
+        return check_result
+
+
     def validate_fields(self) -> List:
         check_results = []
         upl_checksum_check = self.check_checksum_at_upload_present()
