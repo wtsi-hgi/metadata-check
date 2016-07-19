@@ -56,11 +56,12 @@ def process_output(issues_by_path, output_dir):
 
 
 def output_as_tsv(check_results_by_path):
-    print("Fpath\tExecuted\tResult\tErrors\t")
-    for fpath, issues in check_results_by_path.items():
-        for issue in issues:
-            errors = issue.error_message if (issue.error_message or issue.error_message is None) else None
-            print(str(fpath) + '\t' + str(issue.check_name) + '\t' + str(issue.executed) + '\t' + str(issue.result) + '\t' + str(errors))
+    if check_results_by_path:
+        print("Fpath\tExecuted\tResult\tErrors\t")
+        for fpath, issues in check_results_by_path.items():
+            for issue in issues:
+                errors = issue.error_message if (issue.error_message or issue.error_message is None) else None
+                print(str(fpath) + '\t' + str(issue.check_name) + '\t' + str(issue.executed) + '\t' + str(issue.result) + '\t' + str(errors))
 
 
 
