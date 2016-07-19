@@ -2,10 +2,5 @@ git+https://github.com/wtsi-hgi/python-sequencescape-db.git@94bf380ec93e1adc4241
 git+https://github.com/wtsi-hgi/python-baton-wrapper.git@a97af16b1435c8693c48aa6dfcc889e6c916f933#egg=baton
 hgicommon==1.1.0
 PyHamcrest==1.8.5
-<<<<<<< HEAD
 pbr==1.8.1
 hgijson==1.3.1
-
-=======
-pbr==1.8.1
->>>>>>> system-testing
