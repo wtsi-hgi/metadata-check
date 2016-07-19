@@ -25,7 +25,7 @@ from mcheck.main import run_checks
 from mcheck.check_names import CHECK_NAMES
 from mcheck.results.checks_results import RESULT
 
-@unittest.skip
+#@unittest.skip
 class MetadataFetchedByPathTest(unittest.TestCase):
     def setUp(self):
         self.comparison_checks = [
@@ -193,7 +193,7 @@ class MetadataFetchedByPathTest(unittest.TestCase):
                         self.assertIsNone(check_res.result)
 
 
-@unittest.skip
+#@unittest.skip
 class MetadataFetchedByMetadataTest(unittest.TestCase):
 
     def test_fetch_study_by_metadata(self):
@@ -207,8 +207,8 @@ class MetadataFetchedByMetadataTest(unittest.TestCase):
                     self.assertEqual(check_res.result, RESULT.SUCCESS)
 
 
-@unittest.skip
-class ComparisonFetchByMetadataVsFetchByPathTest(unittest.TestCase):
+#@unittest.skip
+class ComparisonTests(unittest.TestCase):
 
     def test_same_check_results_by_path_and_by_metadata(self):
         fpath = '/humgen/projects/serapis_staging/test-metacheck/test_metadata_comparison.cram'
@@ -230,10 +230,6 @@ class ComparisonFetchByMetadataVsFetchByPathTest(unittest.TestCase):
 
         self.assertEqual(len(file_check_results_by_path), len(file_check_results_by_meta))
 
-
-
-@unittest.skip
-class ComparisonFetchByMetadataVsStreamTest(unittest.TestCase):
 
     @patch('mcheck.main.run_checks.stdin.read')
     def test_fetch_study_metadata_vs_stream_study_metadata(self, stdin):
@@ -263,10 +259,6 @@ class ComparisonFetchByMetadataVsStreamTest(unittest.TestCase):
         for fpath, results in result_fetch_by_metadata.items():
             self.assertSetEqual(set(results), set(result_stream_metadata[fpath]))
 
-
-
-@unittest.skip
-class ComparisonFetchByPathVsStreamTest(unittest.TestCase):
 
     @patch('mcheck.main.run_checks.stdin.read')
     def test_fetch_study_metadata_vs_stream_study_metadata(self, stdin):
