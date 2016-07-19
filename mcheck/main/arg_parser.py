@@ -20,9 +20,6 @@ This file has been created on Jun 23, 2015.
 """
 
 import argparse
-# from . import constants
-# import argcomplete
-import sys
 from mcheck.main import constants
 
 
@@ -38,17 +35,17 @@ def parse_args():
                            help='The desired reference, given by name',
     )
 
-    tests_grp.add_argument('--test-complete-meta',
-                           action='store_true',
-                           help='Chose this test if you want the iRODS metadata to be checked that '
-                                'it is complete against a config file you give in',
-    )
+    # tests_grp.add_argument('--test-complete-meta',
+    #                        action='store_true',
+    #                        help='Chose this test if you want the iRODS metadata to be checked that '
+    #                             'it is complete against a config file you give in',
+    # )
 
-    tests_grp.add_argument('--config_file',
-                           dest='config_file',
-                           help='The config file for the test regarding iRODS metadata being complete '
-                                '(to be given with --all-tests and --test-complete-meta option)',
-    )
+    # tests_grp.add_argument('--config_file',
+    #                        dest='config_file',
+    #                        help='The config file for the test regarding iRODS metadata being complete '
+    #                             '(to be given with --all-tests and --test-complete-meta option)',
+    # )
 
     # OUTPUT: how to output the results?
     out = parent_parser.add_argument_group('OUTPUT FORMAT', 'What output to return and how', )
@@ -60,38 +57,38 @@ def parse_args():
                             help='write the output as json',
     )
 
-    output_grp.add_argument('--output_as_text',
-                            action='store_true',
-                            dest='text_output',
-                            required=False,
-                            help='write the output as a text report',
-    )
-
-    parent_parser.add_argument('--output_dir',
-                            dest='output_dir',
-                            required=True,
-                            help='write the output to this directory',
-    )
+    # output_grp.add_argument('--output_as_text',
+    #                         action='store_true',
+    #                         dest='text_output',
+    #                         required=False,
+    #                         help='write the output as a text report',
+    # )
+    #
+    # parent_parser.add_argument('--output_dir',
+    #                         dest='output_dir',
+    #                         required=True,
+    #                         help='write the output to this directory',
+    # )
 
 
     # ADDITIONALS:
     additional_outputs_grp = parent_parser.add_argument_group('INCLUDE IN OUTPUT', 'What to include in the output')
     additional_outputs_grp.add_argument("-v", "--verbosity", action="count", help="increase output verbosity")
-    additional_outputs_grp.add_argument('--dump_meta',
-                                        dest='meta_dir',
-                                        required=False,
-                                        help='Dump all the metadata extracted to the directory given as parameter',
-    )
+    # additional_outputs_grp.add_argument('--dump_meta',
+    #                                     dest='meta_dir',
+    #                                     required=False,
+    #                                     help='Dump all the metadata extracted to the directory given as parameter',
+    # )
+    #
+    # additional_outputs_grp.add_argument('--dump_fnames_by_type',
+    #                                     required=False,
+    #                                     dest='fnames_by_ftype',
+    #                                     action='store_true',
+    #                                     help='Output a list of files analyzed grouped by type to a file '
+    #                                          '(by default if no param given - include in the report)',
+    # )
 
-    additional_outputs_grp.add_argument('--dump_fnames_by_type',
-                                        required=False,
-                                        dest='fnames_by_ftype',
-                                        action='store_true',
-                                        help='Output a list of files analyzed grouped by type to a file '
-                                             '(by default if no param given - include in the report)',
-    )
-
-    subparsers = parser.add_subparsers(title='Strategies for fetching iRODS metadata: in batch, per file or given by the user as input',
+    subparsers = parser.add_subparsers(title='Choose the Strategy for fetching iRODS metadata: in batch, per file or given by the user as input',
                                        description='One subcommand required: fetch_by_path | fetch_by_metadata | given_by_user',
                                        help='Sub-commands',
                                        #choices=['fetch_by_path', 'fetch_by_metadata', 'given_by_user'],
@@ -124,7 +121,8 @@ def parse_args():
     )
     input_grp = input.add_mutually_exclusive_group(required=True)
     input_grp.add_argument('--study_name', required=False, help='Study name', )
-    input_grp.add_argument('--study_internal_id',
+    input_grp.add_argument('--study_id',
+                           dest='study_internal_id',
                            help='The internal_id of the study that you query by for getting a list of files',
     )
 
@@ -134,7 +132,7 @@ def parse_args():
 
     # Filters files by type
     filter_grp = parser_all_files_metacheck.add_argument_group('FILTERS', 'Which files to include based on metadata filters')
-    filter_grp.add_argument('--file_types',
+    filter_grp.add_argument('--file_type',
                             choices=['bam', 'cram'],
                             default='cram',
                             #nargs='*',
@@ -159,7 +157,6 @@ def parse_args():
 
     return parser.parse_args()
 
-#print parse_args()
 
 if __name__ == '__main__':
     print(parse_args())
