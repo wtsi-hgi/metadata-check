@@ -142,7 +142,6 @@ class IrodsRawFileMetadata(ComparableMetadata):
                 check_result.error_message = "File has " + str(len(replicas)) + " replicas"
             return check_result
 
-        # Checking the replicas:
         @classmethod
         def check(cls, replicas):
             check_results = []
@@ -206,7 +205,6 @@ class IrodsRawFileMetadata(ComparableMetadata):
                 check_results.extend(acl.validate_fields())
             return check_results
 
-        # Check the acls:
         @classmethod
         def check(cls, acls):
             check_results = []
@@ -264,7 +262,6 @@ class IrodsRawFileMetadata(ComparableMetadata):
             crt_attribute_frequencies = cls.build_freq_dict_from_avus_list(avus)
             attr_freq_check_result = cls.check_attributes_have_the_right_frequency(general_attribute_frequencies, crt_attribute_frequencies)
             return attr_freq_check_result
-
 
 
     def check_metadata(self, avu_counts=None):
@@ -348,9 +345,6 @@ class IrodsSeqFileMetadata(IrodsRawFileMetadata):
         """
         irods_metadata = IrodsSeqFileMetadata(raw_metadata.fpath, file_replicas=raw_metadata.file_replicas, acls=raw_metadata.acls, avus=raw_metadata.avus)
         irods_metadata.checksum_at_upload = {replica.checksum for replica in raw_metadata.file_replicas}
-        # irods_metadata.file_replicas = raw_metadata.file_replicas
-        # irods_metadata.acls = raw_metadata.acls
-        # irods_metadata.avus = raw_metadata.avus
         irods_metadata = cls.set_attributes_from_avus(irods_metadata)
         return irods_metadata
 
