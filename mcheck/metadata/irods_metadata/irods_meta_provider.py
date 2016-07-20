@@ -27,13 +27,26 @@ from baton.models import SearchCriterion
 from typing import List, Tuple
 
 
-import logging
-logging.getLogger("baton.api").setLevel(logging.WARNING)
-logging.getLogger("baton.models").setLevel(logging.WARNING)
-#logging.disable(logging.DEBUG)
-
-
 class iRODSMetadataProvider:
+
+    @classmethod
+    def convert_to_irods_fields(cls, filter_by_npg_qc=None, filter_by_target=None, filter_by_file_types=None,
+                                match_study_name=None, match_study_acc_nr=None, match_study_id=None):
+        search_criteria = []
+        if filter_by_npg_qc:
+            search_criteria.append(('manual_qc', str(filter_by_npg_qc)))
+        if filter_by_target:
+            search_criteria.append(('target', str(filter_by_target)))
+        if filter_by_file_types:
+            search_criteria.append(('type', str(filter_by_file_types)))
+        if match_study_name:
+            search_criteria.append(('study', str(match_study_name)))
+        elif match_study_acc_nr:
+            search_criteria.append(('study_accession_number', str(match_study_acc_nr)))
+        elif match_study_id:
+            search_criteria.append(('study_id', str(match_study_id)))
+        return search_criteria
+
 
     @classmethod
     def fetch_raw_file_metadata_by_path(cls, fpath):
@@ -70,20 +83,3 @@ class iRODSMetadataProvider:
         raw_meta_objects = [IrodsRawFileMetadata.from_baton_wrapper(data_obj) for data_obj in list_of_data_objs_and_metadata]
         return raw_meta_objects
 
-
-# import sys
-# #by_path = iRODSMetadataProvider.fetch_raw_file_metadata_by_path('/Sanger1/home/ic4/some_json.txt')
-# try:
-#     by_path = iRODSMetadataProvider.fetch_raw_file_metadata_by_path('/Sanger1/home/ic4/tox.ini')
-#     print("Metadata for file by path %s " % by_path)
-# except Exception as e:
-#     print(e)
-#     sys.exit(1)
-
-#objs = iRODSMetadataProvider.retrieve_raw_files_metadata_by_metadata({'study': 'SCG_sperm'}, zone='seq')
-
-# objs = iRODSMetadataProvider.retrieve_raw_files_metadata_by_metadata({'study': "De novo mutations in cell-free foetal DNA (cffDNA)"}, zone='seq')
-# print("Objects: %s" % objs)
-
-#objs = iRODSMetadataProvider.retrieve_raw_files_metadata_by_metadata({'file_type': 'tox'}, zone='Sanger1')
-#print("Objects found by metadata: %s" % str(len(objs)))

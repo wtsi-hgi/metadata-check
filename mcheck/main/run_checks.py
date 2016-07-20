@@ -26,9 +26,10 @@ from collections import defaultdict
 from sys import stdin, exit
 import logging
 
+from mcheck.metadata.irods_metadata.irods_meta_provider import iRODSMetadataProvider
 from mcheck.com import utils
 from mcheck.main import arg_parser
-from mcheck.main.input_parser import convert_json_to_baton_objs #parse_data_objects,
+from mcheck.main.input_parser import convert_json_to_baton_objs  # parse_data_objects,
 from mcheck.results.results_processing import CheckResultsProcessing
 from mcheck.checks.mchecks_by_comparison import FileMetadataComparison
 from mcheck.checks.mchecks_by_type import MetadataSelfChecks
@@ -39,90 +40,84 @@ from mcheck.results.checks_results import RESULT, CheckResultJSONEncoder
 # my_logger.setLevel(logging.DEBUG)
 
 
-def print_output_as_tsv(check_results_by_path):
+def _print_output_as_tsv(check_results_by_path):
+    """
+    This function converts a dictionary of key = fpath, values = CheckResults into a tab delimited values string.
+    :param check_results_by_path:
+    :return:
+    """
+    result_str = ''
     if check_results_by_path:
-        print("Fpath\tExecuted\tResult\tErrors\t")
+        result_str += "Fpath\tExecuted\tResult\tErrors\t"
+        # print("Fpath\tExecuted\tResult\tErrors\t")
         for fpath, issues in check_results_by_path.items():
             for issue in issues:
                 errors = issue.error_message if (issue.error_message or issue.error_message is None) else None
-                print(str(fpath) + '\t' + str(issue.check_name) + '\t' + str(issue.executed) + '\t' + str(issue.result) + '\t' + str(errors))
-
-
-def convert_args_to_search_criteria(filter_by_npg_qc=None, filter_by_target=None, filter_by_file_types=None,
-                                match_study_name=None, match_study_acc_nr=None, match_study_id=None):
-    search_criteria = []
-    if filter_by_npg_qc:
-        search_criteria.append(('manual_qc',str(filter_by_npg_qc)))
-    else:
-        print(
-            "WARNING! You haven't filtered on manual_qc field. You will get the report from checking all the data, "
-            "no matter if qc pass of fail.")
-    if filter_by_target:
-        search_criteria.append(('target', str(filter_by_target)))
-    else:
-        print(
-            "WARNING! You haven't filtered by target field. You will get back the report from checking all the data, "
-            "no matter if it is the target or not, hence possibly also PhiX")
-    if filter_by_file_types:
-        search_criteria.append(('type', str(filter_by_file_types)))
-    else:
-        print("WARNING! You haven't filtered on file type.")
-
-    # Parse input parameters and obtain files+metadata:
-    if match_study_name:
-        search_criteria.append(('study', str(match_study_name)))
-    elif match_study_acc_nr:
-        search_criteria.append(('study_accession_number', str(match_study_acc_nr)))
-    elif match_study_id:
-        search_criteria.append(('study_id', str(match_study_id)))
-    return search_criteria
+                result_str = result_str + str(fpath) + '\t' + str(issue.check_name) + '\t' + str(
+                    issue.executed) + '\t' + str(
+                    issue.result) + '\t' + str(errors) + '\n'
+                # print(str(fpath) + '\t' + str(issue.check_name) + '\t' + str(issue.executed) + '\t' + str(
+                # issue.result) + '\t' + str(errors))
+    return result_str
 
 
 def check_metadata_fetched_by_metadata(filter_npg_qc=None, filter_target=None, file_types=None, study_name=None,
-                                     study_acc_nr=None, study_internal_id=None, irods_zone=None, reference=None):
-    issues_dict = defaultdict(list)
-    search_criteria = convert_args_to_search_criteria(filter_npg_qc, filter_target,
-                                                      file_types, study_name,
-                                                      study_acc_nr, study_internal_id)
-    irods_metadata_dict = MetadataSelfChecks.fetch_and_preprocess_irods_metadata_by_metadata(search_criteria, irods_zone, issues_dict, reference)
+                                       study_acc_nr=None, study_internal_id=None, irods_zone=None, reference=None):
+    check_results_by_path = defaultdict(list)
+    search_criteria = iRODSMetadataProvider.convert_to_irods_fields(filter_npg_qc, filter_target,
+                                                                    file_types, study_name,
+                                                                    study_acc_nr, study_internal_id)
+    irods_metadata_dict = MetadataSelfChecks.fetch_and_preprocess_irods_metadata_by_metadata(search_criteria,
+                                                                                             irods_zone,
+                                                                                             check_results_by_path,
+                                                                                             reference)
     if not irods_metadata_dict:
         print("No irods metadata found. No checks performed.")
         sys.exit(1)
-    header_metadata_dict, seqscape_metadata_dict = _search_irods_metadata_in_other_sources_and_check(irods_metadata_dict, issues_dict)
-    FileMetadataComparison.check_metadata_across_different_sources(irods_metadata_dict, header_metadata_dict, seqscape_metadata_dict, issues_dict)
-    return issues_dict
+    header_metadata_dict, seqscape_metadata_dict = _fetch_irods_metadata_from_other_sources_and_check(
+        irods_metadata_dict, check_results_by_path)
+    FileMetadataComparison.check_metadata_across_different_sources(irods_metadata_dict, header_metadata_dict,
+                                                                   seqscape_metadata_dict, check_results_by_path)
+    return check_results_by_path
 
 
 def check_metadata_fetched_by_path(irods_fpaths, reference=None):
-    issues_dict = defaultdict(list)
-    irods_metadata_dict = MetadataSelfChecks.fetch_and_preprocess_irods_metadata_by_path(irods_fpaths, issues_dict, reference)
+    check_results_by_path = defaultdict(list)
+    irods_metadata_dict = MetadataSelfChecks.fetch_and_preprocess_irods_metadata_by_path(irods_fpaths,
+                                                                                         check_results_by_path,
+                                                                                         reference)
     if not irods_metadata_dict:
         print("No irods metadata found. No checks performed.")
         sys.exit(1)
-    header_metadata_dict, seqscape_metadata_dict = _search_irods_metadata_in_other_sources_and_check(irods_metadata_dict, issues_dict)
-    FileMetadataComparison.check_metadata_across_different_sources(irods_metadata_dict, header_metadata_dict, seqscape_metadata_dict, issues_dict)
-    return issues_dict
+    header_metadata_dict, seqscape_metadata_dict = _fetch_irods_metadata_from_other_sources_and_check(
+        irods_metadata_dict, check_results_by_path)
+    FileMetadataComparison.check_metadata_across_different_sources(irods_metadata_dict, header_metadata_dict,
+                                                                   seqscape_metadata_dict, check_results_by_path)
+    return check_results_by_path
 
 
 def check_metadata_given_as_json_stream(reference=None):
-    issues_dict = defaultdict(list)
+    check_results_by_path = defaultdict(list)
     json_input_data = stdin.read()
     baton_data_objects_list = convert_json_to_baton_objs(json_input_data)
     irods_metadata_dict = {}
     for data_obj in baton_data_objects_list:
         meta = IrodsSeqFileMetadata.from_baton_wrapper(data_obj)
-        issues_dict[meta.fpath].extend(meta.check_metadata(reference))
+        check_results_by_path[meta.fpath].extend(meta.check_metadata(reference))
         irods_metadata_dict[meta.fpath] = meta
     if not irods_metadata_dict:
         print("No irods metadata found. No checks performed.")
         sys.exit(1)
-    header_metadata_dict, seqscape_metadata_dict = _search_irods_metadata_in_other_sources_and_check(irods_metadata_dict, issues_dict)
-    FileMetadataComparison.check_metadata_across_different_sources(irods_metadata_dict, header_metadata_dict, seqscape_metadata_dict, issues_dict)
-    return issues_dict
+    header_metadata_dict, seqscape_metadata_dict = _fetch_irods_metadata_from_other_sources_and_check(
+        irods_metadata_dict, check_results_by_path)
+    FileMetadataComparison.check_metadata_across_different_sources(irods_metadata_dict, header_metadata_dict,
+                                                                   seqscape_metadata_dict, check_results_by_path)
+    return check_results_by_path
 
 
-def _search_irods_metadata_in_other_sources_and_check(irods_metadata_dict, issues_dict):
-    header_metadata_dict = MetadataSelfChecks.fetch_and_preprocess_header_metadata(irods_metadata_dict.keys(), issues_dict)
+def _fetch_irods_metadata_from_other_sources_and_check(irods_metadata_dict, issues_dict):
+    header_metadata_dict = MetadataSelfChecks.fetch_and_preprocess_header_metadata(irods_metadata_dict.keys(),
+                                                                                   issues_dict)
     seqsc_metadata_dict = MetadataSelfChecks.fetch_and_preprocess_seqscape_metadata(irods_metadata_dict, issues_dict)
     return header_metadata_dict, seqsc_metadata_dict
 
@@ -138,7 +133,6 @@ def main():
         filter_target = args.filter_target
     except AttributeError:
         filter_target = None
-
     try:
         file_types = args.file_types
     except AttributeError:
@@ -175,8 +169,22 @@ def main():
         reference = None
 
     if args.metadata_fetching_strategy == 'fetch_by_metadata':
+        if not file_types:
+            print(
+                "WARNING! You haven't filtered on file type. The result will contain both BAMs and CRAMs, possibly other types of file as well.")
+        if not filter_target:
+            print(
+                "WARNING! You haven't filtered by target field. You will get back the report from checking all the data, "
+                "no matter if it is the target or not, hence possibly also PhiX")
+        if not filter_npg_qc:
+            print(
+                "WARNING! You haven't filtered on manual_qc field. You will get the report from checking all the data, "
+                "no matter if qc pass of fail.")
+
+    if args.metadata_fetching_strategy == 'fetch_by_metadata':
         check_results_by_fpath = check_metadata_fetched_by_metadata(filter_npg_qc, filter_target, file_types,
-                                                               study_name, study_acc_nr, study_internal_id, irods_zone, reference)
+                                                                    study_name, study_acc_nr, study_internal_id,
+                                                                    irods_zone, reference)
     elif args.metadata_fetching_strategy == 'fetch_by_path':
         check_results_by_fpath = check_metadata_fetched_by_path(irods_fpaths, reference)
     elif args.metadata_fetching_strategy == 'given_by_user':
@@ -188,7 +196,8 @@ def main():
         check_results_json = json.dumps(check_results_by_fpath, cls=CheckResultJSONEncoder)
         print(check_results_json)
     else:
-        print_output_as_tsv(check_results_by_fpath)
+        result_as_tsv_string = _print_output_as_tsv(check_results_by_fpath)
+        print(result_as_tsv_string)
 
     for fpath, check_res in check_results_by_fpath.items():
         for result in check_res:

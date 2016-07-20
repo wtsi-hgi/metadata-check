@@ -18,35 +18,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 This file has been created on Jun 13, 2016.
 """
-import unittest
-from collections import defaultdict
-
-from mcheck.main import run_checks
-
-class ArgsConvertTests(unittest.TestCase):
-
-    def test_convert_args_to_search_criteria_1(self):
-        result = set(run_checks.convert_args_to_search_criteria(filter_by_npg_qc='1', filter_by_target='1', filter_by_file_types='cram'))
-        expected = set([('manual_qc', '1'), ('target', '1'), ('type', 'cram')])
-        self.assertSetEqual(result, expected)
-
-
-    def test_convert_args_to_search_criteria_when_no_search_criteria(self):
-        result = set(run_checks.convert_args_to_search_criteria())
-        expected = set()
-        self.assertSetEqual(result, expected)
-
-
-    def test_convert_args_to_search_criteria_2(self):
-        result = run_checks.convert_args_to_search_criteria(match_study_acc_nr='EGA1')
-        expected = [('study_accession_number', 'EGA1')]
-        self.assertSetEqual(set(result), set(expected))
-
-
-    def test_convert_args_to_search_criteria_3(self):
-        result = set(run_checks.convert_args_to_search_criteria(filter_by_file_types='bam'))
-        expected = set([('type', 'bam')])
-        self.assertSetEqual(result, expected)
 
 #
 # class FetchIrodsMetadataTests(unittest.TestCase):
