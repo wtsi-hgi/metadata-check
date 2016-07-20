@@ -34,19 +34,6 @@ def parse_args():
                            choices=[constants.HS37D5, constants.GRCH38, constants.G1K, constants.GRCH37],
                            help='The desired reference, given by name',
     )
-
-    # tests_grp.add_argument('--test-complete-meta',
-    #                        action='store_true',
-    #                        help='Chose this test if you want the iRODS metadata to be checked that '
-    #                             'it is complete against a config file you give in',
-    # )
-
-    # tests_grp.add_argument('--config_file',
-    #                        dest='config_file',
-    #                        help='The config file for the test regarding iRODS metadata being complete '
-    #                             '(to be given with --all-tests and --test-complete-meta option)',
-    # )
-
     # OUTPUT: how to output the results?
     out = parent_parser.add_argument_group('OUTPUT FORMAT', 'What output to return and how', )
     output_grp = out.add_mutually_exclusive_group()  #(required=True)
@@ -57,37 +44,9 @@ def parse_args():
                             help='write the output as json',
     )
 
-    # output_grp.add_argument('--output_as_text',
-    #                         action='store_true',
-    #                         dest='text_output',
-    #                         required=False,
-    #                         help='write the output as a text report',
-    # )
-    #
-    # parent_parser.add_argument('--output_dir',
-    #                         dest='output_dir',
-    #                         required=True,
-    #                         help='write the output to this directory',
-    # )
-
-
     # ADDITIONALS:
     additional_outputs_grp = parent_parser.add_argument_group('INCLUDE IN OUTPUT', 'What to include in the output')
     additional_outputs_grp.add_argument("-v", "--verbosity", action="count", help="increase output verbosity")
-    # additional_outputs_grp.add_argument('--dump_meta',
-    #                                     dest='meta_dir',
-    #                                     required=False,
-    #                                     help='Dump all the metadata extracted to the directory given as parameter',
-    # )
-    #
-    # additional_outputs_grp.add_argument('--dump_fnames_by_type',
-    #                                     required=False,
-    #                                     dest='fnames_by_ftype',
-    #                                     action='store_true',
-    #                                     help='Output a list of files analyzed grouped by type to a file '
-    #                                          '(by default if no param given - include in the report)',
-    # )
-
     subparsers = parser.add_subparsers(title='Choose the Strategy for fetching iRODS metadata: in batch, per file or given by the user as input',
                                        description='One subcommand required: fetch_by_path | fetch_by_metadata | given_by_user',
                                        help='Sub-commands',
@@ -153,8 +112,6 @@ def parse_args():
                             required=False,
                             help='This flag stopps the default filter on the target=1 irods metadata attribute',
     )
-
-
     return parser.parse_args()
 
 
