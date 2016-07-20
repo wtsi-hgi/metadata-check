@@ -59,28 +59,28 @@ class ComparableMetadataTests(unittest.TestCase):
 
 
     def test_difference_when_there_are_diffs_h_vs_ss1(self):
-        header_metadata = SAMFileHeaderMetadata('/seq/123.bam', '123/bam', samples={'name': set(['S1'])}, libraries={}, studies={})
+        header_metadata = SAMFileHeaderMetadata('/seq/123.bam', samples={'name': set(['S1'])}, libraries={}, studies={})
         seqscape_metadata = SeqscapeMetadata(samples={'name': set(['S9'])}, libraries={}, studies={})
         result = header_metadata.difference(seqscape_metadata)
         self.assertEqual(result,{'samples': {'name': set(['S1'])}})
 
 
     def test_difference_when_there_are_diffs_h_vs_ss2(self):
-        header_metadata = SAMFileHeaderMetadata('/seq/123.bam', '123/bam', samples={'name': set(['S9'])}, libraries={}, studies={})
+        header_metadata = SAMFileHeaderMetadata('/seq/123.bam', samples={'name': set(['S9'])}, libraries={}, studies={})
         seqscape_metadata = SeqscapeMetadata(samples={'name': set(['S1'])}, libraries={}, studies={})
         result = header_metadata.difference(seqscape_metadata)
         self.assertEqual(result,{'samples': {'name': set(['S9'])}})
 
 
     def test_difference_when_there_are_diff_type_ids_h_vs_ss(self):
-        header_metadata = SAMFileHeaderMetadata('/seq/123.bam', '123/bam', samples={'name': set(['S1']), 'accession_number': set(['Acc1'])}, libraries={}, studies={})
+        header_metadata = SAMFileHeaderMetadata('/seq/123.bam', samples={'name': set(['S1']), 'accession_number': set(['Acc1'])}, libraries={}, studies={})
         seqscape_metadata = SeqscapeMetadata(samples={'name': set(['S1'])}, libraries={}, studies={})
         result = header_metadata.difference(seqscape_metadata)
         self.assertEqual(result, {})
 
 
     def test_difference_when_many_diffs_h_vs_ss(self):
-        header_metadata = SAMFileHeaderMetadata('/seq/123.bam', '123/bam',
+        header_metadata = SAMFileHeaderMetadata('/seq/123.bam',
                                                 samples={'name': set(['S9']), 'accession_number': set(['Acc9'])},
                                                 libraries={'internal_id': set(['123'])}, studies={})
         seqscape_metadata = SeqscapeMetadata(samples={'name': set(['S1'])}, libraries={'internal_id': set(['444'])}, studies={})
@@ -89,7 +89,7 @@ class ComparableMetadataTests(unittest.TestCase):
 
 
     def test_difference_when_no_diffs_h_vs_ss(self):
-        header_metadata = SAMFileHeaderMetadata('/seq/123.bam', '123/bam',
+        header_metadata = SAMFileHeaderMetadata('/seq/123.bam',
                                                 samples={'name': set(['S9']), 'accession_number': set(['Acc9'])},
                                                 libraries={'internal_id': set(['123'])}, studies={})
         seqscape_metadata = SeqscapeMetadata(samples={'name': set(['S9']), 'accession_number': set(['Acc9'])},
@@ -102,7 +102,7 @@ class ComparableMetadataTests(unittest.TestCase):
         irods_metadata = IrodsSeqFileMetadata('/seq/123.bam',
                                               samples={'name': set(['S1']), 'accession_number': set(), 'internal_id': set()},
                                               libraries={}, studies={})
-        header_metadata = SAMFileHeaderMetadata('/seq/123.bam', '123/bam',
+        header_metadata = SAMFileHeaderMetadata('/seq/123.bam',
                                                 samples={'name': set(['S1']), 'accession_number' : set(), 'internal_id': set()},
                                                 libraries={}, studies={})
         result = irods_metadata.difference(header_metadata)
@@ -114,7 +114,7 @@ class ComparableMetadataTests(unittest.TestCase):
                                               samples={'name': set(['S1']), 'accession_number': set(['EGA1']), 'internal_id': set(['1'])},
                                               libraries={'name': set(['123']), 'internal_id': set(['123'])},
                                               studies={'name': set(["Crohns disease"]), 'accession_number': set(['EGAS4']), 'internal_id': set(['4'])})
-        header_metadata = SAMFileHeaderMetadata('/seq/123.bam', '123/bam',
+        header_metadata = SAMFileHeaderMetadata('/seq/123.bam',
                                                 samples={'name': set(['S1']), 'accession_number' : set(), 'internal_id': set()},
                                                 libraries={'internal_id': set(['123'])}, studies={})
         result = irods_metadata.difference(header_metadata)
@@ -126,7 +126,7 @@ class ComparableMetadataTests(unittest.TestCase):
                                               samples={'name': set(['S1']), 'accession_number': set(['EGA1']), 'internal_id': set(['1'])},
                                               libraries={'name': set(['123']), 'internal_id': set(['123'])},
                                               studies={'name': set(["Crohns disease"]), 'accession_number': set(['EGAS4']), 'internal_id': set(['4'])})
-        header_metadata = SAMFileHeaderMetadata('/seq/123.bam', '123/bam',
+        header_metadata = SAMFileHeaderMetadata('/seq/123.bam',
                                                 samples={'name': set(['S100']), 'accession_number' : set(), 'internal_id': set()},
                                                 libraries={'internal_id': set(['123'])}, studies={})
         result = irods_metadata.difference(header_metadata)
@@ -137,7 +137,7 @@ class ComparableMetadataTests(unittest.TestCase):
                                               samples={'name': set(['S1']), 'accession_number': set(['EGA1']), 'internal_id': set(['1'])},
                                               libraries={'name': set(['123']), 'internal_id': set(['123'])},
                                               studies={'name': set(["Crohns disease"]), 'accession_number': set(['EGAS4']), 'internal_id': set(['4'])})
-        header_metadata = SAMFileHeaderMetadata('/seq/123.bam', '123/bam',
+        header_metadata = SAMFileHeaderMetadata('/seq/123.bam',
                                                 samples={'name': set(['S100']), 'accession_number' : set(), 'internal_id': set()},
                                                 libraries={'internal_id': set(['123'])}, studies={})
         result = header_metadata.difference(irods_metadata)

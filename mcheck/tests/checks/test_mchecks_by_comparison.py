@@ -34,7 +34,7 @@ class FileMetadataComparisonTest(unittest.TestCase):
                                               samples={'name': set(['S1']), 'accession_number': set(),
                                                        'internal_id': set()},
                                               libraries={}, studies={})
-        header_metadata = SAMFileHeaderMetadata('/seq/123.bam', '123/bam', samples={'name': set(['S1'])}, libraries={},
+        header_metadata = SAMFileHeaderMetadata('/seq/123.bam', samples={'name': set(['S1'])}, libraries={},
                                                 studies={})
         seqscape_metadata = SeqscapeMetadata(samples={'name': set(['S1'])}, libraries={}, studies={})
         issues_dict = defaultdict(list)
@@ -54,7 +54,7 @@ class FileMetadataComparisonTest(unittest.TestCase):
                                               samples={'name': set(['S1']), 'accession_number': set(['EGA1']),
                                                        'internal_id': set()},
                                               libraries={}, studies={})
-        header_metadata = SAMFileHeaderMetadata('/seq/123.bam', '123/bam', samples={'name': set(['S1'])}, libraries={},
+        header_metadata = SAMFileHeaderMetadata('/seq/123.bam', samples={'name': set(['S1'])}, libraries={},
                                                 studies={})
         seqscape_metadata = SeqscapeMetadata(samples={'name': set(['S1'])}, libraries={}, studies={})
         issues_dict = defaultdict(list)
@@ -74,7 +74,7 @@ class FileMetadataComparisonTest(unittest.TestCase):
                                               samples={'name': set(['S1']), 'accession_number': set(),
                                                        'internal_id': set()},
                                               libraries={}, studies={})
-        header_metadata = SAMFileHeaderMetadata('/seq/123.bam', '123/bam', samples={'name': set(['S99999'])},
+        header_metadata = SAMFileHeaderMetadata('/seq/123.bam', samples={'name': set(['S99999'])},
                                                 libraries={}, studies={})
         seqscape_metadata = SeqscapeMetadata(samples={'name': set(['S1'])}, libraries=set(), studies=set())
         issues_dict = defaultdict(list)

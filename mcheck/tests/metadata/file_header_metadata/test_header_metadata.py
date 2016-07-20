@@ -98,10 +98,10 @@ class TestSAMFileHeaderMetadata(unittest.TestCase):
 
 
     def test_fix_metadata_1(self):
-        metadata = SAMFileHeaderMetadata(fpath='some_path', fname='some_name')
+        metadata = SAMFileHeaderMetadata(fpath='some_path')
         metadata.samples = {'name': {'sample1', 'sample2', 'sample3', None}}
         metadata.libraries = {'internal_id': {-1, '', 123}, 'name': {'', None}}
-        expected = SAMFileHeaderMetadata(fpath='some_path', fname='some_name')
+        expected = SAMFileHeaderMetadata(fpath='some_path')
         expected.samples = {'name': {'sample1', 'sample2', 'sample3'}}
         expected.libraries = {'internal_id': {123}, 'name': set()}
         metadata.fix_metadata()
@@ -109,10 +109,10 @@ class TestSAMFileHeaderMetadata(unittest.TestCase):
         self.assertDictEqual(metadata.libraries, expected.libraries)
 
     def test_fix_metadata_2(self):
-        metadata = SAMFileHeaderMetadata(fpath='some_path', fname='some_name')
+        metadata = SAMFileHeaderMetadata(fpath='some_path')
         metadata.samples = {'name': {'sample1', 'sample2', 'sample3'}}
         metadata.libraries = {'internal_id': {-1, '', 123}, 'name': set()}
-        expected = SAMFileHeaderMetadata(fpath='some_path', fname='some_name')
+        expected = SAMFileHeaderMetadata(fpath='some_path')
         expected.samples = {'name': {'sample1', 'sample2', 'sample3'}}
         expected.libraries = {'internal_id': {123}, 'name': set()}
         metadata.fix_metadata()

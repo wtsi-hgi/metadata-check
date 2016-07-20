@@ -31,8 +31,7 @@ from mcheck.results.checks_results import CheckResult
 class SAMFileHeaderMetadata(ComparableMetadata):
     INVALID_IDS = ['N/A', 'undefined', 'unspecified', -1, '', None]
 
-    def __init__(self, fpath, fname, samples={}, libraries={}, studies={}, reference=None, platforms=None):
-        self.fname = fname
+    def __init__(self, fpath, samples={}, libraries={}, studies={}, reference=None, platforms=None):    # fname,
         self.fpath = fpath
         self.samples = samples
         self.libraries = libraries
@@ -76,7 +75,7 @@ class SAMFileHeaderMetadata(ComparableMetadata):
         return
 
     def __str__(self):
-        return "Fpath = " + str(self.fpath) + ", fname = "+ str(self.fname) + ", samples = " + str(self.samples) + \
+        return "Fpath = " + str(self.fpath) + ", samples = " + str(self.samples) + \
                ", libraries = " + str(self.libraries) + ", platforms = " + \
                str(self.platforms)
 
@@ -84,14 +83,13 @@ class SAMFileHeaderMetadata(ComparableMetadata):
         return self.__str__()
 
     def __eq__(self, other):
-        return self.fname == other.fname and self.fpath == other.fpath and self.samples == other.samples and \
+        return self.fpath == other.fpath and self.samples == other.samples and \
                self.libraries == other.libraries and self.studies == other.studies and \
                self.reference == other.reference and self.platforms == other.platforms
 
-
 class LaneletSAMFileHeaderMetadata(SAMFileHeaderMetadata):
-    def __init__(self, fpath, fname, samples={}, libraries={}, studies={}, lanelets=None, reference=None, platforms=None):
-        super().__init__(fpath, fname, samples, libraries, studies, reference, platforms)
+    def __init__(self, fpath,  samples={}, libraries={}, studies={}, lanelets=None, reference=None, platforms=None):    # fname,
+        super().__init__(fpath, samples, libraries, studies, reference, platforms)
         self.lanelets = lanelets
 
     def __str__(self):
