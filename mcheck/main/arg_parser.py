@@ -100,7 +100,7 @@ def parse_args():
 
     parser_filecheck = subparsers.add_parser('fetch_by_path', parents=[parent_parser],
                                              help='Fetch the metadata of a file by irods filepath')
-    parser_filecheck.add_argument('fpaths_irods',
+    parser_filecheck.add_argument('irods_fpaths',
                                   nargs='+',
                                   help='List of file paths in iRODS'
     )

@@ -210,9 +210,9 @@ def main():
         study_internal_id = None
 
     try:
-        fpaths_irods = args.fpaths_irods
+        irods_fpaths = args.irods_fpaths
     except AttributeError:
-        fpaths_irods = None
+        irods_fpaths = None
 
     try:
         irods_zone = args.irods_zone
