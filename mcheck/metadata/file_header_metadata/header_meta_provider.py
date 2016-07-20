@@ -38,8 +38,7 @@ class SAMFileHeaderMetadataProvider:
         rg_tags_parsed = SAMFileRGTagParser.parse(raw_header.rg_tags)
         samples = EntityIdentifier.separate_identifiers_by_type(rg_tags_parsed.samples)
         libraries = EntityIdentifier.separate_identifiers_by_type(rg_tags_parsed.libraries)
-        fname = common_utils.extract_fname(fpath)
-        return SAMFileHeaderMetadata(fpath=fpath, samples=samples, libraries=libraries, fname=fname, platforms=rg_tags_parsed.platforms)
+        return SAMFileHeaderMetadata(fpath=fpath, samples=samples, libraries=libraries, platforms=rg_tags_parsed.platforms)
 
 
 
