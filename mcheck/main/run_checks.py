@@ -124,58 +124,83 @@ def convert_args_to_search_criteria(filter_by_npg_qc=None, filter_by_target=None
         search_criteria.append(('study_id', str(match_study_id)))
     return search_criteria
 
-def fetch_irods_metadata_by_metadata(issues_dict, filter_npg_qc=None, filter_target=None, file_types=None, study_name=None,
+
+def check_metadata_fetched_by_metadata(filter_npg_qc=None, filter_target=None, file_types=None, study_name=None,
                                      study_acc_nr=None, study_internal_id=None, irods_zone=None, reference=None):
+    issues_dict = defaultdict(list)
     search_criteria = convert_args_to_search_criteria(filter_npg_qc, filter_target,
                                                       file_types, study_name,
                                                       study_acc_nr, study_internal_id)
     irods_metadata_dict = MetadataSelfChecks.fetch_and_preprocess_irods_metadata_by_metadata(search_criteria, irods_zone, issues_dict, reference)
-    return irods_metadata_dict
+    if not irods_metadata_dict:
+        print("No irods metadata found. No checks performed.")
+        sys.exit(1)
+    header_metadata_dict, seqscape_metadata_dict = _search_irods_metadata_in_other_sources_and_check(irods_metadata_dict, issues_dict)
+    FileMetadataComparison.check_metadata_across_different_sources(irods_metadata_dict, header_metadata_dict, seqscape_metadata_dict, issues_dict)
+    return issues_dict
 
 
-def fetch_irods_metadata_by_path(issues_dict, irods_fpaths, reference):
-    return MetadataSelfChecks.fetch_and_preprocess_irods_metadata_by_path(irods_fpaths, issues_dict, reference)
+def check_metadata_fetched_by_path(irods_fpaths, reference=None):
+    issues_dict = defaultdict(list)
+    irods_metadata_dict = MetadataSelfChecks.fetch_and_preprocess_irods_metadata_by_path(irods_fpaths, issues_dict, reference)
+    if not irods_metadata_dict:
+        print("No irods metadata found. No checks performed.")
+        sys.exit(1)
+    header_metadata_dict, seqscape_metadata_dict = _search_irods_metadata_in_other_sources_and_check(irods_metadata_dict, issues_dict)
+    FileMetadataComparison.check_metadata_across_different_sources(irods_metadata_dict, header_metadata_dict, seqscape_metadata_dict, issues_dict)
+    return issues_dict
 
 
-def fetch_irods_metadata_from_json(issues_dict, json_data_objects, reference=None):
-    baton_data_objects_list = convert_json_to_baton_objs(json_data_objects)
+def check_metadata_given_as_json_stream(reference=None):
+    issues_dict = defaultdict(list)
+    json_input_data = stdin.read()
+    baton_data_objects_list = convert_json_to_baton_objs(json_input_data)
     irods_metadata_dict = {}
     for data_obj in baton_data_objects_list:
         meta = IrodsSeqFileMetadata.from_baton_wrapper(data_obj)
         issues_dict[meta.fpath].extend(meta.check_metadata(reference))
         irods_metadata_dict[meta.fpath] = meta
-    return irods_metadata_dict
-
-
-
-def check_metadata(metadata_fetching_strategy, reference=None, filter_npg_qc=None, filter_target=None, file_types=None,
-                   study_name=None, study_acc_nr=None, study_internal_id=None, irods_fpaths=None, irods_zone=None):
-    issues_dict = defaultdict(list)
-    if metadata_fetching_strategy == 'fetch_by_metadata':
-        irods_metadata_dict = fetch_irods_metadata_by_metadata(issues_dict, filter_npg_qc, filter_target, file_types,
-                                                               study_name, study_acc_nr, study_internal_id, irods_zone, reference)
-    elif metadata_fetching_strategy == 'fetch_by_path':
-        irods_metadata_dict = fetch_irods_metadata_by_path(issues_dict, irods_fpaths, reference)
-    elif metadata_fetching_strategy == 'given_by_user':
-        input_data_objects = stdin.read()
-        irods_metadata_dict = fetch_irods_metadata_from_json(issues_dict, input_data_objects, reference)
-    else:
-        raise ValueError("Fetching strategy not supported")
-
     if not irods_metadata_dict:
         print("No irods metadata found. No checks performed.")
         sys.exit(1)
-
-    # Getting HEADER metadata:
-    header_metadata_dict = MetadataSelfChecks.fetch_and_preprocess_header_metadata(irods_metadata_dict.keys(), issues_dict)
-
-    # Getting Seqscape metadata:
-    seqsc_metadata_dict = MetadataSelfChecks.fetch_and_preprocess_seqscape_metadata(irods_metadata_dict, issues_dict)
-
-    # Running checks to compare metadata obtained from different sources:
-    FileMetadataComparison.check_metadata_across_different_sources(irods_metadata_dict, header_metadata_dict, seqsc_metadata_dict, issues_dict)
-
+    header_metadata_dict, seqscape_metadata_dict = _search_irods_metadata_in_other_sources_and_check(irods_metadata_dict, issues_dict)
+    FileMetadataComparison.check_metadata_across_different_sources(irods_metadata_dict, header_metadata_dict, seqscape_metadata_dict, issues_dict)
     return issues_dict
+
+
+def _search_irods_metadata_in_other_sources_and_check(irods_metadata_dict, issues_dict):
+    header_metadata_dict = MetadataSelfChecks.fetch_and_preprocess_header_metadata(irods_metadata_dict.keys(), issues_dict)
+    seqsc_metadata_dict = MetadataSelfChecks.fetch_and_preprocess_seqscape_metadata(irods_metadata_dict, issues_dict)
+    return header_metadata_dict, seqsc_metadata_dict
+
+
+# def check_metadata(metadata_fetching_strategy, reference=None, filter_npg_qc=None, filter_target=None, file_types=None,
+#                    study_name=None, study_acc_nr=None, study_internal_id=None, irods_fpaths=None, irods_zone=None):
+#     issues_dict = defaultdict(list)
+#     if metadata_fetching_strategy == 'fetch_by_metadata':
+#         irods_metadata_dict = check_metadata_fetched_by_metadata(issues_dict, filter_npg_qc, filter_target, file_types,
+#                                                                study_name, study_acc_nr, study_internal_id, irods_zone, reference)
+#     elif metadata_fetching_strategy == 'fetch_by_path':
+#         irods_metadata_dict = check_metadata_fetched_by_path(issues_dict, irods_fpaths, reference)
+#     elif metadata_fetching_strategy == 'given_by_user':
+#         irods_metadata_dict = check_metadata_given_as_json_stream(issues_dict, input_data_objects, reference)
+#     else:
+#         raise ValueError("Fetching strategy not supported")
+#
+#     if not irods_metadata_dict:
+#         print("No irods metadata found. No checks performed.")
+#         sys.exit(1)
+#
+#     # Getting HEADER metadata:
+#     header_metadata_dict = MetadataSelfChecks.fetch_and_preprocess_header_metadata(irods_metadata_dict.keys(), issues_dict)
+#
+#     # Getting Seqscape metadata:
+#     seqsc_metadata_dict = MetadataSelfChecks.fetch_and_preprocess_seqscape_metadata(irods_metadata_dict, issues_dict)
+#
+#     # Running checks to compare metadata obtained from different sources:
+#     FileMetadataComparison.check_metadata_across_different_sources(irods_metadata_dict, header_metadata_dict, seqsc_metadata_dict, issues_dict)
+#
+#     return issues_dict
 
 def main():
     args = arg_parser.parse_args()
@@ -224,9 +249,20 @@ def main():
     except AttributeError:
         reference = None
 
-    check_results_dict = check_metadata(args.metadata_fetching_strategy, reference, filter_npg_qc,
-                                 filter_target, file_types, study_name, study_acc_nr,
-                                 study_internal_id, fpaths_irods, irods_zone)
+    if args.metadata_fetching_strategy == 'fetch_by_metadata':
+        check_results_by_fpath = check_metadata_fetched_by_metadata(filter_npg_qc, filter_target, file_types,
+                                                               study_name, study_acc_nr, study_internal_id, irods_zone, reference)
+    elif args.metadata_fetching_strategy == 'fetch_by_path':
+        check_results_by_fpath = check_metadata_fetched_by_path(irods_fpaths, reference)
+    elif args.metadata_fetching_strategy == 'given_by_user':
+        check_results_by_fpath = check_metadata_given_as_json_stream(reference)
+    else:
+        raise ValueError("Fetching strategy not supported")
+
+
+    # check_results_dict = check_metadata(args.metadata_fetching_strategy, reference, filter_npg_qc,
+    #                              filter_target, file_types, study_name, study_acc_nr,
+    #                              study_internal_id, fpaths_irods, irods_zone)
 
 
     # # OUTPUTTING THE CHECK RESULTS
@@ -239,12 +275,12 @@ def main():
 
     import json
     if args.json_output:
-        check_results_json = json.dumps(check_results_dict, cls=CheckResultJSONEncoder)
+        check_results_json = json.dumps(check_results_by_fpath, cls=CheckResultJSONEncoder)
         print(check_results_json)
     else:
-        output_as_tsv(check_results_dict)
+        output_as_tsv(check_results_by_fpath)
 
-    for fpath, check_res in check_results_dict.items():
+    for fpath, check_res in check_results_by_fpath.items():
         for result in check_res:
             if result.result == RESULT.FAILURE:
                 exit(1)
