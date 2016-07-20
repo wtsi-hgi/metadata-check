@@ -25,7 +25,7 @@ from mcheck.main import run_checks
 from mcheck.check_names import CHECK_NAMES
 from mcheck.results.checks_results import RESULT
 
-#@unittest.skip
+@unittest.skip
 class MetadataFetchedByPathTest(unittest.TestCase):
     def setUp(self):
         self.comparison_checks = [
@@ -193,7 +193,7 @@ class MetadataFetchedByPathTest(unittest.TestCase):
                         self.assertIsNone(check_res.result)
 
 
-#@unittest.skip
+@unittest.skip
 class MetadataFetchedByMetadataTest(unittest.TestCase):
 
     def test_fetch_study_by_metadata(self):
@@ -211,7 +211,7 @@ class MetadataFetchedByMetadataTest(unittest.TestCase):
                 #     self.assertTrue(False)
 
 
-#@unittest.skip
+@unittest.skip
 class ComparisonTests(unittest.TestCase):
 
     def test_same_check_results_by_path_and_by_metadata(self):
