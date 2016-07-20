@@ -27,10 +27,8 @@ from sys import stdin, exit
 import logging
 
 from mcheck.metadata.irods_metadata.irods_meta_provider import iRODSMetadataProvider
-from mcheck.com import utils
 from mcheck.main import arg_parser
-from mcheck.main.input_parser import convert_json_to_baton_objs  # parse_data_objects,
-from mcheck.results.results_processing import CheckResultsProcessing
+from mcheck.main.input_parser import convert_json_to_baton_objs
 from mcheck.checks.mchecks_by_comparison import FileMetadataComparison
 from mcheck.checks.mchecks_by_type import MetadataSelfChecks
 from mcheck.metadata.irods_metadata.file_metadata import IrodsSeqFileMetadata
@@ -49,20 +47,31 @@ def _print_output_as_tsv(check_results_by_path):
     result_str = ''
     if check_results_by_path:
         result_str += "Fpath\tExecuted\tResult\tErrors\t"
-        # print("Fpath\tExecuted\tResult\tErrors\t")
         for fpath, issues in check_results_by_path.items():
             for issue in issues:
                 errors = issue.error_message if (issue.error_message or issue.error_message is None) else None
                 result_str = result_str + str(fpath) + '\t' + str(issue.check_name) + '\t' + str(
                     issue.executed) + '\t' + str(
                     issue.result) + '\t' + str(errors) + '\n'
-                # print(str(fpath) + '\t' + str(issue.check_name) + '\t' + str(issue.executed) + '\t' + str(
-                # issue.result) + '\t' + str(errors))
     return result_str
 
 
 def check_metadata_fetched_by_metadata(filter_npg_qc=None, filter_target=None, file_types=None, study_name=None,
                                        study_acc_nr=None, study_internal_id=None, irods_zone=None, reference=None):
+    """
+    This function fetches the iRODS metadata by querying iRODS by other metadata. It takes as parameters a set of optional
+    querying fields and returns a dict where key = file path checked, value = a list of CheckResult objects corresponding
+    to the checks performed.
+    :param filter_npg_qc: the field in iRODS that applies a filter on QC pass/fail on the data it fetches
+    :param filter_target: the field in iRODS that applies a filter on target field in iRODS
+    :param file_types: the field in iRODS that applies a filter on the type of files
+    :param study_name: the study name that we want to fetch data for
+    :param study_acc_nr: the study accession number that we want to fetch data for
+    :param study_internal_id: the study internal id that we want to fetch data for
+    :param irods_zone: the zone where the query should be run
+    :param reference: the genome reference => one wants to check if the data has this reference as metadata
+    :return: dict of key = string file path, value = list[CheckResult]
+    """
     check_results_by_path = defaultdict(list)
     search_criteria = iRODSMetadataProvider.convert_to_irods_fields(filter_npg_qc, filter_target,
                                                                     file_types, study_name,
@@ -82,6 +91,15 @@ def check_metadata_fetched_by_metadata(filter_npg_qc=None, filter_target=None, f
 
 
 def check_metadata_fetched_by_path(irods_fpaths, reference=None):
+    """
+    This function fetches the iRODS metadata by file path. It takes as parameter a list of file paths and queries
+    iRODS for metadata for each of the paths taken as parameter. It returns a dict where
+    key = file path checked, value = a list of CheckResult objects corresponding to the checks performed.
+    :param irods_fpaths: list of strings corresponding to iRODS file paths
+    :param reference: string that contains the name of the genome reference =>
+            one wants to check if the data has this reference as metadata
+    :return: dict of key = string file path, value = list[CheckResult]
+    """
     check_results_by_path = defaultdict(list)
     irods_metadata_dict = MetadataSelfChecks.fetch_and_preprocess_irods_metadata_by_path(irods_fpaths,
                                                                                          check_results_by_path,
@@ -97,6 +115,12 @@ def check_metadata_fetched_by_path(irods_fpaths, reference=None):
 
 
 def check_metadata_given_as_json_stream(reference=None):
+    """
+    This function takes in the iRODS metadata as a stream of json data read from stdin and it uses for checking the files.
+    :param reference: string that contains the name of the genome reference =>
+                      one wants to check if the data has this reference as metadata
+    :return: dict of key = string file path, value = list[CheckResult]
+    """
     check_results_by_path = defaultdict(list)
     json_input_data = stdin.read()
     baton_data_objects_list = convert_json_to_baton_objs(json_input_data)
