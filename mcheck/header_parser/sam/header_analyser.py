@@ -124,10 +124,6 @@ class BAMHeaderAnalyser(object):
             rgs_parsed.append(new_rg)
         return rgs_parsed
 
-    @classmethod
-    @wrappers.check_args_not_none
-
-
 
     @classmethod
     @wrappers.check_args_not_none
