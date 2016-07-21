@@ -1,5 +1,6 @@
 git+https://github.com/wtsi-hgi/python-sequencescape-db.git@94bf380ec93e1adc4241fdf176bebf14548f39ad#egg=sequencescape
 git+https://github.com/wtsi-hgi/python-baton-wrapper.git@a97af16b1435c8693c48aa6dfcc889e6c916f933#egg=baton
+git+https://github.com/wtsi-hgi/python-sam-header-parser.git@8d0304957be26b79c85c5041837a5e95dd0e1335#egg=python-sam-header-parser
 hgicommon==1.1.0
 PyHamcrest==1.8.5
 pbr==1.8.1
