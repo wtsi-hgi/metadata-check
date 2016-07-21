@@ -22,8 +22,9 @@ This file has been created on Nov 16, 2015.
 import mcheck.com.utils as common_utils
 from mcheck.metadata.common.identifiers import EntityIdentifier
 from mcheck.metadata.file_header_metadata.header_metadata import SAMFileHeaderMetadata
-from mcheck.header_parser.sam.header_extractor import IrodsSamFileHeaderExtractor, LustreSamFileHeaderExtractor
-from mcheck.header_parser.sam.header_parser import SAMFileHeaderParser, SAMFileRGTagParser
+
+from sam.header_extractor import IrodsSamFileHeaderExtractor, LustreSamFileHeaderExtractor
+from sam.header_parser import SAMFileHeaderParser, SAMFileRGTagParser
 
 
 class SAMFileHeaderMetadataProvider:
