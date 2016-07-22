@@ -38,16 +38,44 @@ pip install git+https://github.com/wtsi-hgi/metadata-check.git@<commit_id_or_bra
 
 Usage
 =====
+It can be either be run as a command line tool, or called from within python code as an API.
+For the command line tool, there are 3 subcommands:
+```python
+    python mcheck/main/run_checks.py -h
+    fetch_by_path       Fetch the metadata of a file by irods filepath
+    given_by_user       The metadata is given as baton output via stdin and
+                        should be a list of data objects with metadata.
+    fetch_by_metadata   Fetch the files matching the meta query
+```
+each with its own parameters.
 
-Technical details
-=================
-Input: 
-- a file/list of file paths in iRODS or 
-- a study name/study accession number (so that all the files associated with it are being checked)
+Example of usage for each:
+Fetching metadata by file path:
+```bash
+python mcheck/main/run_checks.py fetch_by_path <file_path>
+```
 
-Output:
-- a report containing the problems found with each file
-- (optional) a list of metadata attributes gathered from different sources
-- (optional) number of files of each type (CRAM/BAM) (useful when analysing files for a whole study).
+Fetching metadata by metadata attributes:
+In this case there is one mandatory parameter - which is --irods_zone, which tells baton in which iRODS zone to search for the data given your search criteria.
+Regarding the query criteria itself, there is a small selection of attributes that one can query by, as I have picked the most popular ones:
+- study_name
+- study_id
+- study_acc_nr (study EGA accession number)
 
-This program runs on a single machine.
+And another set of attributes used for filtering your data:
+- filter_npq_qc (filter the data by the NPG QC status, which can be either 1 (pass) or 0 (QC fail)
+- filter_target (filter the data by the target field, which can be: 0 (this is usually data that is not of interest), 1 - data of interest released as lanelets, library - data of interest released as library-level CRAMs.
+- file_type - can be either BAM or CRAM, depending on what type file format you are looking for. Currently the new data is released as CRAM only, so you might want to use this option in order to filter out BAMs for older data dating from the times when the data was being released both as BAMs and CRAMs (same data, 2 different formats).
+
+Example of usage:
+```bash
+python mcheck/main/run_checks.py fetch_by_metadata --study_name <study_name> --irods_zone seq --filter_target 1 --filter_npg_qc 1
+```
+
+Using metadata given by the user at stdin:
+Using this option the tool expects a json formatted string which follows the rules of the baton output in terms of attribute names and values.
+
+By default, the tool will output to stdout the CheckResults as tsv. However, there is also the option of getting the output as json by running it with --output_as_json parameter.
+There is also an option for testing that your data is aligned to a specific reference (that you have to give from the command line as --reference).
+
+This program runs on a single machine. However, it can be parallelized by submitting a job on the cluster for each file intended to be checked using the fetch_by_path mode.
