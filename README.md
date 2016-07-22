@@ -41,11 +41,13 @@ Usage
 It can be either be run as a command line tool, or called from within python code as an API.
 For the command line tool, there are 3 subcommands:
 ```python
-    python mcheck/main/run_checks.py -h
-    fetch_by_path       Fetch the metadata of a file by irods filepath
-    given_by_user       The metadata is given as baton output via stdin and
+    fetch_by_path       Fetch the metadata of one or more files by irods
+                        filepath
+    given_at_stdin      The metadata is given as baton output via stdin and
                         should be a list of data objects with metadata.
-    fetch_by_metadata   Fetch the files matching the meta query
+    fetch_by_metadata   Fetch the files that match the metadata attributes
+                        given
+
 ```
 each with its own parameters.
 
