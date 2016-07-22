@@ -211,7 +211,7 @@ def main():
                                                                     irods_zone, reference)
     elif args.metadata_fetching_strategy == 'fetch_by_path':
         check_results_by_fpath = check_metadata_fetched_by_path(irods_fpaths, reference)
-    elif args.metadata_fetching_strategy == 'given_by_user':
+    elif args.metadata_fetching_strategy == 'given_at_stdin':
         check_results_by_fpath = check_metadata_given_as_json_stream(reference)
     else:
         raise ValueError("Fetching strategy not supported")

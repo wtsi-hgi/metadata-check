@@ -29,7 +29,7 @@ def parse_args():
     # Tests
     parent_parser = argparse.ArgumentParser(add_help=False)
     tests_grp = parent_parser.add_argument_group('TESTS', 'Choose which tests to run on your data')
-    tests_grp.add_argument('--test-for-reference',
+    tests_grp.add_argument('--reference',
                            dest='desired_reference',
                            choices=[constants.HS37D5, constants.GRCH38, constants.G1K, constants.GRCH37],
                            help='The desired reference, given by name',
@@ -58,17 +58,17 @@ def parse_args():
     subparsers.required = True
 
     parser_filecheck = subparsers.add_parser('fetch_by_path', parents=[parent_parser],
-                                             help='Fetch the metadata of a file by irods filepath')
+                                             help='Fetch the metadata of one or more files by irods filepath')
     parser_filecheck.add_argument('irods_fpaths',
                                   nargs='+',
                                   help='List of file paths in iRODS'
     )
-    parser_give_by_user = subparsers.add_parser('given_by_user', parents=[parent_parser],
+    parser_give_by_user = subparsers.add_parser('given_at_stdin', parents=[parent_parser],
                                                 help="The metadata is given as baton output via stdin and should be a list of data objects with metadata.")
 
 
     parser_all_files_metacheck = subparsers.add_parser('fetch_by_metadata', parents=[parent_parser],
-                                                       help='Fetch the files matching the meta query')
+                                                       help='Fetch the files that match the metadata attributes given')
     parser_all_files_metacheck.add_argument('--irods_zone',
                                             help='The irods zone where the data is found',
                                             choices=['seq', 'humgen', 'Sanger1'],
