@@ -77,7 +77,16 @@ python mcheck/main/run_checks.py fetch_by_metadata --study_name <study_name> --i
 Using metadata given by the user at stdin:
 Using this option the tool expects a json formatted string which follows the rules of the baton output in terms of attribute names and values.
 
+Example of usage:
+```bash
+cat cffdna.json | python mcheck/main/run_checks.py given_at_stdin
+```
+
+which will print to stdout the results.
+
 By default, the tool will output to stdout the CheckResults as tsv. However, there is also the option of getting the output as json by running it with --output_as_json parameter.
 There is also an option for testing that your data is aligned to a specific reference (that you have to give from the command line as --reference).
 
 This program runs on a single machine. However, it can be parallelized by submitting a job on the cluster for each file intended to be checked using the fetch_by_path mode.
+Note: if the metadata is fetched_by_metadata, then the metadata itself can be huge, if there is a large number of files within that study, so the tool will need memory proportional with that.
+
