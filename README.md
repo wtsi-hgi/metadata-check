@@ -90,3 +90,28 @@ There is also an option for testing that your data is aligned to a specific refe
 
 This program runs on a single machine. However, it can be parallelized by submitting a job on the cluster for each file intended to be checked using the `fetch_by_path` mode.
 Note: if the metadata is `fetched_by_metadata`, then the metadata itself can be huge, if there is a large number of files within that study, so the tool will need memory proportional with that.
+
+## Using metacheck programatically
+### Fetch iRODS metadata by path
+```python
+from mcheck.main.api import check_metadata_fetched_by_path
+check_results = check_metadata_fetched_by_path([<path1>, <path2>])
+
+# or, if one wants to check also for reference:
+check_results = check_metadata_fetched_by_path([<path1>, <path2>], 'hs37d5')
+
+```
+
+###Fetch iRODS metadata by querying by metadata
+```python
+from mcheck.main.api import check_metadata_fetched_by_metadata
+check_results = check_metadata_fetched_by_metadata(filter_npg_qc='1', filter_target='library', file_types='cram', study_name='some study', irods_zone='seq')
+``` 
+
+### Give iRODS metadata by stdin
+```python
+from mcheck.main.api import check_metadata_given_as_json_stream
+check_results = check_metadata_given_as_json_stream()
+```
+
+
