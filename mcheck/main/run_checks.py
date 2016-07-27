@@ -131,7 +131,7 @@ def _fetch_irods_metadata_from_other_sources_and_check(irods_metadata_dict, issu
 
 def decide_exit_status(check_results_by_path):
     exit_status = 0
-    irrelevant = [CHECK_NAMES.check_for_samples_in_more_studies]
+    irrelevant = [CHECK_NAMES.check_for_samples_in_more_studies, CHECK_NAMES.check_more_than_one_replica]
     for fpath, check_results in check_results_by_path.items():
         for check_result in check_results:
             if check_result.result == RESULT.FAILURE and check_result.check_name not in irrelevant:
