@@ -19,41 +19,23 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 This file has been created on May 05, 2016.
 """
 
-import os
 import sys
-import json
 from collections import defaultdict
 from sys import stdin, exit
-import logging
 
+from mcheck.results.checks_results import RESULT
 from mcheck.metadata.irods_metadata.irods_meta_provider import iRODSMetadataProvider
 from mcheck.main import arg_parser
 from mcheck.main.input_parser import convert_json_to_baton_objs
 from mcheck.checks.mchecks_by_comparison import FileMetadataComparison
 from mcheck.checks.mchecks_by_type import MetadataSelfChecks
 from mcheck.metadata.irods_metadata.file_metadata import IrodsSeqFileMetadata
-from mcheck.results.checks_results import RESULT, CheckResultJSONEncoder
+from mcheck.main.output_formatter import format_output_as_json, format_output_as_tsv
 
+# import logging
 # my_logger = logging.getLogger('MyLogger')
 # my_logger.setLevel(logging.DEBUG)
 
-
-def _print_output_as_tsv(check_results_by_path):
-    """
-    This function converts a dictionary of key = fpath, values = CheckResults into a tab delimited values string.
-    :param check_results_by_path:
-    :return:
-    """
-    result_str = ''
-    if check_results_by_path:
-        result_str += "Fpath\tExecuted\tResult\tErrors\t"
-        for fpath, issues in check_results_by_path.items():
-            for issue in issues:
-                errors = issue.error_message if (issue.error_message or issue.error_message is None) else None
-                result_str = result_str + str(fpath) + '\t' + str(issue.check_name) + '\t' + str(
-                    issue.executed) + '\t' + str(
-                    issue.result) + '\t' + str(errors) + '\n'
-    return result_str
 
 
 def check_metadata_fetched_by_metadata(filter_npg_qc=None, filter_target=None, file_types=None, study_name=None,
@@ -217,10 +199,10 @@ def main():
         raise ValueError("Fetching strategy not supported")
 
     if args.json_output:
-        check_results_json = json.dumps(check_results_by_fpath, cls=CheckResultJSONEncoder)
-        print(check_results_json)
+        check_results_as_json = format_output_as_json(check_results_by_fpath)
+        print(check_results_as_json)
     else:
-        result_as_tsv_string = _print_output_as_tsv(check_results_by_fpath)
+        result_as_tsv_string = format_output_as_tsv(check_results_by_fpath)
         print(result_as_tsv_string)
 
     for fpath, check_res in check_results_by_fpath.items():
