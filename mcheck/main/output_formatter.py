@@ -43,8 +43,8 @@ def format_output_as_tsv(check_results_by_path):
 
 def format_output_as_json(check_results_by_path):
     """
-
-    :param check_results_by_path:
-    :return:
+    This function takes as input a dict where key = filepath, value = list of CheckResults and formats them to json.
+    :param check_results_by_path: dict - key = str (filepath), value = list[CheckResult]
+    :return: json formatted string
     """
     return json.dumps(check_results_by_path, cls=CheckResultJSONEncoder)
