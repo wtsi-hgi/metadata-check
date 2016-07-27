@@ -19,22 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 This file has been created on Nov 27, 2015.
 """
 
-
-
-# each checking function returns the same type of namedtuple/whatnot with:
-# -error severity, or error type, or error group, or something like that
-# -the source (for sorting?)
-# -the actual human readable error message string
-#
-# the collecting part just has to understand how to present all those to the user
-from hgijson import MappingJSONEncoderClassBuilder, JsonPropertyMapping, MappingJSONDecoderClassBuilder
+from hgijson import JsonPropertyMapping
 from mcheck.results.constants import SEVERITY, RESULT
-
-CHECK_NAME_JSON_PROPERTY = "check_name"
-SEVERITY_JSON_PROPERTY = "severity"
-ERROR_MESSAGE_JSON_PROPERTY = "error_message"
-EXECUTED_JSON_PROPERTY = "executed"
-RESULT_JSON_PROPERTY = "result"
 
 
 class CheckResult:
@@ -65,14 +51,13 @@ class CheckResult:
         return self.check_name == other.check_name and self.error_message == other.error_message and \
                self.severity == other.severity and self.executed == other.executed and self.result == other.result
 
+    @classmethod
+    def to_json_mapping(cls):
+        return [
+        JsonPropertyMapping("check_name", "check_name", "check_name"),
+        JsonPropertyMapping("severity", "severity", optional=True),
+        JsonPropertyMapping("error_message", "error_message", optional=True),
+        JsonPropertyMapping("executed", "executed", optional=True),
+        JsonPropertyMapping("result", "result", optional=True)
+    ]
 
-# JSON encoder/decoder for `CheckResult`
-_check_result_json_mappings = [
-    JsonPropertyMapping(CHECK_NAME_JSON_PROPERTY, "check_name", "check_name"),
-    JsonPropertyMapping(SEVERITY_JSON_PROPERTY, "severity", optional=True),
-    JsonPropertyMapping(ERROR_MESSAGE_JSON_PROPERTY, "error_message", optional=True),
-    JsonPropertyMapping(EXECUTED_JSON_PROPERTY, "executed", optional=True),
-    JsonPropertyMapping(RESULT_JSON_PROPERTY, "result", optional=True)
-]
-CheckResultJSONEncoder = MappingJSONEncoderClassBuilder(CheckResult, _check_result_json_mappings).build()
-CheckResultJSONDecoder = MappingJSONDecoderClassBuilder(CheckResult, _check_result_json_mappings).build()

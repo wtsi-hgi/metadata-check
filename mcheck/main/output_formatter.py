@@ -20,7 +20,8 @@ This file has been created on Jul 27, 2016.
 """
 
 import json
-from mcheck.results.checks_results import RESULT, CheckResultJSONEncoder
+from mcheck.results.checks_results import RESULT, CheckResult    #, CheckResultJSONEncoder
+from hgijson import MappingJSONEncoderClassBuilder, JsonPropertyMapping, MappingJSONDecoderClassBuilder
 
 def format_output_as_tsv(check_results_by_path):
     """
@@ -47,4 +48,5 @@ def format_output_as_json(check_results_by_path):
     :param check_results_by_path: dict - key = str (filepath), value = list[CheckResult]
     :return: json formatted string
     """
+    CheckResultJSONEncoder = MappingJSONEncoderClassBuilder(CheckResult, CheckResult.to_json_mapping()).build()
     return json.dumps(check_results_by_path, cls=CheckResultJSONEncoder)
