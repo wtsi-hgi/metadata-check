@@ -1,10 +1,10 @@
 import json
 import unittest
 
-from mcheck.results.checks_results import  CheckResult
-    #CheckResultJSONDecoder, CheckResultJSONEncoder,
+from mcheck.results.checks_results import CheckResult
 from mcheck.results.constants import RESULT, SEVERITY
 from hgijson import MappingJSONEncoderClassBuilder, MappingJSONDecoderClassBuilder
+
 _NAME = "my_name"
 _SEVERITY = SEVERITY.IMPORTANT
 _ERROR_MESSAGE = "test"
