@@ -257,8 +257,10 @@ class IrodsRawFileMetadata(ComparableMetadata):
 
 
         @classmethod
-        def check_attribute_frequencies(cls, avus):
-            general_attribute_frequencies = cls.read_and_parse_config_file(cls.GENERAL_ATTRIBUTE_FREQUENCY_CONFIG_FILE)
+        def check_attribute_frequencies(cls, avus, config_fpath=None):
+            if not config_fpath:
+                config_fpath = cls.GENERAL_ATTRIBUTE_FREQUENCY_CONFIG_FILE
+            general_attribute_frequencies = cls.read_and_parse_config_file(config_fpath)
             crt_attribute_frequencies = cls.build_freq_dict_from_avus_list(avus)
             attr_freq_check_result = cls.check_attributes_have_the_right_frequency(general_attribute_frequencies, crt_attribute_frequencies)
             return attr_freq_check_result
@@ -507,10 +509,14 @@ class IrodsSeqFileMetadata(IrodsRawFileMetadata):
 
     class CompleteMetadataChecks(IrodsRawFileMetadata.CompleteMetadataChecks):
 
+        LIBRARY_ATTRIBUTE_FREQUENCY_CONFIG_FILE = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                                                               'conf_files/library_cram.conf')
         @classmethod
-        def check_attribute_frequencies(cls, avus):
-            res = super().check_attribute_frequencies(avus)
-            #TODO: implement the library-specific code when we know the requirements
+        def check_attribute_frequencies(cls, avus, config_file=None):
+            if 'target' in avus and len(avus['target']) == 1 and avus['target'] == 'library':
+                res = super().check_attribute_frequencies(avus, cls.LIBRARY_ATTRIBUTE_FREQUENCY_CONFIG_FILE)
+            else:
+                res = super().check_attribute_frequencies(avus)
             return res
 
 
