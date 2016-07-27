@@ -23,6 +23,7 @@ import sys
 from collections import defaultdict
 from sys import stdin, exit
 
+from mcheck.check_names import CHECK_NAMES
 from mcheck.results.checks_results import RESULT
 from mcheck.metadata.irods_metadata.irods_meta_provider import iRODSMetadataProvider
 from mcheck.main import arg_parser
@@ -128,6 +129,16 @@ def _fetch_irods_metadata_from_other_sources_and_check(irods_metadata_dict, issu
     return header_metadata_dict, seqsc_metadata_dict
 
 
+def decide_exit_status(check_results_by_path):
+    exit_status = 0
+    irrelevant = [CHECK_NAMES.check_for_samples_in_more_studies]
+    for fpath, check_results in check_results_by_path.items():
+        for check_result in check_results:
+            if check_result.result == RESULT.FAILURE and check_result.check_name not in irrelevant:
+                exit_status = 1
+    return exit_status
+
+
 def main():
     args = arg_parser.parse_args()
     try:
@@ -205,10 +216,7 @@ def main():
         result_as_tsv_string = format_output_as_tsv(check_results_by_fpath)
         print(result_as_tsv_string)
 
-    for fpath, check_res in check_results_by_fpath.items():
-        for result in check_res:
-            if result.result == RESULT.FAILURE:
-                exit(1)
+    exit(decide_exit_status(check_results_by_fpath))
 
 if __name__ == '__main__':
     main()
