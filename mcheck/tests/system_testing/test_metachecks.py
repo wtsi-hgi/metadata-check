@@ -21,7 +21,7 @@ This file has been created on Jun 07, 2016.
 
 import unittest
 from unittest.mock import patch
-from mcheck.main import run_checks
+from mcheck.main import api
 from mcheck.check_names import CHECK_NAMES
 from mcheck.results.checks_results import RESULT
 
@@ -42,7 +42,7 @@ class MetadataFetchedByPathTest(unittest.TestCase):
         """
         irods_fpath = "/humgen/projects/serapis_staging/test-metacheck/test_metadata.txt"
 
-        result = run_checks.check_metadata_fetched_by_path(irods_fpaths=[irods_fpath])
+        result = api.check_metadata_fetched_by_path(irods_fpaths=[irods_fpath])
         print("Comparisong checks: %s" % self.comparison_checks)
         for fpath, check_results in result.items():
             check_names = [c.check_name for c in check_results]
@@ -62,7 +62,7 @@ class MetadataFetchedByPathTest(unittest.TestCase):
 
     def test_metadata_when_metadata_ok(self):
         irods_fpath = "/humgen/projects/serapis_staging/test-metacheck/test_ok_metadata.out"
-        result = run_checks.check_metadata_fetched_by_path(irods_fpaths=[irods_fpath])
+        result = api.check_metadata_fetched_by_path(irods_fpaths=[irods_fpath])
         for fpath, check_results in result.items():
             check_names = [c.check_name for c in check_results]
             self.assertSetEqual(set(check_names), set(CHECK_NAMES.get_only_mandatory_check_names()))
@@ -82,7 +82,7 @@ class MetadataFetchedByPathTest(unittest.TestCase):
 
     def test_metadata_when_metadata_ok_with_reference(self):
         irods_fpath = "/humgen/projects/serapis_staging/test-metacheck/test_ok_metadata.out"
-        result = run_checks.check_metadata_fetched_by_path(irods_fpaths=[irods_fpath], reference='GRCh38')
+        result = api.check_metadata_fetched_by_path(irods_fpaths=[irods_fpath], reference='GRCh38')
         for fpath, check_results in result.items():
             for check_res in check_results:
                 if check_res.check_name == CHECK_NAMES.check_desired_reference:
@@ -91,7 +91,7 @@ class MetadataFetchedByPathTest(unittest.TestCase):
 
     def test_metadata_when_metadata_ok_with_wrong_reference(self):
         irods_fpath = "/humgen/projects/serapis_staging/test-metacheck/test_ok_metadata.out"
-        result = run_checks.check_metadata_fetched_by_path(irods_fpaths=[irods_fpath], reference='hs37d5')
+        result = api.check_metadata_fetched_by_path(irods_fpaths=[irods_fpath], reference='hs37d5')
         for fpath, check_results in result.items():
             for check_res in check_results:
                 if check_res.check_name == CHECK_NAMES.check_desired_reference:
@@ -99,7 +99,7 @@ class MetadataFetchedByPathTest(unittest.TestCase):
 
     def test_metadata_when_metadata_ok_with_wrong_reference_and_one_replica(self):
         irods_fpath = "/humgen/projects/serapis_staging/test-metacheck/test_metadata_missing_md5.out"
-        result = run_checks.check_metadata_fetched_by_path(irods_fpaths=[irods_fpath], reference='grch38')
+        result = api.check_metadata_fetched_by_path(irods_fpaths=[irods_fpath], reference='grch38')
         for fpath, check_results in result.items():
             for check_res in check_results:
                 if check_res.check_name == CHECK_NAMES.check_desired_reference:
@@ -113,7 +113,7 @@ class MetadataFetchedByPathTest(unittest.TestCase):
 
     def test_metadata_when_study_and_samples_dont_match(self):
         irods_fpath = "/humgen/projects/serapis_staging/test-metacheck/test_samples_given_wrong_study.cram"
-        result = run_checks.check_metadata_fetched_by_path(irods_fpaths=[irods_fpath], reference='grch38')
+        result = api.check_metadata_fetched_by_path(irods_fpaths=[irods_fpath], reference='grch38')
         for fpath, check_results in result.items():
             for check_res in check_results:
                 if check_res.check_name in [
@@ -131,7 +131,7 @@ class MetadataFetchedByPathTest(unittest.TestCase):
 
     def test_metadata_when_header_doesnt_match_irods(self):
         irods_fpath = "/humgen/projects/serapis_staging/test-metacheck/test_wrong_header.cram"
-        result = run_checks.check_metadata_fetched_by_path(irods_fpaths=[irods_fpath], reference='grch38')
+        result = api.check_metadata_fetched_by_path(irods_fpaths=[irods_fpath], reference='grch38')
         for fpath, check_results in result.items():
             for check_res in check_results:
                 if check_res.check_name in [
@@ -150,7 +150,7 @@ class MetadataFetchedByPathTest(unittest.TestCase):
 
     def test_when_md5_is_wrong(self):
         irods_fpath = "/humgen/projects/serapis_staging/test-metacheck/test_wrong_md5.out"
-        result = run_checks.check_metadata_fetched_by_path(irods_fpaths=[irods_fpath], reference='grch38')
+        result = api.check_metadata_fetched_by_path(irods_fpaths=[irods_fpath], reference='grch38')
         for fpath, check_results in result.items():
             for check_res in check_results:
                 if check_res.check_name in [
@@ -172,7 +172,7 @@ class MetadataFetchedByPathTest(unittest.TestCase):
 
     def test_when_more_than_1_md5s(self):
         irods_fpath = "/humgen/projects/serapis_staging/test-metacheck/test_more_than_one_md5s.out"
-        result = run_checks.check_metadata_fetched_by_path(irods_fpaths=[irods_fpath], reference='grch38')
+        result = api.check_metadata_fetched_by_path(irods_fpaths=[irods_fpath], reference='grch38')
         for fpath, check_results in result.items():
             for check_res in check_results:
                 if check_res.check_name in [
@@ -197,7 +197,7 @@ class MetadataFetchedByPathTest(unittest.TestCase):
 class MetadataFetchedByMetadataTest(unittest.TestCase):
 
     def test_fetch_study_by_metadata(self):
-        result = run_checks.check_metadata_fetched_by_metadata(filter_target="1", filter_npg_qc="1", file_types="cram",
+        result = api.check_metadata_fetched_by_metadata(filter_target="1", filter_npg_qc="1", file_types="cram",
                                            study_name="SEQCAP_WGS_GDAP_AADM", irods_zone='seq')
         for fpath, check_results in result.items():
             for check_res in check_results:
@@ -216,8 +216,8 @@ class ComparisonTests(unittest.TestCase):
 
     def test_same_check_results_by_path_and_by_metadata(self):
         fpath = '/humgen/projects/serapis_staging/test-metacheck/test_metadata_comparison.cram'
-        check_results_by_metadata = run_checks.check_metadata_fetched_by_metadata(reference='GRCh38', study_name='GDAP_XTEN', irods_zone='humgen')
-        check_results_by_path = run_checks.check_metadata_fetched_by_path(irods_fpaths=[fpath], reference='GRCh38')
+        check_results_by_metadata = api.check_metadata_fetched_by_metadata(reference='GRCh38', study_name='GDAP_XTEN', irods_zone='humgen')
+        check_results_by_path = api.check_metadata_fetched_by_path(irods_fpaths=[fpath], reference='GRCh38')
 
         file_check_results_by_meta = check_results_by_metadata[fpath]
         file_check_results_by_path = check_results_by_path[fpath]
@@ -235,13 +235,13 @@ class ComparisonTests(unittest.TestCase):
         self.assertEqual(len(file_check_results_by_path), len(file_check_results_by_meta))
 
 
-    @patch('mcheck.main.run_checks.stdin.read')
+    @patch('mcheck.main.api.sys.stdin.read')
     def test_fetch_study_metadata_vs_stream_study_metadata(self, stdin):
         fpath = "/nfs/users/nfs_i/ic4/Projects/python3/meta-check/aadm6.json"
         stdin.return_value = open(fpath).read()
-        result_stream_metadata = run_checks.check_metadata_given_as_json_stream()
+        result_stream_metadata = api.check_metadata_given_as_json_stream()
 
-        result_fetch_by_metadata = run_checks.check_metadata_fetched_by_metadata(filter_npg_qc=1, filter_target=1,
+        result_fetch_by_metadata = api.check_metadata_fetched_by_metadata(filter_npg_qc=1, filter_target=1,
                                                              study_name='SEQCAP_WGS_GDAP_AADM', irods_zone='seq')
 
         self.assertSetEqual(set(result_stream_metadata.keys()), set(result_fetch_by_metadata.keys()))
@@ -249,12 +249,12 @@ class ComparisonTests(unittest.TestCase):
             self.assertSetEqual(set(results), set(result_stream_metadata[fpath]))
 
 
-    @patch('mcheck.main.run_checks.stdin.read')
+    @patch('mcheck.main.api.sys.stdin.read')
     def test_fetch_study_metadata_vs_stream_study_metadata(self, stdin):
         fpath = "/nfs/users/nfs_i/ic4/Projects/python3/meta-check/cffdna.json"
         stdin.return_value = open(fpath).read()
-        result_stream_metadata = run_checks.check_metadata_given_as_json_stream()
-        result_fetch_by_metadata = run_checks.check_metadata_fetched_by_metadata(filter_npg_qc=1, filter_target=1,
+        result_stream_metadata = api.check_metadata_given_as_json_stream()
+        result_fetch_by_metadata = api.check_metadata_fetched_by_metadata(filter_npg_qc=1, filter_target=1,
                                                              study_name='De novo mutations in cell-free foetal DNA (cffDNA)', irods_zone='seq')
 
         self.assertSetEqual(set(result_stream_metadata.keys()), set(result_fetch_by_metadata.keys()))
@@ -262,12 +262,12 @@ class ComparisonTests(unittest.TestCase):
             self.assertSetEqual(set(results), set(result_stream_metadata[fpath]))
 
 
-    @patch('mcheck.main.run_checks.stdin.read')
+    @patch('mcheck.main.api.sys.stdin.read')
     def test_fetch_study_metadata_vs_stream_study_metadata(self, stdin):
         fpath = "/nfs/users/nfs_i/ic4/Projects/python3/meta-check/16006_5.json"
         stdin.return_value = open(fpath).read()
-        result_fetch_by_metadata = run_checks.check_metadata_fetched_by_path(irods_fpaths=['/seq/16006/16006_5.cram'])
-        result_stream_metadata = run_checks.check_metadata_given_as_json_stream()
+        result_fetch_by_metadata = api.check_metadata_fetched_by_path(irods_fpaths=['/seq/16006/16006_5.cram'])
+        result_stream_metadata = api.check_metadata_given_as_json_stream()
 
         self.assertSetEqual(set(result_stream_metadata.keys()), set(result_fetch_by_metadata.keys()))
         print()
