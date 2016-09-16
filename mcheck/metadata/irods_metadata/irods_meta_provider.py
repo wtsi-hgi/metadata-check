@@ -52,16 +52,17 @@ class iRODSMetadataProvider:
     def fetch_raw_file_metadata_by_path(cls, fpath):
         try:
             connection = connect_to_irods_with_baton(config.BATON_BIN)#, skip_baton_binaries_validation=True)
-            baton_file_metadata_as_list = connection.data_object.get_by_path(fpath)
+            data_object = connection.data_object.get_by_path(fpath)
         except Exception as e:
             if str(e).find('KRB_ERROR_ACQUIRING_CREDS') != -1:
                 raise OSError("ERROR: you need to log into iRODS and aquire the KERBEROS credentials.") from None
             else:
                 raise e from None
         else:
-            baton_file_metadata = baton_file_metadata_as_list if baton_file_metadata_as_list else None
-            raw_metadata = IrodsRawFileMetadata.from_baton_wrapper(baton_file_metadata)
-            return raw_metadata
+            if data_object:
+                raw_metadata = IrodsRawFileMetadata.from_baton_wrapper(data_object)
+                return raw_metadata
+            return None
 
 
     @classmethod
