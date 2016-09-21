@@ -147,7 +147,7 @@ class IrodsRawFileMetadata(ComparableMetadata):
             check_results = []
             check_results.extend(cls.validate_replicas_individually(replicas))
             check_results.append(cls.check_all_replicas_have_same_checksum(replicas))
-            check_results.append(cls.check_more_than_one_replicas(replicas))
+            #check_results.append(cls.check_more_than_one_replicas(replicas))   # Commented the replica > 1 test, as NPG is now putting in iRODS 1 copy of library CRAMs only
             return check_results
 
 

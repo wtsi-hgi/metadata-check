@@ -226,13 +226,13 @@ class SeqscapeRawMetadata(object):
     def check_studies_fetched_by_samples(self):
         check_results = []
         same_study_for_samples_check = CheckResult(check_name=CHECK_NAMES.check_studies_in_irods_with_studies_in_seqscape_fetched_by_samples)
-        check_for_samples_in_more_studies = CheckResult(check_name=CHECK_NAMES.check_for_samples_in_more_studies, severity=SEVERITY.WARNING)
+        #check_for_samples_in_more_studies = CheckResult(check_name=CHECK_NAMES.check_for_samples_in_more_studies, severity=SEVERITY.WARNING)
         if not self.get_entities_by_type('sample'):
             same_study_for_samples_check.executed = False
             same_study_for_samples_check.result = None
-            check_for_samples_in_more_studies.executed = False
-            check_for_samples_in_more_studies.result = None
-            check_results.append(check_for_samples_in_more_studies)
+            # check_for_samples_in_more_studies.executed = False
+            # check_for_samples_in_more_studies.result = None
+            # check_results.append(check_for_samples_in_more_studies)
             check_results.append(same_study_for_samples_check)
             return check_results
         studies_by_samples_set = set(self.get_all_entities_by_association_by_type('sample', 'study'))
@@ -255,15 +255,15 @@ class SeqscapeRawMetadata(object):
                 same_study_for_samples_check.error_message = error_msg
         check_results.append(same_study_for_samples_check)
 
-        diff_sam_belongs2more_studies = studies_by_samples_set.difference(studies_set)
-        if diff_sam_belongs2more_studies:
-            error_msg = "Some samples belong to more than one study. For samples: %s we had these studies as metadata: %s and we found in Seqscape these studies: %s" % (
-                sample_set_ids,
-                studies_set_names,
-                studies_by_samples_set_names)
-            check_for_samples_in_more_studies.result = RESULT.FAILURE
-            check_for_samples_in_more_studies.error_message = error_msg
-        check_results.append(check_for_samples_in_more_studies)
+        # diff_sam_belongs2more_studies = studies_by_samples_set.difference(studies_set)
+        # if diff_sam_belongs2more_studies:
+        #     error_msg = "Some samples belong to more than one study. For samples: %s we had these studies as metadata: %s and we found in Seqscape these studies: %s" % (
+        #         sample_set_ids,
+        #         studies_set_names,
+        #         studies_by_samples_set_names)
+        #     check_for_samples_in_more_studies.result = RESULT.FAILURE
+        #     check_for_samples_in_more_studies.error_message = error_msg
+        # check_results.append(check_for_samples_in_more_studies)
         return check_results
 
 
