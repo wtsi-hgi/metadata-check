@@ -383,7 +383,7 @@ class TestSamplesAndStudiesFetched(unittest.TestCase):
 
     def test_check_studies_fetched_by_samples(self):
         result = self.raw_metadata.check_studies_fetched_by_samples()
-        self.assertEqual(len(result), 2)
+        self.assertEqual(len(result), 1)
 
     def test_samples_fetched_by_studies(self):
         result = self.raw_metadata.check_samples_fetched_by_studies()
@@ -443,10 +443,8 @@ class TestCheckRawMetadata(unittest.TestCase):
                                                        query_id_type='internal_id', query_entity_type='sample',
                                                        fetched_entity_type='sample')
         raw_metadata.add_fetched_entities(sam1_fetched)
-        print("RAW metadata: %s FINISHED" %raw_metadata)
         result = raw_metadata.check_metadata()
-        print("Result before exiting with error: %s" % result)
-        self.assertEqual(6, len(result))
+        self.assertEqual(5, len(result))
         for res in result:
             if res.executed:
                 self.assertEqual(res.result, RESULT.SUCCESS)
@@ -464,7 +462,7 @@ class TestCheckRawMetadata(unittest.TestCase):
         raw_metadata.add_fetched_entities(sam1_fetched)
         raw_metadata.add_fetched_entities_by_association(std1_fetched)
         result = raw_metadata.check_metadata()
-        self.assertEqual(6, len(result))
+        self.assertEqual(5, len(result))
 
 
 class TestSeqscapeMetadata(unittest.TestCase):
