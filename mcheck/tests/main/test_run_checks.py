@@ -22,7 +22,7 @@ This file has been created on Jun 13, 2016.
 import unittest
 
 from mcheck.check_names import CHECK_NAMES
-from mcheck.main.run_checks import decide_exit_status
+from run_checks import decide_exit_status
 from mcheck.results.checks_results import CheckResult
 from mcheck.results.constants import RESULT
 
