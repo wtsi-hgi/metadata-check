@@ -39,8 +39,8 @@ class FileMetadataComparison:
         :return:
         """
         for fpath, irods_metadata in irods_metadata_dict.items():
-            header_metadata = header_metadata_dict[fpath]
-            seqscape_metadata = seqsc_metadata_dict[fpath]
+            header_metadata = header_metadata_dict.get(fpath)
+            seqscape_metadata = seqsc_metadata_dict.get(fpath)
 
             ss_vs_h_check_result = CheckResult(check_name=CHECK_NAMES.check_seqscape_ids_compared_to_header_ids, error_message=[])
             h_vs_ss_check_result = CheckResult(check_name=CHECK_NAMES.check_header_ids_compared_to_seqscape_ids, error_message=[])
