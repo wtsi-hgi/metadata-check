@@ -51,6 +51,9 @@ class SAMFileHeaderMetadata(ComparableMetadata):
     @classmethod
     def _check_for_invalid_ids(cls, multi_ids_dict: typing.Dict, entity_type: str):
         check_result = CheckResult(check_name=CHECK_NAMES.check_valid_ids, error_message=[])
+        if not multi_ids_dict:
+            check_result.result = RESULT.FAILURE
+            check_result.error_message.append("No ids found.")
         for k, values in multi_ids_dict.items():
             wrong_ids = [id for id in values if not cls._is_id_valid(id)]
             if wrong_ids:
