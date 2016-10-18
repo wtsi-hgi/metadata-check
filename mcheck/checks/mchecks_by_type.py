@@ -89,11 +89,16 @@ class MetadataSelfChecks:
     def fetch_and_preprocess_header_metadata(irods_fpaths, issues_dict):
         header_metadata_dict = {}
         for fpath in irods_fpaths:
-            header_metadata = SAMFileHeaderMetadataProvider.fetch_metadata(fpath, irods=True)
-            check_results = header_metadata.check_metadata()
-            header_metadata.fix_metadata()
-            header_metadata_dict[fpath] = header_metadata
-            issues_dict[fpath].extend(check_results)
+            try:
+                header_metadata = SAMFileHeaderMetadataProvider.fetch_metadata(fpath, irods=True)
+            except (OSError, IOError) as e:
+                # TODO: log this error so that one knows what went wrong
+                pass
+            else:
+                check_results = header_metadata.check_metadata()
+                header_metadata.fix_metadata()
+                header_metadata_dict[fpath] = header_metadata
+                issues_dict[fpath].extend(check_results)
         return header_metadata_dict
 
 
