@@ -55,11 +55,11 @@ Example of usage for each:
 
 ### Fetching Metadata by File Path
 
-    python mcheck/main/run_checks.py fetch_by_path <file_path>
+    python run_checks.py fetch_by_path <file_path>
 
 ### Fetching Metadata by Metadata Attributes
 
-    python mcheck/main/run_checks.py fetch_by_metadata --irods_zone ZONE QUERY_ATTRIBUTES... FILTER_ATTRIBUTES...
+    python run_checks.py fetch_by_metadata --irods_zone ZONE QUERY_ATTRIBUTES... FILTER_ATTRIBUTES...
 
 The iRODS zone tells baton in which iRODS zone to search for the data given your search criteria; it is a mandatory parameter.
 
@@ -75,14 +75,14 @@ And another set of attributes used for filtering your data:
 
 Example of usage:
 
-    python mcheck/main/run_checks.py fetch_by_metadata --study_name <study_name> --irods_zone seq --filter_target 1 --filter_npg_qc 1
+    python run_checks.py fetch_by_metadata --study_name <study_name> --irods_zone seq --filter_target 1 --filter_npg_qc 1
 
 ### Using Metadata Given by the User at `stdin`
 Using this option the tool expects a json formatted string which follows the rules of the baton output in terms of attribute names and values.
 
 Example of usage:
 
-    cat cffdna.json | python mcheck/main/run_checks.py given_at_stdin
+    cat cffdna.json | python run_checks.py given_at_stdin
 
 which will output the CheckResults to stdout. By default, this will be a tsv, however there is also the option of getting the output as json by running it with `--output_as_json` parameter.
 
