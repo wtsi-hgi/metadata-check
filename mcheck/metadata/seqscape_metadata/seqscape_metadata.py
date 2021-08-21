@@ -21,7 +21,7 @@ This file has been created on Nov 09, 2015.
 
 from collections import defaultdict
 import collections
-from typing import List, Dict, Union
+from typing import List, Dict, Union, Set
 
 from sequencescape import NamedModel, Sample, Study, Library
 from mcheck.results.checks_results import CheckResult
@@ -148,7 +148,7 @@ class SeqscapeRawMetadata(object):
         return list(results)
 
 
-    def get_entities_without_duplicates_by_entity_type(self, entity_type: str) -> List[NamedModel]:
+    def get_entities_without_duplicates_by_entity_type(self, entity_type: str) -> Set[NamedModel]:
         entities_by_type = self.get_entities_by_type(entity_type)
         all_entities = set(entities_by_type)
         return all_entities
